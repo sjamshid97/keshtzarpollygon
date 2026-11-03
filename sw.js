@@ -32,7 +32,8 @@ self.addEventListener('fetch', (e) => {
   if (url.origin !== location.origin) return;
 
   // صفحهٔ اصلی: همیشه اول شبکه و بدون کش مرورگر (تا با یک رفرش نسخهٔ تازه بیاید)
-  if (req.mode === 'navigate' || url.pathname.endsWith('/index.html') || url.pathname.endsWith('/')) {
+  // فقط صفحهٔ اصلی برنامه؛ صفحه‌های دیگر (مثل demo.html) نباید جای index.html را در کش بگیرند
+  if (url.pathname.endsWith('/index.html') || url.pathname.endsWith('/')) {
     e.respondWith(
       fetch(new Request(req.url, { cache: 'no-store', credentials: 'same-origin' }))
         .then(r => {
