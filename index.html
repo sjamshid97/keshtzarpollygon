@@ -409,8 +409,6 @@
         <div class="fld" style="display:block; margin-top:8px">
           <select id="gsProv" onchange="gsSaveCfg()" style="width:100%; font-size:12.5px">
             <option value="supabase">Supabase — رایگان و همیشگی (پیشنهاد)</option>
-            <option value="google">گوگل درایو (Apps Script)</option>
-            <option value="custom">سرویس JSON دلخواه (jsonblob و…)</option>
           </select>
         </div>
         <div class="fld" style="display:block; margin-top:6px">
@@ -677,7 +675,7 @@
 <script>
 /* ---------- ذخیره‌سازی ---------- */
 const STORE_KEY = 'seed_coord_notebook_v1';
-const APP_VERSION = '1.10.0';   // build-app.py این عدد را با VERSION هم‌تراز می‌کند
+const APP_VERSION = '1.10.1';   // build-app.py این عدد را با VERSION هم‌تراز می‌کند
 let state = { projects: [], activeId: null };
 
 let storageOK = true;
@@ -2109,14 +2107,12 @@ const GS = { prov:'supabase', url:'', token:'', key:'', auto:false, busy:false, 
 const GS_LOCAL = 'seed_cloud_v2';
 try{
   const o = JSON.parse(localStorage.getItem(GS_LOCAL) || localStorage.getItem('seed_gdrive_v1') || '{}');
-  GS.prov = o.prov || (o.url && /script\.google/.test(o.url) ? 'google' : 'supabase');
+  GS.prov = 'supabase';   /* فقط Supabase پشتیبانی می‌شود؛ روش‌های قدیمی حذف شدند */
   GS.url = o.url || ''; GS.token = o.token || ''; GS.key = o.key || '';
   GS.auto = !!o.auto; GS.lastPush = o.lastPush || 0; GS.lastPull = o.lastPull || 0;
 }catch(e){}
 const PROVIDERS = {
-  supabase: { name:'Supabase', urlPh:'https://xxxxxxxx.supabase.co', tokPh:'anon public key (کلید عمومی پروژه)' },
-  google:   { name:'گوگل درایو', urlPh:'https://script.google.com/macros/s/…/exec', tokPh:'(لازم نیست — خالی بگذارید)' },
-  custom:   { name:'سرویس JSON دلخواه', urlPh:'https://jsonblob.com/api/jsonBlob/…', tokPh:'Authorization (اختیاری)' }
+  supabase: { name:'Supabase', urlPh:'https://xxxxxxxx.supabase.co', tokPh:'anon public key (کلید عمومی پروژه)' }
 };
 
 /* --- راه‌اندازی با یک لینک: ?srv=<url>&tok=<anon>&skey=<code>&auto=1 --- */
@@ -2128,7 +2124,6 @@ function gsApplyLinkSetup(){
     if(srv) GS.url = gsNormUrl(srv);
     if(tok) GS.token = gsNormToken(tok);
     if(sk) GS.key = gsNormKey(sk);
-    if(q.get('prov')) GS.prov = q.get('prov');
     if(q.get('auto') === '1') GS.auto = true;
     gsPersist();
     // پارامترها از نوار آدرس پاک شوند تا در لینک‌های اشتراکی نمانند
@@ -2161,7 +2156,6 @@ function gsRender(msg){
   const u = document.getElementById('gsUrl'), t = document.getElementById('gsToken');
   if(u) u.placeholder = ph.urlPh;
   if(t) t.placeholder = ph.tokPh;
-  if(GS.prov === 'google' && t) t.style.display = 'none'; else if(t) t.style.display = '';
   const miss = gsWhyNotReady();
   if(miss.length){
     GS.msg = '';
@@ -2178,22 +2172,6 @@ function gsRender(msg){
     ' · آخرین دریافت: <b>' + (GS.lastPull ? faDate(GS.lastPull) : '—') + '</b>' +
     ' · خودکار: ' + (GS.auto ? 'روشن' : 'خاموش') +
     (msg ? '<br><span style="color:#1f6f43">' + msg + '</span>' : '');
-}
-
-/* ---------- گوگل (JSONP) ---------- */
-function gsCbName(){ return 'gsCb_' + Math.floor(Math.random()*1e9); }
-function gsJsonp(params, timeoutMs){
-  return new Promise((resolve, reject)=>{
-    const cb = gsCbName(); let done = false;
-    const qs = Object.keys(params).map(k=>encodeURIComponent(k)+'='+encodeURIComponent(params[k])).join('&');
-    const sc = document.createElement('script');
-    const clean = ()=>{ try{ delete window[cb]; }catch(e){ window[cb]=undefined; } if(sc.parentNode) sc.parentNode.removeChild(sc); };
-    const tm = setTimeout(()=>{ if(done) return; done = true; clean(); reject(new Error('پاسخی از سرور نیامد (۱۵ ثانیه)')); }, timeoutMs || 15000);
-    window[cb] = (data)=>{ if(done) return; done = true; clearTimeout(tm); clean(); resolve(data); };
-    sc.onerror = ()=>{ if(done) return; done = true; clearTimeout(tm); clean(); reject(new Error('آدرس سرویس درست نیست یا دسترسی «هر کسی» ندارد')); };
-    sc.src = GS.url + (GS.url.indexOf('?')>-1 ? '&' : '?') + qs + '&callback=' + cb + '&t=' + Date.now();
-    document.head.appendChild(sc);
-  });
 }
 
 /* ---------- Supabase (REST/PostgREST) ---------- */
@@ -2228,7 +2206,7 @@ function gsWhyNotReady(){
   if(!GS.url) miss.push('آدرس سرویس');
   else if(!/^https?:\/\//i.test(GS.url)) miss.push('آدرس سرویس (باید با https:// شروع شود)');
   if(!GS.key) miss.push('کدِ همگام‌سازی');
-  if(GS.prov === 'supabase' && !GS.token) miss.push('کلید عمومی (anon key)');
+  if(!GS.token) miss.push('کلید عمومی (anon key)');
   return miss;
 }
 function gsHumanErr(e){
@@ -2269,49 +2247,12 @@ async function sbPush(payload){
   return true;
 }
 
-/* ---------- سرویس JSON دلخواه (GET/PUT) ---------- */
-function customUrl(){
-  return GS.url + (GS.url.indexOf('?')>-1 ? '&' : '?') + 'key=' + encodeURIComponent(GS.key);
-}
-function customHeaders(){
-  const h = { 'Content-Type':'application/json' };
-  if(GS.token) h['Authorization'] = /^Bearer /i.test(GS.token) ? GS.token : 'Bearer ' + GS.token;
-  return h;
-}
-async function customPull(){
-  const r = await fetch(customUrl(), { headers: customHeaders() });
-  if(!r.ok) throw await sbErr(r);
-  const j = await r.json();
-  if(j && j.data && j.data.state) return j.data;
-  if(j && j.state) return j;
-  if(j && j.projects) return { state: j, device:'سرویس JSON', updatedAt: Date.now() };
-  return null;
-}
-async function customPush(payload){
-  const r = await fetch(customUrl(), { method:'PUT', headers: customHeaders(), body: JSON.stringify(payload) });
-  if(!r.ok) throw await sbErr(r);
-  return true;
-}
-
 /* ---------- عملیات مشترک ---------- */
 async function cloudPull(){
-  if(GS.prov === 'google'){
-    const r = await gsJsonp({ action:'pull', key:GS.key });
-    if(!r || !r.ok) throw new Error((r && r.error) || 'پاسخ نامعتبر');
-    return r.data;
-  }
-  if(GS.prov === 'supabase') return await sbPull();
-  return await customPull();
+  return await sbPull();
 }
 async function cloudPush(payload){
-  if(GS.prov === 'google'){
-    // Apps Script هدر CORS نمی‌دهد → با no-cors می‌فرستیم (نوشته می‌شود، پاسخ خواندنی نیست)
-    await fetch(GS.url, { method:'POST', mode:'no-cors', headers:{ 'Content-Type':'text/plain;charset=utf-8' },
-      body: JSON.stringify({ key:GS.key, action:'push', data: payload }) });
-    return true;
-  }
-  if(GS.prov === 'supabase') return await sbPush(payload);
-  return await customPush(payload);
+  return await sbPush(payload);
 }
 function cloudPayload(){
   return { app:'seedcoord-sync', v:2, device: syncDeviceName(), exportedAt: Date.now(), updatedAt: Date.now(), state: state };
@@ -2320,21 +2261,12 @@ function cloudPayload(){
 async function gsTest(){
   gsSaveCfg();
   if(!gsReady()) return alert('اول آدرس سرویس و کدِ همگام‌سازی را وارد کنید.');
-  if(GS.prov === 'supabase' && !GS.token) return alert('کلید عمومی Supabase (anon key) را هم وارد کنید.');
+  if(!GS.token) return alert('کلید عمومی Supabase (anon key) را هم وارد کنید.');
   gsRender('در حال آزمایش…');
   try{
-    if(GS.prov === 'google'){
-      const r = await gsJsonp({ action:'ping', key:GS.key });
-      if(!r || !r.ok) throw new Error((r && r.error) || 'پاسخ نامعتبر');
-      GS.ready = true; gsRender('اتصال برقرار است ✅ ' + (r.msg || ''));
-    } else if(GS.prov === 'supabase'){
-      const r2 = await fetch(sbBase() + '/rest/v1/' + SB_TABLE + '?select=key&limit=1', { headers: sbHeaders() });
-      if(!r2.ok) throw await sbErr(r2);
-      GS.ready = true; gsRender('اتصال برقرار است ✅ جدول ' + SB_TABLE + ' در دسترس است.');
-    } else {
-      const d = await customPull();
-      GS.ready = true; gsRender('اتصال برقرار است ✅ ' + (d && d.state ? 'داده موجود است' : 'سرویس پاسخ داد (خالی)'));
-    }
+    const r2 = await fetch(sbBase() + '/rest/v1/' + SB_TABLE + '?select=key&limit=1', { headers: sbHeaders() });
+    if(!r2.ok) throw await sbErr(r2);
+    GS.ready = true; gsRender('اتصال برقرار است ✅ جدول ' + SB_TABLE + ' در دسترس است.');
   }catch(e){ GS.ready = false; gsRender('⚠ ' + escSync(gsHumanErr(e))); }
 }
 
