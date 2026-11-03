@@ -32,17 +32,22 @@ self.addEventListener('fetch', (e) => {
   if (url.origin !== location.origin) return;
 
   // صفحهٔ اصلی: همیشه اول شبکه و بدون کش مرورگر (تا با یک رفرش نسخهٔ تازه بیاید)
-  // فقط صفحهٔ اصلی برنامه؛ صفحه‌های دیگر (مثل demo.html) نباید جای index.html را در کش بگیرند
-  if (url.pathname.endsWith('/index.html') || url.pathname.endsWith('/')) {
-    e.respondWith(
-      fetch(new Request(req.url, { cache: 'no-store', credentials: 'same-origin' }))
-        .then(r => {
-          const copy = r.clone();
-          caches.open(CACHE).then(c => c.put('./index.html', copy)).catch(() => {});
-          return r;
-        })
-        .catch(() => caches.match('./index.html').then(r => r || caches.match('./')))
-    );
+  // هر صفحهٔ برنامه (index.html یا demo.html): اول شبکه — همیشه تازه؛ بعد کش
+  // (قبلاً demo.html از کش می‌آمد و نسخهٔ قدیمی روی صفحه می‌ماند)
+  if (req.mode === 'navigate') {
+    e.respondWith((async () => {
+      try {
+        const fresh = await fetch(new Request(req.url, { cache: 'no-store', credentials: 'same-origin' }));
+        const c = await caches.open(CACHE);
+        if (url.pathname.endsWith('/') || url.pathname.endsWith('/index.html')) c.put('./index.html', fresh.clone()).catch(() => {});
+        else c.put(req, fresh.clone()).catch(() => {});
+        return fresh;
+      } catch (err) {
+        const hit = await caches.match(req);
+        if (hit) return hit;
+        return (await caches.match('./index.html')) || (await caches.match('./')) || Response.error();
+      }
+    })());
     return;
   }
 
