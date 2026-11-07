@@ -350,6 +350,13 @@
     /* سازگاری با کدهای قبلی */
     --green2:var(--green); --green-soft:var(--green-50);
     --shadow:var(--sh-1);
+
+    /* ── رنگ‌های تک‌افتادهٔ قدیمی: همان مقدار قبلی، فقط حالا نام‌دار ── */
+    --accent-2:#1f6f43; --accent-2-50:#eef6f0;
+    --danger-2:#b3352c; --danger-3:#b3261e; --danger-4:#8d2a22;
+    --warn-2:#b4761a; --warn-3:#7a5310;
+    --soft-green:#4d6b57; --soft-green-2:#5d7768;
+    --grey-2:#8a8f8b; --grey-3:#555555; --blue-2:#1a4f8a; --blue-2-50:#e8f0fb;
   }
   body{background:var(--bg); color:var(--ink); font-size:13.5px; -webkit-font-smoothing:antialiased}
 
@@ -507,6 +514,8 @@
     .tabs::-webkit-scrollbar{height:3px}
     .tab{white-space:nowrap}
     .wrap{padding:12px 12px 26px}
+    /* ستون شبکه باید کوچک‌شدنی باشد؛ وگرنه جدولِ پهن، کل صفحه را از عرض گوشی بیرون می‌زند */
+    .grid{grid-template-columns:minmax(0,1fr)}
     .kpis{grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px}
     .kpi{padding:9px 11px}
     .kpi .v{font-size:17px}
@@ -549,18 +558,150 @@
   #mpTop, #mpZoom, #mpArea, #mpPanel{font-family:inherit}
   .om-cmd{border-radius:var(--r-md)}
   code, .kbd{color:var(--ink-2)}
+/* ═══════════ ۰۸ — کلاس‌های کاربردی ═══════════
+   این فایل جای استایل‌های درون‌خطی (style روی تگ) را گرفته است.
+   قاعده: هیچ استایلی مستقیم روی تگ نوشته نمی‌شود؛ همه از این‌جا می‌آید.
+   اگر روزی رنگ یا فاصله‌ای خواست عوض شود، فقط همین‌جا عوض می‌شود.
+
+   چرا !important؟ چون استایل درون‌خطی از هر کلاسی قوی‌تر است. برای این‌که
+   رفتار دقیقاً همان قبلی بماند (هیچ چیز یک پیکسل هم جابه‌جا نشود) این
+   کلاس‌ها هم همان قدرت را دارند. اگر جایی لازم شد خلاف این باشد،
+   همان‌جا با یک قاعدهٔ دقیق‌تر (مثلاً با #id) خنثی کنید. */
+
+  /* ── پنهان/پیدا ── */
+  .u-hidden{display:none !important}
+  .u-block{display:block !important}
+  .warn-box{margin-top:10px; background:var(--warn-2-50,#fff8e8); color:#6b4a0d; border-radius:8px; padding:7px 11px; font-size:12px}
+
+  /* ── چیدمان ── */
+  .u-flex1{flex:1 !important}
+  .u-flex14{flex:1.4 !important}
+  .u-block{display:block !important}
+  .u-nowrap{white-space:nowrap !important}
+  .u-scroll{overflow:auto !important}
+  .u-wauto{width:auto !important}
+  .u-w100{width:100% !important}
+  .u-w64{width:64px !important}
+  .u-ltr{direction:ltr !important}
+  .u-tar{text-align:right !important}
+  .u-gap10{gap:10px !important}
+  .u-dim{opacity:.45 !important}
+
+  /* ── فاصله ── */
+  .u-mt0{margin-top:0 !important}
+  .u-mt4{margin-top:4px !important}
+  .u-mt6{margin-top:6px !important}
+  .u-mt8{margin-top:8px !important}
+  .u-mt10{margin-top:10px !important}
+  .u-mb6{margin-bottom:6px !important}
+  .u-mb6-flush{margin:0 0 6px !important}
+  .u-my6{margin:6px 0 !important}
+  .u-my6-2{margin:6px 0 2px !important}
+  .u-mis6{margin-inline-start:6px !important}
+
+  /* ── نوشته ── */
+  .u-fs10{font-size:10px !important}
+  .u-fs105{font-size:10.5px !important}
+  .u-fs11{font-size:11px !important}
+  .u-fs115{font-size:11.5px !important}
+  .u-fs12{font-size:12px !important}
+  .u-fs125{font-size:12.5px !important}
+  .u-fs15{font-size:15px !important}
+  .u-fw400{font-weight:400 !important}
+  .u-bold{font-weight:700 !important}
+  .u-lh185{line-height:1.85 !important}
+  .u-lh19{line-height:1.9 !important}
+  .u-lh195{line-height:1.95 !important}
+  .u-lh2{line-height:2 !important}
+  .u-lead{font-size:12px !important; font-weight:700 !important; color:var(--accent-2) !important; margin-bottom:4px !important}
+  .note-line{margin-top:14px !important; font-size:11px !important; color:var(--grey-3) !important}
+  .doc-sign{margin-top:22px !important; border-top:1px dashed #99bbbb !important; padding-top:8px !important; text-align:center !important}
+
+  /* ── رنگ نوشته ── */
+  .c-accent{color:var(--accent-2) !important}
+  .c-danger{color:var(--danger-2) !important}
+  .c-danger-dark{color:var(--danger-4) !important}
+  .c-warn{color:var(--warn-2) !important}
+  .c-warn-dark{color:var(--warn-3) !important}
+  .c-soft{color:var(--soft-green) !important}
+  .c-soft-2{color:var(--soft-green-2) !important}
+  .c-muted{color:var(--grey-2) !important}
+  .c-white{color:#fff !important}
+
+  /* ── خط جداکننده ── */
+  .u-hr{border-top:1px dashed var(--green-line) !important; margin:12px 0 10px !important}
+  .u-hr-tight{border-top:1px dashed var(--green-line) !important; margin:10px 0 8px !important}
+  .u-sep-top{margin-top:10px !important; border-top:1px dashed var(--green-line) !important; padding-top:8px !important}
+
+  /* ── برچسب‌های رنگی ── */
+  .chip-green{background:var(--accent-2-50) !important; color:var(--accent-2) !important; font-size:10.5px !important}
+  .chip-blue{background:var(--blue-2-50) !important; color:var(--blue-2) !important}
+
+  /* ── دکمهٔ ریز ── */
+  .btn-mini{padding:3px 7px !important; min-height:0 !important; font-size:10.5px !important}
+  .btn-mini-lg{min-height:0 !important; padding:3px 8px !important}
+
+  /* ── ردیف تیک ── */
+  .u-check-row{display:flex !important; align-items:center !important; gap:6px !important; font-size:12.5px !important; cursor:pointer !important}
+  .u-check-row-tight{display:flex !important; align-items:center !important; gap:4px !important; margin:0 !important; cursor:pointer !important}
+
+  /* ── کادر نوشتن ── */
+  .u-textarea{min-height:52px !important; direction:rtl !important; text-align:right !important; font-family:inherit !important; font-size:13px !important}
+  .u-textarea-lg{min-height:60px !important; direction:rtl !important; text-align:right !important; font-family:inherit !important; font-size:13px !important}
+  .u-code{width:100% !important; font-size:12px !important; direction:ltr !important; text-align:left !important}
+  .u-code-lg{width:100% !important; min-height:90px !important; font-size:12px !important; direction:ltr !important; text-align:left !important}
+  .u-coord{font-size:10.5px !important; color:var(--soft-green-2) !important; direction:ltr !important}
+
+  /* ── هالهٔ سفید دور نوشتهٔ روی نقشه ── */
+  .u-halo{paint-order:stroke !important; stroke:#fff !important; stroke-width:3px !important}
+  .u-halo-2{paint-order:stroke !important; stroke:#fff !important; stroke-width:3.2px !important}
+/* ═══════════ ۰۹ — پنجره‌های پیام ═══════════
+   جای alert / confirm / prompt مرورگر.
+   همان حسِ برنامه (خاکستری + سبز)، راست‌به‌چپ، و همیشه بالای همه چیز
+   (حتی بالای پنجرهٔ گزارش و کارت‌های کشویی). */
+
+  .dlg-wrap{position:fixed; inset:0; z-index:10000; direction:rtl;
+    background:rgba(18,26,34,.38); display:flex; align-items:center; justify-content:center;
+    padding:18px; animation:dlgFade .12s ease-out}
+  @keyframes dlgFade{from{opacity:0} to{opacity:1}}
+
+  .dlg{background:var(--surface); border-radius:var(--r-lg); width:min(460px, calc(100vw - 36px));
+    max-height:88vh; display:flex; flex-direction:column; overflow:hidden;
+    box-shadow:0 28px 64px -22px rgba(16,24,32,.55); border:1px solid var(--line);
+    font-family:inherit; animation:dlgUp .14s ease-out}
+  @keyframes dlgUp{from{transform:translateY(6px); opacity:.6} to{transform:none; opacity:1}}
+
+  .dlg-h{display:flex; align-items:center; gap:8px; padding:14px 16px 0;
+    font-size:13.5px; font-weight:700; color:var(--ink)}
+  .dlg-h .ic{width:18px; height:18px; border-radius:50%; display:inline-flex;
+    align-items:center; justify-content:center; font-size:11px; flex:none;
+    background:var(--green-50); color:var(--green)}
+  .dlg.warn .dlg-h .ic{background:var(--amber-50); color:var(--amber)}
+  .dlg.danger .dlg-h .ic{background:var(--red-50); color:var(--red)}
+
+  .dlg-b{padding:10px 16px 14px; font-size:13px; line-height:1.95; color:var(--ink-2);
+    white-space:pre-line; overflow:auto}
+  .dlg-b .fld{margin:0}
+  .dlg-b input, .dlg-b textarea{margin-top:8px}
+
+  .dlg-f{display:flex; align-items:center; gap:8px; padding:0 16px 14px}
+  .dlg-f .sp{flex:1}
+  .dlg-f button{min-height:34px}
+
+  /* کادر متنِ قابل کپی */
+  .dlg-b textarea.code{min-height:96px; font-family:inherit; direction:ltr; text-align:left; font-size:11.5px}
 </style>
 </head>
 <body>
 <header class="top">
   <h1>دفترچهٔ مختصات زمین‌های تولید بذر گواهی‌شده</h1>
   <p>ثبت، ذخیره و خروجی گرفتن مختصات هر پروژه / قطعه — خروجی استاندارد <b>GeoJSON (WGS84 / RFC 7946)</b> — بدون نیاز به اینترنت و بدون حساب کاربری</p>
-  <div id="storageWarn" style="display:none; margin-top:10px; background:#fff8e8; color:#6b4a0d; border-radius:8px; padding:7px 11px; font-size:12px">
+  <div id="storageWarn" class="warn-box u-hidden">
     ⚠ در این حالت پیش‌نمایش، ذخیره‌سازی مرورگر غیرفعال است. فایل را دانلود کنید و در مرورگر خودتان باز کنید تا اطلاعات ذخیره شود. تا آن موقع، از دکمهٔ «پشتیبان JSON» استفاده کنید.
   </div>
   <div class="tabs">
-    <button class="tab active" id="tabDoc" onclick="setView('doc')">📓 دفترچه</button>
-    <button class="tab" id="tabMap" onclick="setView('map')">🗺 نقشهٔ تعاملی (آفلاین)</button>
+    <button class="tab active" id="tabDoc" data-act="view:doc">📓 دفترچه</button>
+    <button class="tab" id="tabMap" data-act="view:map">🗺 نقشهٔ تعاملی (آفلاین)</button>
     <span class="tab-sp"></span>
     <span class="tab-note" id="mapNote"></span>
   </div>
@@ -571,7 +712,7 @@
     <div class="kpi"><span class="l">پروژه‌ها</span><span class="v" id="kpiProj">۰</span></div>
     <div class="kpi"><span class="l">قطعات</span><span class="v" id="kpiPlots">۰</span></div>
     <div class="kpi"><span class="l">مساحت کل</span><span class="v" id="kpiArea">۰ <small>هکتار</small></span></div>
-    <div class="kpi alt"><span class="l">آخرین بازدید ثبت‌شده</span><span class="v" id="kpiVisit" style="font-size:15px">—</span></div>
+    <div class="kpi alt"><span class="l">آخرین بازدید ثبت‌شده</span><span class="v u-fs15" id="kpiVisit">—</span></div>
   </div>
   <div class="grid">
 
@@ -580,100 +721,100 @@
       <div class="card">
         <h2>پروژه‌ها <span class="badge" id="projCount">0</span></h2>
         <div id="projList"><div class="empty">هنوز پروژه‌ای نساخته‌اید</div></div>
-        <div id="projTotal" style="margin-top:8px"></div>
-        <div class="row" style="margin-top:10px">
-          <button class="primary" style="flex:1" onclick="addProject()">+ پروژه جدید</button>
+        <div class="u-mt8" id="projTotal"></div>
+        <div class="row u-mt10">
+          <button class="primary u-flex1" data-act="proj:add">+ پروژه جدید</button>
         </div>
-        <div class="row" style="margin-top:8px">
-          <button class="small primary" onclick="openProjectReport()" style="flex:1">📋 گزارش پروژه‌ها</button>
-          <button class="small" onclick="demoData()">پروژه نمونه</button>
-          <button class="small" onclick="exportBackup()">پشتیبان JSON</button>
-          <button class="small" onclick="document.getElementById('importFile').click()">بازیابی GeoJSON/JSON</button>
-          <input type="file" id="importFile" accept=".json,.geojson" style="display:none" onchange="importBackup(this)">
+        <div class="row u-mt8">
+          <button class="small primary u-flex1" data-act="rep:open">📋 گزارش پروژه‌ها</button>
+          <button class="small" data-act="data:demo">پروژه نمونه</button>
+          <button class="small" data-act="backup:export">پشتیبان JSON</button>
+          <button class="small" data-act="backup:importFile">بازیابی GeoJSON/JSON</button>
+          <input type="file" id="importFile" accept=".json,.geojson" class="u-hidden" data-change="backup:import">
         </div>
       </div>
 
-      <details class="card fold" id="syncCard"><summary class="fold-sum"><h2>همگام‌سازی گوشی ↔ کامپیوتر <span class="badge" style="background:#e8f0fb;color:#1a4f8a">دستی و امن</span></h2></summary>
-        <div class="hint" style="line-height:1.95">
+      <details class="card fold" id="syncCard"><summary class="fold-sum"><h2>همگام‌سازی گوشی ↔ کامپیوتر <span class="badge chip-blue">دستی و امن</span></h2></summary>
+        <div class="hint u-lh195">
           داده‌ها فقط روی خود دستگاه ذخیره می‌شوند؛ برای دیدن اطلاعاتِ نسخهٔ قدیمی یا کامپیوتر روی گوشی،
           <b>فایل همگام‌سازی</b> بگیرید و در دستگاه دیگر وارد کنید. ادغام، چیزی را پاک نمی‌کند و
           <b>تازه‌ترین نسخه</b> هر قطعه برنده می‌شود.
         </div>
-        <div class="row" style="margin-top:8px">
-          <button class="small primary" style="flex:1" onclick="syncExport(false)">۱) گرفتن فایل همگام‌سازی</button>
-          <button class="small" style="flex:1" onclick="syncExport(true)">ارسال با واتساپ/تلگرام</button>
+        <div class="row u-mt8">
+          <button class="small primary u-flex1" data-act="sync:exportOffline">۱) گرفتن فایل همگام‌سازی</button>
+          <button class="small u-flex1" data-act="sync:exportShare">ارسال با واتساپ/تلگرام</button>
         </div>
-        <div class="row" style="margin-top:6px">
-          <button class="small primary" style="flex:1" onclick="document.getElementById('syncFile').click()">۲) آوردن فایل از دستگاه دیگر</button>
-          <input type="file" id="syncFile" accept=".json,.geojson,application/json" style="display:none" onchange="syncImport(this)">
+        <div class="row u-mt6">
+          <button class="small primary u-flex1" data-act="sync:importFile">۲) آوردن فایل از دستگاه دیگر</button>
+          <input type="file" id="syncFile" accept=".json,.geojson,application/json" class="u-hidden" data-change="sync:import">
         </div>
-        <div class="row" style="margin-top:6px">
-          <button class="small" onclick="syncCopy()">کپی متن همگام‌سازی</button>
-          <button class="small" onclick="syncPasteToggle()">چسباندن متن…</button>
-          <button class="small" onclick="document.getElementById('importFile').click()">بازیابی GeoJSON/JSON</button>
+        <div class="row u-mt6">
+          <button class="small" data-act="sync:copy">کپی متن همگام‌سازی</button>
+          <button class="small" data-act="sync:pasteToggle">چسباندن متن…</button>
+          <button class="small" data-act="backup:importFile">بازیابی GeoJSON/JSON</button>
         </div>
-        <div id="syncPasteWrap" style="display:none; margin-top:8px">
-          <textarea id="syncPasteBox" placeholder="متن همگام‌سازی را اینجا بچسبانید…" style="width:100%; min-height:90px; font-size:12px; direction:ltr; text-align:left"></textarea>
-          <div class="row" style="margin-top:6px">
-            <button class="small primary" onclick="syncPasteApply()">ادغام این متن</button>
-            <button class="small" onclick="syncPasteToggle()">بستن</button>
+        <div id="syncPasteWrap" class="u-mt8 u-hidden">
+          <textarea class="u-code-lg" id="syncPasteBox" placeholder="متن همگام‌سازی را اینجا بچسبانید…"></textarea>
+          <div class="row u-mt6">
+            <button class="small primary" data-act="sync:pasteApply">ادغام این متن</button>
+            <button class="small" data-act="sync:pasteToggle">بستن</button>
           </div>
         </div>
-        <div id="syncLog" class="hint" style="margin-top:8px; color:#1f6f43"></div>
+        <div id="syncLog" class="hint u-mt8 c-accent"></div>
 
-        <div style="border-top:1px dashed #cfe0d5; margin:12px 0 10px"></div>
-        <h3 style="margin:0 0 6px; font-size:12.5px; color:#1f6f43">☁️ سرور ابری (همگام‌سازی خودکار)</h3>
-        <div class="hint" style="line-height:1.85">
+        <div class="u-hr"></div>
+        <h3 class="u-mb6-flush u-fs125 c-accent">☁️ سرور ابری (همگام‌سازی خودکار)</h3>
+        <div class="hint u-lh185">
           یکی را انتخاب کنید، یک‌بار آدرس و کلیدها را بگذارید؛ از آن به بعد هر تغییر خودکار روی سرور
           نوشته می‌شود و دستگاه دیگر با باز کردن برنامه همان را می‌گیرد.
           راهنما: <b>راهنمای-سرور-رایگان.md</b>
         </div>
-        <div class="fld" style="display:block; margin-top:8px">
-          <select id="gsProv" onchange="gsSaveCfg()" style="width:100%; font-size:12.5px">
+        <div class="fld u-block u-mt8">
+          <select class="u-w100 u-fs125" id="gsProv" data-change="gs:saveCfg">
             <option value="supabase">Supabase — رایگان و همیشگی (پیشنهاد)</option>
           </select>
         </div>
-        <div class="fld" style="display:block; margin-top:6px">
-          <input id="gsUrl" type="url" style="width:100%; font-size:12px; direction:ltr; text-align:left" onchange="gsSaveCfg()">
+        <div class="fld u-block u-mt6">
+          <input class="u-code" id="gsUrl" type="url" data-change="gs:saveCfg">
         </div>
-        <div class="fld" style="display:block; margin-top:6px">
-          <input id="gsToken" type="text" style="width:100%; font-size:12px; direction:ltr; text-align:left" onchange="gsSaveCfg()">
+        <div class="fld u-block u-mt6">
+          <input class="u-code" id="gsToken" type="text" data-change="gs:saveCfg">
         </div>
-        <div class="row" style="margin-top:6px">
-          <input id="gsKey" type="text" placeholder="کدِ همگام‌سازی (مثل ۱۴۰۵-مزرعه-۷۲۹۱)" style="flex:1; font-size:12px" onchange="gsSaveCfg()">
-          <button class="small" onclick="gsTest()">آزمایش اتصال</button>
-          <button class="small" onclick="gsDiag()" title="بررسی گام‌به‌گام و گزارش دقیق">🔍 عیب‌یابی</button>
+        <div class="row u-mt6">
+          <input class="u-flex1 u-fs12" id="gsKey" type="text" placeholder="کدِ همگام‌سازی (مثل ۱۴۰۵-مزرعه-۷۲۹۱)" data-change="gs:saveCfg">
+          <button class="small" data-act="gs:test">آزمایش اتصال</button>
+          <button class="small" data-act="gs:diag" title="بررسی گام‌به‌گام و گزارش دقیق">🔍 عیب‌یابی</button>
         </div>
-        <div class="row" style="margin-top:6px">
-          <button class="small primary" style="flex:1" onclick="gsPush(true)">ارسال به سرور</button>
-          <button class="small primary" style="flex:1" onclick="gsPull(true)">دریافت از سرور</button>
+        <div class="row u-mt6">
+          <button class="small primary u-flex1" data-act="gs:push">ارسال به سرور</button>
+          <button class="small primary u-flex1" data-act="gs:pull">دریافت از سرور</button>
         </div>
-        <div class="row" style="margin-top:6px">
-          <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; cursor:pointer">
-            <input type="checkbox" id="gsAuto" onchange="gsSaveCfg()" style="width:auto">
+        <div class="row u-mt6">
+          <label class="u-check-row">
+            <input class="u-wauto" type="checkbox" id="gsAuto" data-change="gs:saveCfg">
             همگام‌سازی خودکار (هر تغییر ↑ و هر بار باز شدن ↓)
           </label>
         </div>
-        <div id="gsState" class="hint" style="margin-top:6px; font-size:11px"></div>
+        <div id="gsState" class="hint u-mt6 u-fs11"></div>
 
-        <div id="gsBeatWrap" style="margin-top:10px; border-top:1px dashed #cfe0d5; padding-top:8px">
-          <div style="font-size:12px; font-weight:700; color:#1f6f43; margin-bottom:4px">⏱ ضربان سرور (جلوگیری از خواب‌رفتن پروژهٔ رایگان)</div>
-          <div id="gsBeatState" class="hint" style="font-size:11px">—</div>
-          <div class="row" style="margin-top:6px">
-            <button class="small" onclick="gsHeartbeat(true)">ثبت ضربان حالا</button>
-            <button class="small" onclick="gsBeatCopyCurl()">کپی فرمان زمان‌بند</button>
+        <div class="u-sep-top" id="gsBeatWrap">
+          <div class="u-lead">⏱ ضربان سرور (جلوگیری از خواب‌رفتن پروژهٔ رایگان)</div>
+          <div id="gsBeatState" class="hint u-fs11">—</div>
+          <div class="row u-mt6">
+            <button class="small" data-act="gs:heartbeat">ثبت ضربان حالا</button>
+            <button class="small" data-act="gs:beatCopy">کپی فرمان زمان‌بند</button>
           </div>
-          <div class="row" style="margin-top:6px">
-            <button class="small" onclick="gsBeatDownloadWorkflow()">فایل زمان‌بند GitHub</button>
-            <button class="small" onclick="gsBeatBoost()">ضربان فوری در پس‌زمینه (Supabase)</button>
+          <div class="row u-mt6">
+            <button class="small" data-act="gs:beatDownload">فایل زمان‌بند GitHub</button>
+            <button class="small" data-act="gs:beatBoost">ضربان فوری در پس‌زمینه (Supabase)</button>
           </div>
-          <div class="hint" style="margin-top:6px; font-size:10.5px">
+          <div class="hint u-mt6 u-fs105">
             Supabase پروژهٔ رایگان را بعد از ۷ روز بی‌فعالیتی pause می‌کند و شرطش «چند درخواست
             در روز» است، نه یک درخواست هر چند روز. پس زمان‌بند را روی <b>روزی یک‌بار</b> بگذارید:
             cron-job.org یا UptimeRobot (رایگان، بدون کد). راهنما: <b>راهنمای-ضربان-سرور.md</b>
           </div>
         </div>
-        <div class="hint" style="margin-top:8px; font-size:11px">
+        <div class="hint u-mt8 u-fs11">
           نسخهٔ قدیمی دفترچه را باز کردید؟ همان‌جا <b>«پشتیبان JSON»</b> بگیرید و اینجا «بازیابی GeoJSON/JSON» یا
           «آوردن فایل» را بزنید — همهٔ پروژه‌ها و قطعه‌ها منتقل می‌شوند.
         </div>
@@ -681,19 +822,19 @@
 
       <details class="card fold" id="autoCard"><summary class="fold-sum"><h2>کار آفلاین و ذخیرهٔ خودکار <span class="badge" id="autoBadge">—</span></h2></summary>
         <div id="autoBody"><div class="hint">در حال بررسی…</div></div>
-        <div style="border-top:1px dashed #cfe0d5; margin:10px 0 8px"></div>
-        <div class="hint" style="font-size:11.5px">
+        <div class="u-hr-tight"></div>
+        <div class="hint u-fs115">
           <b>نسخهٔ برنامه:</b> <span id="appVerTxt">—</span>
-          <span id="updState" style="margin-inline-start:6px"></span>
+          <span class="u-mis6" id="updState"></span>
         </div>
-        <div class="row" style="margin-top:6px">
-          <button class="small" onclick="appUpdateCheck(true)">🔄 بررسی به‌روزرسانی</button>
-          <button class="small primary" onclick="appForceUpdate()">⬆ به‌روزرسانی کامل</button>
+        <div class="row u-mt6">
+          <button class="small" data-act="app:check">🔄 بررسی به‌روزرسانی</button>
+          <button class="small primary" data-act="app:force">⬆ به‌روزرسانی کامل</button>
         </div>
       </details>
 
       <details class="card fold" id="guideCard"><summary class="fold-sum"><h2>راهنمای سریع</h2></summary>
-        <div class="hint" style="line-height:2">
+        <div class="hint u-lh2">
           ۱) هر پروژه = یک پرونده (مثلاً «گندم – مزرعه شماره ۳ – ۱۴۰۵»).<br>
           ۲) در هر پروژه، برای هر زمین یک «قطعه» بسازید.<br>
           ۳) مختصات را از گوشی/GPS/اکسل کپی و در کادر بچسبانید؛ یا در شکل شماتیک: رأس را بکشید، روی فضای خالی کلیک کنید (افزودن نقطه)، دوبار کلیک (حذف نقطه).<br>
@@ -726,44 +867,44 @@
 
   <div class="mpbar" id="mpTop">
     <b>نقشه</b>
-    <select id="mpProv" onchange="MP.setProvider(this.value)">
+    <select id="mpProv" data-change="mp:setProvider">
       <option value="esri">ماهواره (Esri)</option>
       <option value="esri_street">نقشهٔ پایه (Esri)</option>
       <option value="osm">OpenStreetMap</option>
       <option value="custom">سرور دلخواه…</option>
     </select>
     <span class="sp"></span>
-    <button onclick="MP.fitProject()">نمایش پروژهٔ جاری</button>
-    <button onclick="MP.fitAll()">همهٔ پروژه‌ها</button>
-    <button onclick="MP.locate()">موقعیت من</button>
-    <button id="mpLblBtn" onclick="MP.toggleLabels()">نام و مساحت: روشن</button>
-    <button id="mpFieldBtn" onclick="MP.toggleField()">🛰 حالت صحرا</button>
-    <button onclick="MP.togglePanel()">پنل دانلود</button>
-    <button onclick="MP.startNewPlot()" id="mpBtnNew" title="ساخت قطعه با لمس نقشه">＋ قطعهٔ جدید</button>
-    <button onclick="MP.openEdit()" id="mpBtnEdit" title="ویرایش رأس‌ها (یا ۱٫۵ ثانیه روی نقشه نگه دار)">✏️ ویرایش رأس</button>
+    <button data-act="mp:fitProject">نمایش پروژهٔ جاری</button>
+    <button data-act="mp:fitAll">همهٔ پروژه‌ها</button>
+    <button data-act="mp:locate">موقعیت من</button>
+    <button id="mpLblBtn" data-act="mp:toggleLabels">نام و مساحت: روشن</button>
+    <button id="mpFieldBtn" data-act="field:toggle">🛰 حالت صحرا</button>
+    <button data-act="mp:togglePanel">پنل دانلود</button>
+    <button data-act="mp:newPlot" id="mpBtnNew" title="ساخت قطعه با لمس نقشه">＋ قطعهٔ جدید</button>
+    <button data-act="mp:openEdit" id="mpBtnEdit" title="ویرایش رأس‌ها (یا ۱٫۵ ثانیه روی نقشه نگه دار)">✏️ ویرایش رأس</button>
   </div>
 
   <div class="mpbar" id="mpZoom">
-    <button onclick="MP.zoomBy(1)">+</button>
-    <button onclick="MP.zoomBy(-1)">−</button>
-    <button onclick="MP.centerProject()" title="مرکز پروژه">⌖</button>
+    <button data-act="mp:zoomIn">+</button>
+    <button data-act="mp:zoomOut">−</button>
+    <button data-act="mp:center" title="مرکز پروژه">⌖</button>
   </div>
 
   <!-- داک ویرایش لمسی: با نگه‌داشتن ۱٫۵ ثانیه روی نقشه باز می‌شود -->
   <div class="tkdock" id="mpEditDock">
     <div class="tk-t" id="mpDockTitle">✏️ ویرایش رأس</div>
     <div class="tk-r">
-      <button class="tk-b" id="mpDockAdd" onclick="MP.dockAdd()">➕ نقطهٔ جدید</button>
-      <button class="tk-b bad" onclick="MP.dockDelete()">🗑 حذف رأس</button>
-      <button class="tk-b ok" onclick="MP.endEdit()">✅ پایان</button>
+      <button class="tk-b" id="mpDockAdd" data-act="mp:dockAdd">➕ نقطهٔ جدید</button>
+      <button class="tk-b bad" data-act="mp:dockDelete">🗑 حذف رأس</button>
+      <button class="tk-b ok" data-act="mp:endEdit">✅ پایان</button>
     </div>
   </div>
   <div class="tkdock" id="mpNewDock">
     <div class="tk-t" id="mpNewTitle">🆕 قطعهٔ جدید</div>
     <div class="tk-r">
-      <button class="tk-b" onclick="MP.newUndo()">↩️ آخرین نقطه</button>
-      <button class="tk-b ok" id="mpNewSave" onclick="MP.newSave()">✅ پایان و ذخیره</button>
-      <button class="tk-b" onclick="MP.newCancel()">✖ لغو</button>
+      <button class="tk-b" data-act="mp:newUndo">↩️ آخرین نقطه</button>
+      <button class="tk-b ok" id="mpNewSave" data-act="mp:newSave">✅ پایان و ذخیره</button>
+      <button class="tk-b" data-act="mp:newCancel">✖ لغو</button>
     </div>
   </div>
   <div id="mpTouchTip"></div>
@@ -781,14 +922,14 @@
       <span id="mpFieldStat">در حال گرفتن سیگنال GPS…</span>
     </div>
     <div class="frow">
-      <button class="fbtn primary" id="mpFixBtn" onclick="MP.fieldCapture()">📍 ثبت رأس</button>
-      <button class="fbtn" onclick="MP.fieldUndo()">↶ آخرین</button>
-      <button class="fbtn" onclick="MP.fieldFinish()">✓ پایان</button>
+      <button class="fbtn primary" id="mpFixBtn" data-act="field:capture">📍 ثبت رأس</button>
+      <button class="fbtn" data-act="field:undo">↶ آخرین</button>
+      <button class="fbtn" data-act="field:finish">✓ پایان</button>
     </div>
     <div class="frow">
-      <button class="fbtn ghost" onclick="MP.fieldNewPlot()">＋ قطعهٔ جدید</button>
-      <button class="fbtn ghost" id="mpAutoBtn" onclick="MP.fieldToggleAuto()">ثبت خودکار: خاموش</button>
-      <button class="fbtn ghost" onclick="MP.toggleField(false)">بستن</button>
+      <button class="fbtn ghost" data-act="field:newPlot">＋ قطعهٔ جدید</button>
+      <button class="fbtn ghost" id="mpAutoBtn" data-act="field:auto">ثبت خودکار: خاموش</button>
+      <button class="fbtn ghost" data-act="field:exit">بستن</button>
     </div>
   </div>
   <div class="mpbar" id="mpSumBar"><span class="lbl">مجموع مساحت پروژه‌ها:</span></div>
@@ -799,7 +940,7 @@
     <div class="ph">
       <b>نقشه: دانلود و ویرایش</b>
       <span class="tag" id="mpCacheTag">۰ کاشی</span>
-      <button onclick="MP.togglePanel()" title="بستن">✕</button>
+      <button data-act="mp:togglePanel" title="بستن">✕</button>
     </div>
     <div class="pb">
 
@@ -808,23 +949,23 @@
         <div class="hint"><b>📱 روی گوشی:</b> ۱٫۵ ثانیه انگشت را روی زمین نگه دار →
           روی قطعه: رأس‌ها ظاهر می‌شوند (بکش / لمس کن / ➕ ➖) · روی زمین خالی: قطعهٔ جدید ساخته می‌شود.<br>
           <b>💻 روی کامپیوتر:</b> یکی از حالت‌های زیر را بزنید یا همان ۱٫۵ ثانیه با موس نگه دارید.</div>
-        <div class="row" style="margin:6px 0">
-          <button class="small primary" style="flex:1" onclick="MP.openEdit()">✏️ ویرایش لمسی رأس‌ها</button>
-          <button class="small primary" style="flex:1" onclick="MP.startNewPlot()">＋ قطعهٔ جدید با لمس</button>
+        <div class="row u-my6">
+          <button class="small primary u-flex1" data-act="mp:openEdit">✏️ ویرایش لمسی رأس‌ها</button>
+          <button class="small primary u-flex1" data-act="mp:newPlot">＋ قطعهٔ جدید با لمس</button>
         </div>
-        <div class="fld">قطعه: <select id="mpPlotSel" onchange="MP.selectPlot(this.value)" style="flex:1"></select></div>
-        <div class="row" style="margin-bottom:6px">
-          <button class="small primary" style="flex:1" onclick="MP.downloadPlot()">دانلود نقشهٔ همین قطعه</button>
-          <button class="small" onclick="MP.fitProject()">نمایش قطعه</button>
+        <div class="fld">قطعه: <select class="u-flex1" id="mpPlotSel" data-change="mp:selectPlot"></select></div>
+        <div class="row u-mb6">
+          <button class="small primary u-flex1" data-act="mp:downloadPlot">دانلود نقشهٔ همین قطعه</button>
+          <button class="small" data-act="mp:fitProject">نمایش قطعه</button>
         </div>
         <div class="row">
-          <button class="small modebtn" id="mpModeMove" onclick="MP.setMode('move')">کشیدن رأس</button>
-          <button class="small modebtn" id="mpModeAdd" onclick="MP.setMode('add')">افزودن نقطه</button>
-          <button class="small modebtn" id="mpModeDel" onclick="MP.setMode('delete')">حذف نقطه</button>
-          <button class="small" onclick="MP.setMode('off')">خاموش</button>
+          <button class="small modebtn" id="mpModeMove" data-act="mp:modeMove">کشیدن رأس</button>
+          <button class="small modebtn" id="mpModeAdd" data-act="mp:modeAdd">افزودن نقطه</button>
+          <button class="small modebtn" id="mpModeDel" data-act="mp:modeDelete">حذف نقطه</button>
+          <button class="small" data-act="mp:modeOff">خاموش</button>
         </div>
-        <div class="mp-stat" style="margin-top:6px"><span id="mpEditInfo">حالت ویرایش خاموش است</span></div>
-        <div class="row" style="margin-top:6px"><button class="small" style="flex:1" onclick="MP.endEdit()">✅ پایان و ذخیره</button></div>
+        <div class="mp-stat u-mt6"><span id="mpEditInfo">حالت ویرایش خاموش است</span></div>
+        <div class="row u-mt6"><button class="small u-flex1" data-act="mp:endEdit">✅ پایان و ذخیره</button></div>
       </div>
 
       <div class="sec">
@@ -836,49 +977,49 @@
       <div class="sec">
         <h3>۳) دانلود محدوده برای آفلاین</h3>
         <div class="hint">کاشی‌های دیده‌شده خودکار ذخیره می‌شوند؛ این بخش برای دانلود کامل و مطمئن یک محدوده است.</div>
-        <div class="fld">از زوم <input type="number" id="mpZFrom" min="8" max="19" value="15" onchange="MP.updateEstimate()">
-          تا زوم <input type="number" id="mpZTo" min="8" max="19" value="17" onchange="MP.updateEstimate()"></div>
-        <div class="fld">حاشیه <input type="number" id="mpPad" min="0" max="2000" step="50" value="100" onchange="MP.updateEstimate()"> متر</div>
+        <div class="fld">از زوم <input type="number" id="mpZFrom" min="8" max="19" value="15" data-change="mp:updateEstimate">
+          تا زوم <input type="number" id="mpZTo" min="8" max="19" value="17" data-change="mp:updateEstimate"></div>
+        <div class="fld">حاشیه <input type="number" id="mpPad" min="0" max="2000" step="50" value="100" data-change="mp:updateEstimate"> متر</div>
         <div class="row">
-          <button class="primary" style="flex:1" onclick="MP.downloadView()">دانلود محدودهٔ فعلی</button>
+          <button class="primary u-flex1" data-act="mp:downloadView">دانلود محدودهٔ فعلی</button>
         </div>
-        <div class="row" style="margin-top:6px">
-          <button style="flex:1" onclick="MP.downloadProject()">دانلود پروژهٔ جاری</button>
-          <button style="flex:1" onclick="MP.downloadAll()">دانلود همهٔ پروژه‌ها</button>
+        <div class="row u-mt6">
+          <button class="u-flex1" data-act="mp:downloadProject">دانلود پروژهٔ جاری</button>
+          <button class="u-flex1" data-act="mp:downloadAll">دانلود همهٔ پروژه‌ها</button>
         </div>
-        <div class="row" style="margin-top:4px"><button style="flex:1" onclick="MP.suggestZooms()">🎯 زوم پیشنهادی برای همین محدوده</button></div>
-        <div class="fld">سرعت دانلود: <select id="mpConc" onchange="MP.setConc()">
+        <div class="row u-mt4"><button class="u-flex1" data-act="mp:suggestZooms">🎯 زوم پیشنهادی برای همین محدوده</button></div>
+        <div class="fld">سرعت دانلود: <select id="mpConc" data-change="mp:setConc">
           <option value="4">محافظه‌کار — ۴ کاشی همزمان</option>
           <option value="8">عادی — ۸ کاشی همزمان</option>
           <option value="18">سریع — ۱۸ کاشی همزمان (پیشنهادی)</option>
           <option value="24">حداکثر — ۲۴ کاشی همزمان</option>
         </select></div>
-        <div class="mp-stat" style="margin-top:8px"><span>تخمین محدودهٔ فعلی:</span><b id="mpEst">—</b></div>
-        <div class="mp-prog" id="mpProgWrap" style="display:none"><i id="mpProg"></i></div>
-        <div class="mp-stat" id="mpProgTxt" style="display:none"><span id="mpProgState">—</span><b id="mpProgNum">—</b></div>
-        <div class="row" style="margin-top:6px"><button id="mpCancel" style="display:none" onclick="MP.cancelDownload()">توقف</button>
-          <button id="mpPause" style="display:none" onclick="MP.togglePause()">⏸ توقف موقت</button></div>
-        <div id="mpJobWrap" style="display:none">
-          <div class="mp-stat" style="margin-top:8px"><span id="mpJobTxt">—</span></div>
-          <div class="row"><button class="primary" style="flex:1" onclick="MP.resumeJob()">▶ ادامهٔ دانلود ناتمام</button>
-            <button onclick="MP.clearJob()">حذف</button></div>
+        <div class="mp-stat u-mt8"><span>تخمین محدودهٔ فعلی:</span><b id="mpEst">—</b></div>
+        <div class="mp-prog u-hidden" id="mpProgWrap"><i id="mpProg"></i></div>
+        <div class="mp-stat u-hidden" id="mpProgTxt"><span id="mpProgState">—</span><b id="mpProgNum">—</b></div>
+        <div class="row u-mt6"><button id="mpCancel" class="u-hidden" data-act="mp:cancelDownload">توقف</button>
+          <button id="mpPause" class="u-hidden" data-act="mp:togglePause">⏸ توقف موقت</button></div>
+        <div id="mpJobWrap" class="u-hidden">
+          <div class="mp-stat u-mt8"><span id="mpJobTxt">—</span></div>
+          <div class="row"><button class="primary u-flex1" data-act="mp:resumeJob">▶ ادامهٔ دانلود ناتمام</button>
+            <button data-act="mp:clearJob">حذف</button></div>
         </div>
-        <div class="row" style="margin-top:6px">
-          <button style="flex:1" onclick="MP.speedTest()">⚡ تست سرعت سرور نقشه</button>
+        <div class="row u-mt6">
+          <button class="u-flex1" data-act="mp:speedTest">⚡ تست سرعت سرور نقشه</button>
         </div>
-        <div class="mp-stat" id="mpSpeedOut" style="display:none"><span id="mpSpeedTxt">—</span></div>
-        <div class="fld" style="margin-top:8px">سرور نقشهٔ دلخواه (اختیاری)
-          <input id="mpTileUrl" placeholder="https://…/{z}/{x}/{y}.png" style="direction:ltr" onchange="MP.saveTileUrl()"></div>
+        <div class="mp-stat u-hidden" id="mpSpeedOut"><span id="mpSpeedTxt">—</span></div>
+        <div class="fld u-mt8">سرور نقشهٔ دلخواه (اختیاری)
+          <input class="u-ltr" id="mpTileUrl" placeholder="https://…/{z}/{x}/{y}.png" data-change="mp:saveTileUrl"></div>
         <div class="hint">اگر شبکه‌تان سرورهای خارجی را کند می‌دهد، نشانی یک سرور کاشی دیگر (با {z}/{x}/{y}) را بگذارید.</div>
       </div>
 
       <div class="sec">
         <h3>۴) محدوده‌های ذخیره‌شده</h3>
         <div id="mpAreas"><div class="hint">هنوز چیزی دانلود نشده.</div></div>
-        <div class="row" style="margin-top:8px">
-          <button class="danger" onclick="MP.clearCache()">پاک‌کردن کل حافظهٔ نقشه</button>
+        <div class="row u-mt8">
+          <button class="danger" data-act="mp:clearCache">پاک‌کردن کل حافظهٔ نقشه</button>
         </div>
-        <div class="mp-stat" style="margin-top:8px"><span>حجم حافظه:</span><b id="mpCacheSize">—</b></div>
+        <div class="mp-stat u-mt8"><span>حجم حافظه:</span><b id="mpCacheSize">—</b></div>
       </div>
 
       <div class="sec">
@@ -895,7 +1036,7 @@
 <script>
 /* ---------- ذخیره‌سازی ---------- */
 const STORE_KEY = 'seed_coord_notebook_v1';
-const APP_VERSION = '1.12.1';   // build-app.py این عدد را با VERSION هم‌تراز می‌کند
+const APP_VERSION = '2.0.0';   // build-app.py این عدد را با VERSION هم‌تراز می‌کند
 let state = { projects: [], activeId: null };
 
 let storageOK = true;
@@ -1032,12 +1173,12 @@ async function abAskPermission(handle){
   }catch(e){ return false; }
 }
 async function abChooseFolder(){
-  if(!abHasFolder()) return alert('این مرورگر انتخاب پوشه را پشتیبانی نمی‌کند.\nروی گوشی، فایل ذخیرهٔ خودکار در حافظهٔ امن برنامه نگه داشته می‌شود و با دکمهٔ «ذخیرهٔ فایل» می‌توانید آن را در پوشهٔ دانلود بگذارید.');
+  if(!abHasFolder()) return uiAlert('این مرورگر انتخاب پوشه را پشتیبانی نمی‌کند.\nروی گوشی، فایل ذخیرهٔ خودکار در حافظهٔ امن برنامه نگه داشته می‌شود و با دکمهٔ «ذخیرهٔ فایل» می‌توانید آن را در پوشهٔ دانلود بگذارید.');
   try{
     const dir = await window.showDirectoryPicker({ id:'seedcoord', mode:'readwrite', startIn:'documents' });
     AB.dir = dir; await abIdbSet('dir', dir);
     await abNow('پوشه انتخاب شد');
-  }catch(e){ if(e && e.name !== 'AbortError') alert('انتخاب پوشه ممکن نشد: ' + e.message); }
+  }catch(e){ if(e && e.name !== 'AbortError') uiAlert('انتخاب پوشه ممکن نشد: ' + e.message); }
 }
 async function abRestoreFolder(){
   const dir = await abIdbGet('dir');
@@ -1073,7 +1214,7 @@ function abToggle(v){
   if(AB.on) abNow('روشن شد');
   renderAutoCard();
 }
-function abSaveNow(){ abNow('دستی'); if(!AB.on) alert('ذخیره شد: ' + faDate(AB.last)); }
+function abSaveNow(){ abNow('دستی'); if(!AB.on) uiAlert('ذخیره شد: ' + faDate(AB.last)); }
 
 /* --- ذخیرهٔ فایل در پوشهٔ دانلود (هر گوشی/مرورگری) --- */
 function abDownload(){
@@ -1082,16 +1223,17 @@ function abDownload(){
     download('قطعات-' + stamp() + '.geojson', gj, 'application/geo+json');
     setTimeout(()=>download('پشتیبان-دفترچه-' + stamp() + '.json', JSON.stringify(state, null, 2), 'application/json'), 400);
     setTimeout(()=>renderAutoCard('فایل در پوشهٔ دانلود ذخیره شد'), 800);
-  }catch(e){ alert('ذخیرهٔ فایل ممکن نشد: ' + e.message); }
+  }catch(e){ uiAlert('ذخیرهٔ فایل ممکن نشد: ' + e.message); }
 }
 async function abRestore(){
   const data = await abOpfsLatest();
-  if(!data) return alert('نسخهٔ خودکارِ ذخیره‌شده پیدا نشد.');
-  if(!confirm('آخرین نسخهٔ ذخیره‌شدهٔ خودکار بازیابی شود؟ (دادهٔ فعلی جایگزین می‌شود)')) return;
+  if(!data) return uiAlert('نسخهٔ خودکارِ ذخیره‌شده پیدا نشد.');
+  if(!(await uiConfirm('آخرین نسخهٔ ذخیره‌شدهٔ خودکار بازیابی شود؟ (دادهٔ فعلی جایگزین می‌شود)',
+      { danger:true, ok:'بازیابی کن', title:'بازیابی نسخهٔ خودکار' }))) return;
   state.projects = data.projects || [];
   state.activeId = data.activeId || (state.projects[0] && state.projects[0].id) || null;
   save(); render();
-  alert('بازیابی انجام شد: ' + (state.projects.length) + ' پروژه');
+  uiAlert('بازیابی انجام شد: ' + (state.projects.length) + ' پروژه');
 }
 function faDate(t){
   if(!t) return '—';
@@ -1106,14 +1248,14 @@ function renderAutoCard(msg){
   const swOn = !!(navigator.serviceWorker && navigator.serviceWorker.controller);
   const standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
   let status;
-  if(AB.lastErr) status = '<span style="color:#b3352c">⚠ ذخیرهٔ خودکار خطا داد: ' + AB.lastErr + '</span>';
+  if(AB.lastErr) status = '<span class="c-danger">⚠ ذخیرهٔ خودکار خطا داد: ' + AB.lastErr + '</span>';
   else if(AB.last) status = 'آخرین ذخیرهٔ خودکار: <b>' + faDate(AB.last) + '</b>' + (AB.lastSize ? ' · ' + Math.round(AB.lastSize/1024) + ' کیلوبایت' : '');
   else status = 'هنوز ذخیرهٔ خودکاری انجام نشده';
   const where = AB.dir ? 'پوشهٔ انتخابی شما (قطعات.json و قطعات.geojson)'
             : (abHasOpfs() ? 'حافظهٔ امن برنامه روی همین دستگاه' : '—');
   if(badge){ badge.textContent = AB.on ? 'روشن' : 'خاموش'; badge.style.background = AB.on ? '' : '#eee'; }
   body.innerHTML = `
-    <div class="hint" style="line-height:1.9">
+    <div class="hint u-lh19">
       <b>وضعیت:</b> ${off ? '📴 آفلاین — برنامه و کاشی‌های ذخیره‌شده کار می‌کنند' : '🌐 آنلاین'}<br>
       <b>نصب روی کامپیوتر:</b> کروم/اِج → آیکون <b>⊕ نصب</b> در نوار آدرس، یا منوی ⋮ → «نصب برنامه» (سافاری: اشتراک‌گذاری → افزودن به Dock)<br>
       <b>نصب روی گوشی:</b> ${standalone ? '✅ به‌صورت برنامه باز شده (آفلاین کامل)'
@@ -1121,24 +1263,24 @@ function renderAutoCard(msg){
             : (swOn ? '✅ فایل‌های آفلاین ذخیره شده — برای آیکون روی صفحهٔ اصلی، منوی مرورگر → «افزودن به صفحهٔ اصلی»'
             : '— از طریق آدرس http/https باز کنید تا آفلاین کامل شود'))}<br>
       <b>ذخیرهٔ خودکار:</b> ${AB.on ? '✅ روشن → ' + where : 'خاموش'}<br>
-      ${status}${msg ? '<br><span style="color:#1f6f43">' + msg + '</span>' : ''}
+      ${status}${msg ? '<br><span class="c-accent">' + msg + '</span>' : ''}
     </div>
-    <div class="row" style="margin-top:8px">
-      <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; cursor:pointer">
-        <input type="checkbox" ${AB.on?'checked':''} onchange="abToggle(this.checked)" style="width:auto">
+    <div class="row u-mt8">
+      <label class="u-check-row">
+        <input class="u-wauto" type="checkbox" ${AB.on?'checked':''} data-change="ab:toggle">
         ذخیرهٔ خودکار فایل بعد از هر تغییر
       </label>
     </div>
-    <div class="row" style="margin-top:6px">
-      <button class="small" onclick="abSaveNow()">ذخیرهٔ فوری</button>
-      ${abHasFolder() ? '<button class="small" onclick="abChooseFolder()">انتخاب پوشه…</button>' : ''}
-      <button class="small" onclick="abDownload()">ذخیرهٔ فایل (دانلود)</button>
+    <div class="row u-mt6">
+      <button class="small" data-act="ab:save">ذخیرهٔ فوری</button>
+      ${abHasFolder() ? '<button class="small" data-act="ab:folder">انتخاب پوشه…</button>' : ''}
+      <button class="small" data-act="ab:download">ذخیرهٔ فایل (دانلود)</button>
     </div>
-    <div class="row" style="margin-top:6px">
-      <button class="small" onclick="abRestore()">بازیابی آخرین نسخهٔ خودکار</button>
-      ${AB.installEvt ? '<button class="small primary" onclick="abInstall()">📲 نصب برنامه روی گوشی</button>' : ''}
+    <div class="row u-mt6">
+      <button class="small" data-act="ab:restore">بازیابی آخرین نسخهٔ خودکار</button>
+      ${AB.installEvt ? '<button class="small primary" data-act="ab:install">📲 نصب برنامه روی گوشی</button>' : ''}
     </div>
-    <div class="hint" style="margin-top:8px; font-size:11px">
+    <div class="hint u-mt8 u-fs11">
       مرورگرها اجازهٔ نوشتنِ بی‌صدا در پوشه‌های گوشی را نمی‌دهند. روی گوشی، نسخهٔ خودکار داخل
       «حافظهٔ امن برنامه» ذخیره می‌شود (با بستن مرورگر پاک نمی‌شود) و با «ذخیرهٔ فایل (دانلود)»
       یا هنگام «✓ پایان» در حالت صحرا، فایل GeoJSON در پوشهٔ دانلود هم گذاشته می‌شود.
@@ -1151,7 +1293,7 @@ window.addEventListener('beforeinstallprompt', (e)=>{ e.preventDefault(); AB.ins
 window.addEventListener('appinstalled', ()=>{ AB.installEvt = null; renderAutoCard('برنامه نصب شد ✅'); });
 async function abInstall(){
   if(!AB.installEvt){
-    return alert('برای نصب:\n• اندروید (کروم): منوی ⋮ → «افزودن به صفحهٔ اصلی»\n• آیفون (سافاری): دکمهٔ اشتراک‌گذاری → «Add to Home Screen»');
+    return uiAlert('برای نصب:\n• اندروید (کروم): منوی ⋮ → «افزودن به صفحهٔ اصلی»\n• آیفون (سافاری): دکمهٔ اشتراک‌گذاری → «Add to Home Screen»');
   }
   AB.installEvt.prompt();
   try{ await AB.installEvt.userChoice; }catch(e){}
@@ -1169,9 +1311,16 @@ document.addEventListener('visibilitychange', ()=>{ if(AB.on && document.visibil
 
 function showStorageWarning(){
   const el = document.getElementById('storageWarn');
-  if(el) el.style.display = 'block';
+  setShown(el, true);
 }
 function uid(){ return Math.random().toString(36).slice(2,9); }
+/* پنهان/پیدا کردن یک عنصر — به‌جای دست‌زدن به style.display */
+function isShown(el){ return !!el && !el.classList.contains('u-hidden'); }
+function setShown(el, on, cls){
+  if(!el) return;
+  if(cls) el.classList.toggle(cls, !!on);   // کلاس کمکی اختیاری (مثل u-block)
+  el.classList.toggle('u-hidden', !on);
+}
 /* عدد اعشاری با ارقام فارسی */
 function faFixed(n, d){
   const dd = (d === undefined) ? 2 : d;
@@ -1333,30 +1482,30 @@ function sumCardHtml(p){
       <td>${(i+1).toLocaleString('fa-IR')}</td>
       <td class="name">${esc(pl.name||('قطعه '+(i+1)))}</td>
       <td>${esc(pl.code||'—')}</td>
-    <td style="white-space:nowrap">${esc(pl.plantDate||'—')}</td>
+    <td class="u-nowrap">${esc(pl.plantDate||'—')}</td>
     <td dir="ltr">${esc(pl.seedRate||'—')}</td>
-    <td style="white-space:nowrap">${esc(pl.lastVisit||'—')}</td>
+    <td class="u-nowrap">${esc(pl.lastVisit||'—')}</td>
       <td dir="ltr">${ok ? faFixed(net/10000, net/10000 < 1 ? 3 : 2) : '—'}</td>
       <td dir="ltr">${ok ? Math.round(net).toLocaleString('fa-IR') : '—'}</td>
       <td>${(pts.length||0).toLocaleString('fa-IR')}</td>
       <td>${holes.length ? holes.length.toLocaleString('fa-IR') : '—'}</td>
-      <td dir="ltr" style="font-size:11px">${c ? c[0].toFixed(5)+', '+c[1].toFixed(5) : '—'}</td>
-      <td style="white-space:nowrap">
-        <button class="small" style="padding:3px 7px;min-height:0;font-size:10.5px" title="GeoJSON این قطعه"
-          onclick="exportPlotGeoJson('${pl.id}')">Geo</button>
-        <button class="small" style="padding:3px 7px;min-height:0;font-size:10.5px" title="KML این قطعه"
-          onclick="exportPlotKml('${pl.id}')">KML</button>
+      <td class="u-fs11" dir="ltr">${c ? c[0].toFixed(5)+', '+c[1].toFixed(5) : '—'}</td>
+      <td class="u-nowrap">
+        <button class="small btn-mini" title="GeoJSON این قطعه"
+          data-act="plot:geo" data-id="${pl.id}">Geo</button>
+        <button class="small btn-mini" title="KML این قطعه"
+          data-act="plot:kml" data-id="${pl.id}">KML</button>
       </td>
     </tr>`;
   });
   return `<div class="card" id="sumCard">
     <h2>مجموع مساحت قطعات این پروژه <span class="badge">${faFixed(totalHa, 2)} هکتار</span>
-      <span class="badge" style="background:#eef6f0;color:#1f6f43;font-size:10.5px" title="با هر تغییر خودکار به‌روز می‌شود">↻ زنده</span></h2>
+      <span class="badge chip-green" title="با هر تغییر خودکار به‌روز می‌شود">↻ زنده</span></h2>
     <div class="sumhead">
       <div class="hint">مساحت خالص (بدون حفره‌ها) · مجموع ${completePlots.toLocaleString('fa-IR')} قطعهٔ کامل از ${p.plots.length.toLocaleString('fa-IR')} قطعه</div>
       <div class="tot">مجموع: ${faFixed(totalHa, 2)} هکتار · ${Math.round(totalM2).toLocaleString('fa-IR')} م²</div>
     </div>
-    <div style="overflow:auto">
+    <div class="u-scroll">
       <table class="sumtable">
         <thead><tr>
           <th>#</th><th>نام قطعه</th><th>کد</th><th>تاریخ کشت</th><th>بذر (kg/ha)</th><th>آخرین بازدید</th>
@@ -1372,7 +1521,7 @@ function sumCardHtml(p){
         </tbody>
       </table>
     </div>
-    <div class="hint" style="margin-top:6px">همان اعدادی که در GeoJSON (فیلد <span dir="ltr">area_ha</span>) و در چاپ/PDF هم می‌آید.</div>
+    <div class="hint u-mt6">همان اعدادی که در GeoJSON (فیلد <span dir="ltr">area_ha</span>) و در چاپ/PDF هم می‌آید.</div>
   </div>`;
 }
 
@@ -1413,9 +1562,9 @@ function render(){
   } else {
     list.innerHTML = state.projects.map(p=>{
       const total = p.plots.reduce((s,pl)=>s + netAreaM2(pl)/10000, 0);
-      return `<div class="proj-item ${p.id===state.activeId?'active':''}" onclick="selectProject('${p.id}')">
+      return `<div class="proj-item ${p.id===state.activeId?'active':''}" data-act="proj:select" data-id="${p.id}">
         <div class="t">${esc(p.name)}</div>
-        <div class="s">${esc(p.year||'')} ${p.crop?'· '+esc(p.crop):''} · ${p.plots.length.toLocaleString('fa-IR')} قطعه · <b style="color:#1f6f43">${faFixed(total, 2)} هکتار</b></div>
+        <div class="s">${esc(p.year||'')} ${p.crop?'· '+esc(p.crop):''} · ${p.plots.length.toLocaleString('fa-IR')} قطعه · <b class="c-accent">${faFixed(total, 2)} هکتار</b></div>
       </div>`;
     }).join('');
   }
@@ -1430,99 +1579,112 @@ function render(){
   const totalM2 = p.plots.reduce((s,pl)=>s + netAreaM2(pl), 0);
   const totalHa = totalM2/10000;
   const completePlots = p.plots.filter(pl=>netAreaM2(pl) > 0).length;
-  const blocks = [`<div class="card">
-      <h2>مشخصات پروژه
-        <span class="badge" id="projBadge">مجموع: ${faFixed(totalHa, 2)} هکتار · ${completePlots.toLocaleString('fa-IR')} قطعه</span>
-      </h2>
-      <div class="split">
-        <div>
-          <label>نام پروژه / پرونده</label>
-          <input type="text" value="${escAttr(p.name)}" oninput="updateField('name',this.value)">
-          <div class="row">
-            <div style="flex:1"><label>محصول</label><input type="text" value="${escAttr(p.crop)}" oninput="updateField('crop',this.value)" placeholder="گندم، جو، چغندرقند…"></div>
-            <div style="flex:1"><label>سال زراعی</label><input type="text" value="${escAttr(p.year)}" oninput="updateField('year',this.value)" placeholder="۱۴۰۵-۱۴۰۴"></div>
-          </div>
-          <div class="row">
-            <div style="flex:1"><label>تولیدکننده / شرکت</label><input type="text" value="${escAttr(p.owner)}" oninput="updateField('owner',this.value)"></div>
-            <div style="flex:1"><label>استان</label><input type="text" value="${escAttr(p.province)}" oninput="updateField('province',this.value)" placeholder="مثلاً خراسان رضوی"></div>
-            <div style="flex:1"><label>شهرستان / منطقه</label><input type="text" value="${escAttr(p.region||'')}" oninput="updateField('region',this.value)" placeholder="مثلاً نیشابور"></div>
-          </div>
-          <div class="fieldset">
-            <div class="fst">کشاورز (بهره‌بردار)</div>
-            <div class="row">
-              <div style="flex:1.4"><label>نام و نام خانوادگی</label><input type="text" value="${escAttr(p.farmerName||'')}" oninput="updateField('farmerName',this.value)" placeholder="مثلاً محمد رضایی"></div>
-              <div style="flex:1"><label>شماره تماس</label><input type="text" inputmode="tel" value="${escAttr(p.farmerPhone||'')}" oninput="updateField('farmerPhone',this.value)" placeholder="۰۹۱۲۳۴۵۶۷۸۹" style="direction:ltr; text-align:right"></div>
-            </div>
-            <div class="row">
-              <div style="flex:1"><label>شهرستان / روستا</label><input type="text" value="${escAttr(p.farmerCity||'')}" oninput="updateField('farmerCity',this.value)" placeholder="روستای…"></div>
-              <div style="flex:1"><label>کد ملی / شناسهٔ بهره‌بردار</label><input type="text" inputmode="numeric" value="${escAttr(p.farmerNationalId||'')}" oninput="updateField('farmerNationalId',this.value)" placeholder="۱۰ رقم" style="direction:ltr; text-align:right"></div>
-            </div>
-            <label>آدرس کامل</label>
-            <textarea style="min-height:52px; direction:rtl; text-align:right; font-family:inherit; font-size:13px"
-              oninput="updateField('farmerAddress',this.value)" placeholder="روستا، بخش، نشانی پستی…">${esc(p.farmerAddress||'')}</textarea>
-          </div>
-          <label>توضیحات (شماره مجوز، طبقه بذری، نام ناظر…)</label>
-          <textarea style="min-height:60px; direction:rtl; text-align:right; font-family:inherit; font-size:13px"
-            oninput="updateField('notes',this.value)" placeholder="مثلاً: طبقه بذری مادری، مجوز شماره …">${esc(p.notes)}</textarea>
-        </div>
-        <div>
-          <button class="small primary" style="width:100%; margin-bottom:6px; color:#fff" onclick="exportProjectGeoJson()">⬇ خروجی GeoJSON این پروژه</button>
-          <button class="small" style="width:100%; margin-bottom:6px" onclick="exportProjectKml()">خروجی KML (گوگل ارث)</button>
-          <button class="small" style="width:100%; margin-bottom:6px" onclick="exportProjectCsv()">خروجی CSV (اکسل)</button>
-          <button class="small" style="width:100%; margin-bottom:6px" onclick="exportProjectPlotsZip()">⬇ GeoJSON تک‌تک قطعات</button>
-          <button class="small" style="width:100%; margin-bottom:6px" onclick="exportProjectJson()">پشتیبان JSON این پروژه</button>
-          <button class="small" style="width:100%; margin-bottom:6px" onclick="printProject()">چاپ / PDF</button>
-          <button class="small danger" style="width:100%" onclick="deleteProject()">حذف پروژه</button>
-        </div>
-      </div>
-    </div>`];
+  const blocks = [projCardHtml(p, totalHa, completePlots)];
 
   // ---------- جدول خلاصهٔ قطعات با مجموع پروژه ----------
   if(p.plots.length){
     blocks.push(sumCardHtml(p));
   }
 
-  p.plots.forEach((pl, i)=>{
-    const areaM2 = ringArea(pl.points||[]);
-    const ha = areaM2/10000;
-    const per = perimeter(pl.points||[]);
-    blocks.push(`<div class="card" data-plot="${pl.id}">
+  p.plots.forEach((pl, i)=>{ blocks.push(plotCardHtml(pl, i)); });
+
+  blocks.push(offlineCardHtml(p));
+
+  blocks.push(toolsCardHtml());
+  d.innerHTML = blocks.join('');
+  updateProjectsTotal();
+  try{ if(typeof MP !== 'undefined' && MP && MP.renderSumBar) MP.renderSumBar(); }catch(e){}
+}
+
+/* ── کارت «مشخصات پروژه» — از render جدا شد تا خواندنش آسان باشد ── */
+function projCardHtml(p, totalHa, completePlots){
+  return `<div class="card">
+      <h2>مشخصات پروژه
+        <span class="badge" id="projBadge">مجموع: ${faFixed(totalHa, 2)} هکتار · ${completePlots.toLocaleString('fa-IR')} قطعه</span>
+      </h2>
+      <div class="split">
+        <div>
+          <label>نام پروژه / پرونده</label>
+          <input type="text" value="${escAttr(p.name)}" data-input="proj:field" data-key="name">
+          <div class="row">
+            <div class="u-flex1"><label>محصول</label><input type="text" value="${escAttr(p.crop)}" data-input="proj:field" data-key="crop" placeholder="گندم، جو، چغندرقند…"></div>
+            <div class="u-flex1"><label>سال زراعی</label><input type="text" value="${escAttr(p.year)}" data-input="proj:field" data-key="year" placeholder="۱۴۰۵-۱۴۰۴"></div>
+          </div>
+          <div class="row">
+            <div class="u-flex1"><label>تولیدکننده / شرکت</label><input type="text" value="${escAttr(p.owner)}" data-input="proj:field" data-key="owner"></div>
+            <div class="u-flex1"><label>استان</label><input type="text" value="${escAttr(p.province)}" data-input="proj:field" data-key="province" placeholder="مثلاً خراسان رضوی"></div>
+            <div class="u-flex1"><label>شهرستان / منطقه</label><input type="text" value="${escAttr(p.region||'')}" data-input="proj:field" data-key="region" placeholder="مثلاً نیشابور"></div>
+          </div>
+          <div class="fieldset">
+            <div class="fst">کشاورز (بهره‌بردار)</div>
+            <div class="row">
+              <div class="u-flex14"><label>نام و نام خانوادگی</label><input type="text" value="${escAttr(p.farmerName||'')}" data-input="proj:field" data-key="farmerName" placeholder="مثلاً محمد رضایی"></div>
+              <div class="u-flex1"><label>شماره تماس</label><input class="u-ltr u-tar" type="text" inputmode="tel" value="${escAttr(p.farmerPhone||'')}" data-input="proj:field" data-key="farmerPhone" placeholder="۰۹۱۲۳۴۵۶۷۸۹"></div>
+            </div>
+            <div class="row">
+              <div class="u-flex1"><label>شهرستان / روستا</label><input type="text" value="${escAttr(p.farmerCity||'')}" data-input="proj:field" data-key="farmerCity" placeholder="روستای…"></div>
+              <div class="u-flex1"><label>کد ملی / شناسهٔ بهره‌بردار</label><input class="u-ltr u-tar" type="text" inputmode="numeric" value="${escAttr(p.farmerNationalId||'')}" data-input="proj:field" data-key="farmerNationalId" placeholder="۱۰ رقم"></div>
+            </div>
+            <label>آدرس کامل</label>
+            <textarea class="u-textarea"
+              data-input="proj:field" data-key="farmerAddress" placeholder="روستا، بخش، نشانی پستی…">${esc(p.farmerAddress||'')}</textarea>
+          </div>
+          <label>توضیحات (شماره مجوز، طبقه بذری، نام ناظر…)</label>
+          <textarea class="u-textarea-lg"
+            data-input="proj:field" data-key="notes" placeholder="مثلاً: طبقه بذری مادری، مجوز شماره …">${esc(p.notes)}</textarea>
+        </div>
+        <div>
+          <button class="small primary u-w100 u-mb6 c-white" data-act="exp:projGeo">⬇ خروجی GeoJSON این پروژه</button>
+          <button class="small u-w100 u-mb6" data-act="exp:projKml">خروجی KML (گوگل ارث)</button>
+          <button class="small u-w100 u-mb6" data-act="exp:projCsv">خروجی CSV (اکسل)</button>
+          <button class="small u-w100 u-mb6" data-act="exp:projZip">⬇ GeoJSON تک‌تک قطعات</button>
+          <button class="small u-w100 u-mb6" data-act="exp:projJson">پشتیبان JSON این پروژه</button>
+          <button class="small u-w100 u-mb6" data-act="exp:projPrint">چاپ / PDF</button>
+          <button class="small danger u-w100" data-act="proj:delete">حذف پروژه</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ── کارت یک قطعه (فیلدها + حفره‌ها + شماتیک) ── */
+function plotCardHtml(pl, i){
+  return `<div class="card" data-plot="${pl.id}">
       <div class="plot-head">
         <div class="name">قطعه ${i+1}: ${esc(pl.name||'بدون نام')}</div>
         <div class="row">
-          <button class="small" onclick="renamePlot('${pl.id}')">تغییر نام</button>
-          <button class="small danger" onclick="deletePlot('${pl.id}')">حذف</button>
+          <button class="small" data-act="plot:rename" data-id="${pl.id}">تغییر نام</button>
+          <button class="small danger" data-act="plot:delete" data-id="${pl.id}">حذف</button>
         </div>
       </div>
-      <div class="row" style="margin:6px 0 2px">
-        <button class="small primary" style="flex:1" onclick="exportPlotGeoJson('${pl.id}')">⬇ GeoJSON این قطعه</button>
-        <button class="small" style="flex:1" onclick="exportPlotKml('${pl.id}')">🌍 KML این قطعه</button>
-        <button class="small" onclick="exportPlotCsv('${pl.id}')">CSV</button>
+      <div class="row u-my6-2">
+        <button class="small primary u-flex1" data-act="plot:geo" data-id="${pl.id}">⬇ GeoJSON این قطعه</button>
+        <button class="small u-flex1" data-act="plot:kml" data-id="${pl.id}">🌍 KML این قطعه</button>
+        <button class="small" data-act="plot:csv" data-id="${pl.id}">CSV</button>
       </div>
       <div class="split">
         <div>
           <div class="row">
-            <div style="flex:1"><label>کد / شماره قطعه</label><input type="text" value="${escAttr(pl.code)}" oninput="setPlotField('${pl.id}','code',this.value)" placeholder="مثلاً 03"></div>
-            <div style="flex:1"><label>رقم</label><input type="text" value="${escAttr(pl.variety)}" oninput="setPlotField('${pl.id}','variety',this.value)" placeholder="چمران، پیشتاز…"></div>
+            <div class="u-flex1"><label>کد / شماره قطعه</label><input type="text" value="${escAttr(pl.code)}" data-input="plot:field" data-id="${pl.id}" data-key="code" placeholder="مثلاً 03"></div>
+            <div class="u-flex1"><label>رقم</label><input type="text" value="${escAttr(pl.variety)}" data-input="plot:field" data-id="${pl.id}" data-key="variety" placeholder="چمران، پیشتاز…"></div>
           </div>
           <div class="row">
-            <div style="flex:1"><label>طبقه بذری</label><input type="text" value="${escAttr(pl.seedClass)}" oninput="setPlotField('${pl.id}','seedClass',this.value)" placeholder="پرورش مادری / گواهی‌شده"></div>
-            <div style="flex:1"><label>تاریخ کشت</label><input type="text" value="${escAttr(pl.plantDate)}" oninput="setPlotField('${pl.id}','plantDate',this.value)" placeholder="۱۴۰۴/۱۰/۱۵"></div>
-            <div style="flex:1"><label>بذر مصرفی (کیلوگرم در هکتار)</label><input type="text" inputmode="decimal" value="${escAttr(pl.seedRate||'')}" oninput="setPlotField('${pl.id}','seedRate',this.value)" placeholder="مثلاً ۱۲۰" style="direction:ltr; text-align:right"></div>
-            <div style="flex:1"><label>آخرین بازدید</label><input type="text" value="${escAttr(pl.lastVisit||'')}" oninput="setPlotField('${pl.id}','lastVisit',this.value)" placeholder="۱۴۰۵/۰۸/۱۰"></div>
+            <div class="u-flex1"><label>طبقه بذری</label><input type="text" value="${escAttr(pl.seedClass)}" data-input="plot:field" data-id="${pl.id}" data-key="seedClass" placeholder="پرورش مادری / گواهی‌شده"></div>
+            <div class="u-flex1"><label>تاریخ کشت</label><input type="text" value="${escAttr(pl.plantDate)}" data-input="plot:field" data-id="${pl.id}" data-key="plantDate" placeholder="۱۴۰۴/۱۰/۱۵"></div>
+            <div class="u-flex1"><label>بذر مصرفی (کیلوگرم در هکتار)</label><input class="u-ltr u-tar" type="text" inputmode="decimal" value="${escAttr(pl.seedRate||'')}" data-input="plot:field" data-id="${pl.id}" data-key="seedRate" placeholder="مثلاً ۱۲۰"></div>
+            <div class="u-flex1"><label>آخرین بازدید</label><input type="text" value="${escAttr(pl.lastVisit||'')}" data-input="plot:field" data-id="${pl.id}" data-key="lastVisit" placeholder="۱۴۰۵/۰۸/۱۰"></div>
           </div>
           <label>مختصات (هر خط یک نقطه: عرض جغرافیایی، طول جغرافیایی)</label>
-          <textarea data-ring="outer" oninput="updatePlotPoints('${pl.id}', this.value)" spellcheck="false"
+          <textarea data-ring="outer" data-input="plot:points" data-id="${pl.id}" spellcheck="false"
             placeholder="35.70123, 51.40210&#10;35.70190, 51.40455&#10;35.70010, 51.40500">${escCoordText(pl)}</textarea>
           <div class="hint">می‌توانید مستقیم از اکسل/گوشی بچسبانید؛ جداکنندهٔ کاما، فاصله یا Tab فرقی نمی‌کند. اگر «UTM» را انتخاب کنید، ستون اول شرقی (Easting) و دوم شمالی (Northing).</div>
-          <div class="row" style="margin-top:6px">
-            <select onchange="setPlotMode('${pl.id}', this.value)" style="width:auto">
+          <div class="row u-mt6">
+            <select class="u-wauto" data-change="plot:mode" data-id="${pl.id}">
               <option value="geo" ${pl.mode!=='utm'?'selected':''}>جغرافیایی (درجه اعشاری)</option>
               <option value="utm" ${pl.mode==='utm'?'selected':''}>UTM</option>
             </select>
             ${pl.mode==='utm' ? `
-              <span>زون <input type="number" min="1" max="60" value="${pl.zone||40}" style="width:64px" oninput="setPlotZone('${pl.id}', this.value)"></span>
-              <select onchange="setPlotHemisphere('${pl.id}', this.value)" style="width:auto">
+              <span>زون <input class="u-w64" type="number" min="1" max="60" value="${pl.zone||40}" data-input="plot:zone" data-id="${pl.id}"></span>
+              <select class="u-wauto" data-change="plot:hemisphere" data-id="${pl.id}">
                 <option value="N" ${pl.north!==false?'selected':''}>شمالی</option>
                 <option value="S" ${pl.north===false?'selected':''}>جنوبی</option>
               </select>` : ''}
@@ -1530,40 +1692,37 @@ function render(){
           <div class="stats">${statsHtml(pl)}</div>
           <div class="warn-slot">${warnHtml(pl)}</div>
           ${(pl.holes && pl.holes.length) ? `<div class="holes-wrap">
-            <div class="hint" style="margin-top:10px"><b>حفره‌ها</b> (مناطق کسرشده از مساحت قطعه) — مختصات هر حفره را می‌توانید دستی هم وارد کنید:</div>
+            <div class="hint u-mt10"><b>حفره‌ها</b> (مناطق کسرشده از مساحت قطعه) — مختصات هر حفره را می‌توانید دستی هم وارد کنید:</div>
             ${pl.holes.map((h,i)=>`<div class="hole-row">
               <div class="hh">
                 <span><b>حفرهٔ ${i+1}</b> <span class="tag">${(h||[]).length} نقطه</span>${DRAW[pl.id]===i?' <span class="tag">در حال رسم…</span>':''}</span>
                 <span class="row">
-                  <button class="small" onclick="undoPoints('${pl.id}')" ${(UNDO[pl.id]&&UNDO[pl.id].length)?'':'disabled style="opacity:.45"'}>↶</button>
-                  <button class="small danger" onclick="deleteHole('${pl.id}',${i})">حذف حفره</button>
+                  <button class="small u-dim" data-act="plot:undo" data-id="${pl.id}" ${(UNDO[pl.id]&&UNDO[pl.id].length)?'':'disabled'}>↶</button>
+                  <button class="small danger" data-act="hole:delete" data-id="${pl.id}" data-i="${i}">حذف حفره</button>
                 </span>
               </div>
-              <textarea data-ring="h${i}" oninput="updateHolePoints('${pl.id}',${i},this.value)" spellcheck="false" placeholder="35.7000, 51.4030">${esc((h||[]).map(pt=>formatPoint(pl,pt)).join('\n'))}</textarea>
+              <textarea data-ring="h${i}" data-input="hole:points" data-id="${pl.id}" data-i="${i}" spellcheck="false" placeholder="35.7000, 51.4030">${esc((h||[]).map(pt=>formatPoint(pl,pt)).join('\n'))}</textarea>
             </div>`).join('')}
           </div>` : ''}
         </div>
         <div class="sketch-slot">${sketch(pl)}</div>
       </div>
-    </div>`);
-  });
+    </div>`;
+}
 
-  blocks.push(offlineCardHtml(p));
-
-  blocks.push(`<div class="card">
+/* ── کارت دکمه‌های پایانی ── */
+function toolsCardHtml(){
+  return `<div class="card">
       <div class="row">
-        <button class="primary" onclick="addPlot()">+ افزودن قطعه به این پروژه</button>
-        <button class="primary" onclick="exportProjectGeoJson()">GeoJSON این پروژه</button>
-        <button class="primary" onclick="exportAllGeoJson()">GeoJSON همهٔ پروژه‌ها</button>
-        <button onclick="exportProjectKml()">KML این پروژه</button>
-        <button onclick="exportAllKml()">KML همهٔ پروژه‌ها</button>
-        <button onclick="exportProjectCsv()">CSV این پروژه</button>
-        <button onclick="exportAllCsv()">CSV همهٔ پروژه‌ها</button>
+        <button class="primary" data-act="plot:add">+ افزودن قطعه به این پروژه</button>
+        <button class="primary" data-act="exp:projGeo">GeoJSON این پروژه</button>
+        <button class="primary" data-act="exp:allGeo">GeoJSON همهٔ پروژه‌ها</button>
+        <button data-act="exp:projKml">KML این پروژه</button>
+        <button data-act="exp:allKml">KML همهٔ پروژه‌ها</button>
+        <button data-act="exp:projCsv">CSV این پروژه</button>
+        <button data-act="exp:allCsv">CSV همهٔ پروژه‌ها</button>
       </div>
-    </div>`);
-  d.innerHTML = blocks.join('');
-  updateProjectsTotal();
-  try{ if(typeof MP !== 'undefined' && MP && MP.renderSumBar) MP.renderSumBar(); }catch(e){}
+    </div>`;
 }
 
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
@@ -1684,16 +1843,16 @@ function sketch(pl){
   const drawing = DRAW[self] != null;
 
   const tools = [];
-  tools.push(`<button class="small" onclick="toggleLock('${self}')" title="قفل/بازکردن ویرایش گرافیکی">${locked?'🔒 قفل است':'🔓 قفل رأس‌ها'}</button>`);
+  tools.push(`<button class="small" data-act="vert:lock" data-id="${self}" title="قفل/بازکردن ویرایش گرافیکی">${locked?'🔒 قفل است':'🔓 قفل رأس‌ها'}</button>`);
   if(pl.points && pl.points.length){
     const selKey = SEL[self];
-    tools.push(`<button class="small" onclick="deleteSelectedVertex('${self}')" ${locked || selKey==null?'disabled style="opacity:.45"':''}>حذف نقطهٔ انتخابی</button>`);
-    tools.push(`<button class="small" onclick="undoPoints('${self}')" ${(UNDO[self]&&UNDO[self].length)?'':'disabled style="opacity:.45"'}>↶ بازگردانی</button>`);
+    tools.push(`<button class="small u-dim" data-act="vert:delete" data-id="${self}" ${locked || selKey==null?'disabled':''}>حذف نقطهٔ انتخابی</button>`);
+    tools.push(`<button class="small u-dim" data-act="vert:undo" data-id="${self}" ${(UNDO[self]&&UNDO[self].length)?'':'disabled'}>↶ بازگردانی</button>`);
   }
   if(!locked && pts.length >= 3){
     tools.push(drawing
-      ? `<button class="small primary" onclick="finishHole('${self}')">پایان رسم حفره</button>`
-      : `<button class="small" onclick="addHole('${self}')">+ حفره</button>`);
+      ? `<button class="small primary" data-act="hole:finish" data-id="${self}">پایان رسم حفره</button>`
+      : `<button class="small" data-act="hole:add" data-id="${self}">+ حفره</button>`);
   }
 
   const selIdx = SEL[self];
@@ -1880,7 +2039,7 @@ function insertVertex(plotId, edgeIdx, ring){
   ring = ring || 'outer';
   const pl = currentPlot(plotId); if(!pl || pl.locked) return;
   const pts = ringOf(pl, ring);
-  if(pts.length < 2) return alert('برای افزودن نقطه روی ضلع، حداقل ۲ نقطه لازم است.');
+  if(pts.length < 2) return uiAlert('برای افزودن نقطه روی ضلع، حداقل ۲ نقطه لازم است.');
   const a = pts[edgeIdx], b = pts[(edgeIdx+1) % pts.length];
   if(!a || !b) return;
   snapshotPoints(pl);
@@ -1892,8 +2051,8 @@ function removeVertex(plotId, ring, idx){
   const pl = currentPlot(plotId); if(!pl || pl.locked) return;
   const pts = ringOf(pl, ring);
   if(pts.length <= 3){
-    if(ring === 'outer') return alert('هر قطعه حداقل ۳ نقطه لازم دارد؛ حذف ممکن نیست.');
-    return alert('هر حفره حداقل ۳ نقطه لازم دارد؛ برای حذف کل حفره از دکمهٔ «حذف حفره» استفاده کنید.');
+    if(ring === 'outer') return uiAlert('هر قطعه حداقل ۳ نقطه لازم دارد؛ حذف ممکن نیست.');
+    return uiAlert('هر حفره حداقل ۳ نقطه لازم دارد؛ برای حذف کل حفره از دکمهٔ «حذف حفره» استفاده کنید.');
   }
   snapshotPoints(pl);
   pts.splice(idx, 1);
@@ -1903,14 +2062,14 @@ function removeVertex(plotId, ring, idx){
 function deleteSelectedVertex(plotId){
   const pl = currentPlot(plotId); if(!pl) return;
   const k = Object.keys(SEL).find(k=> k===plotId || k.indexOf(plotId+'#h')===0);
-  if(!k) return alert('اول روی یکی از رأس‌ها کلیک کنید تا انتخاب شود.');
+  if(!k) return uiAlert('اول روی یکی از رأس‌ها کلیک کنید تا انتخاب شود.');
   const ring = k === plotId ? 'outer' : +k.split('#h')[1];
   removeVertex(plotId, ring, SEL[k]);
 }
 function undoPoints(plotId){
   const pl = currentPlot(plotId); if(!pl) return;
   const st = UNDO[plotId] || [];
-  if(!st.length) return alert('تغییری برای بازگردانی نیست.');
+  if(!st.length) return uiAlert('تغییری برای بازگردانی نیست.');
   const snap = JSON.parse(st.pop());
   pl.points = snap.points || [];
   pl.holes = snap.holes || [];
@@ -1955,7 +2114,7 @@ function addPointAt(plotId, sp){
 /* ---------- حفره‌ها و قفل ---------- */
 function addHole(plotId){
   const pl = currentPlot(plotId); if(!pl || pl.locked) return;
-  if((pl.points||[]).length < 3) return alert('اول حلقهٔ بیرونی را کامل کنید (حداقل ۳ نقطه).');
+  if((pl.points||[]).length < 3) return uiAlert('اول حلقهٔ بیرونی را کامل کنید (حداقل ۳ نقطه).');
   snapshotPoints(pl);
   plotHoles(pl).push([]);
   DRAW[plotId] = plotHoles(pl).length - 1;
@@ -1970,16 +2129,16 @@ function finishHole(plotId){
     plotHoles(pl).splice(idx,1);
     delete DRAW[plotId];
     save(); render();
-    return alert('حفرهٔ ناقص (کمتر از ۳ نقطه) حذف شد.');
+    return uiAlert('حفرهٔ ناقص (کمتر از ۳ نقطه) حذف شد.');
   }
   delete DRAW[plotId];
   delete SEL[ringKey(plotId, idx)];
   afterGraphicEdit(pl);
   render();
 }
-function deleteHole(plotId, idx){
+async function deleteHole(plotId, idx){
   const pl = currentPlot(plotId); if(!pl) return;
-  if(!confirm('حفرهٔ ' + (idx+1) + ' حذف شود؟')) return;
+  if(!(await uiConfirm('حفرهٔ ' + (idx+1) + ' حذف شود؟', { danger:true, title:'حذف حفره' }))) return;
   snapshotPoints(pl);
   plotHoles(pl).splice(idx,1);
   delete DRAW[plotId];
@@ -2129,19 +2288,19 @@ python3 offline_pack.py --lat ${c[0]} --lon ${c[1]} \\
     <div class="hint">مرکز محاسبه‌شده از قطعات: <b dir="ltr">${c[0]}, ${c[1]}</b> — با این دستور، یک بستهٔ نقشهٔ ماهواره‌ای آفلاین دقیقاً برای همین زمین‌ها ساخته می‌شود.</div>
     <div class="om-grid">
       <div><label>شعاع پوشش (کیلومتر)</label>
-        <input type="number" step="0.5" min="0.2" max="20" value="${o.radius}" oninput="setOfflineOpt('radius', this.value)">
+        <input type="number" step="0.5" min="0.2" max="20" value="${o.radius}" data-input="om:radius">
       </div>
       <div><label>منبع نقشه</label>
-        <select onchange="setOfflineOpt('provider', this.value)">
+        <select data-change="om:provider">
           <option value="esri" ${o.provider==='esri'?'selected':''}>ماهواره (Esri)</option>
           <option value="esri_street" ${o.provider==='esri_street'?'selected':''}>نقشهٔ پایه (Esri)</option>
           <option value="osm" ${o.provider==='osm'?'selected':''}>OpenStreetMap</option>
         </select>
       </div>
       <div><label>زوم‌ها</label>
-        <div class="row" style="gap:10px; font-size:12.5px">
-          ${[14,15,16,17,18].map(z=>`<label style="display:flex; align-items:center; gap:4px; margin:0; cursor:pointer">
-            <input type="checkbox" ${o.zooms.indexOf(z)>-1?'checked':''} onchange="setOfflineOpt('zoom', ${z})" style="width:auto"> ${z}
+        <div class="row u-gap10 u-fs125">
+          ${[14,15,16,17,18].map(z=>`<label class="u-check-row-tight">
+            <input type="checkbox" ${o.zooms.indexOf(z)>-1?'checked':''} data-change="om:zoom" data-zoom="${z}" class="u-wauto"> ${z}
           </label>`).join('')}
         </div>
       </div>
@@ -2152,18 +2311,18 @@ python3 offline_pack.py --lat ${c[0]} --lon ${c[1]} \\
       <b>۳)</b> در پوشهٔ ساخته‌شده <span class="dir">serve.sh</span> را اجرا و <span class="dir">offline.html</span> را باز کنید (یا با <span class="dir">--embed</span> نسخهٔ تک‌فایلی بگیرید).
     </div>
     <textarea class="om-cmd" id="omCmd" readonly>${esc(cmd)}</textarea>
-    <div class="row" style="margin-top:6px">
-      <button class="small primary" onclick="copyCmd()" id="omCopyBtn">کپی دستور</button>
-      <button class="small" onclick="document.getElementById('omCmd').value=document.getElementById('omCmd').value+' --embed'">افزودن --embed (تک‌فایلی)</button>
+    <div class="row u-mt6">
+      <button class="small primary" data-act="om:copyCmd" id="omCopyBtn">کپی دستور</button>
+      <button class="small" data-act="om:embed">افزودن --embed (تک‌فایلی)</button>
     </div>
-    <div class="hint" style="margin-top:8px">
+    <div class="hint u-mt8">
       زوم ۱۶ برای دیدن کل قطعه، ۱۷ برای مرزها و ۱۸ برای جزئیات (ردیف کشت) مناسب است؛ هر چه زوم بالاتر، حجم بیشتر.
       تخمین حجم تقریبی است (ماهواره ≈۲۲KB و نقشهٔ پایه ≈۵۵KB برای هر کاشی).
     </div>
-    <div class="row" style="margin-top:8px">
-      <button class="small primary" onclick="setView('map')">باز کردن نقشه داخل همین برنامه (دانلود + ویرایش رأس)</button>
+    <div class="row u-mt8">
+      <button class="small primary" data-act="view:map">باز کردن نقشه داخل همین برنامه (دانلود + ویرایش رأس)</button>
     </div>
-    <div class="hint" style="margin-top:6px">
+    <div class="hint u-mt6">
       نقشه در تب «نقشهٔ تعاملی» همین فایل است؛ دادهٔ قطعات را مستقیم از همین دفترچه می‌خواند و رأس‌ها را می‌توانید روی تصویر ماهواره بکشید.
       کاشی‌های دیده‌شده خودکار ذخیره می‌شوند. برای نقشهٔ پایهٔ کل ایران: <span dir="ltr">offline-map/iran-basemap.py</span>
       (راهنما: <span dir="ltr">راهنمای-کل-ایران.md</span>).
@@ -2212,20 +2371,20 @@ function syncCopy(){
 }
 function syncCopyFallback(txt){
   const ta = document.getElementById('syncPasteBox');
-  if(ta){ ta.value = txt; document.getElementById('syncPasteWrap').style.display = 'block'; ta.select();
+  if(ta){ ta.value = txt; setShown(document.getElementById('syncPasteWrap'), true); ta.select();
     try{ document.execCommand('copy'); }catch(e){}
     syncLog('متن در کادر پایین آماده است — خودتان کپی کنید (Ctrl+C).'); }
 }
 function syncPasteToggle(){
   const w = document.getElementById('syncPasteWrap');
-  w.style.display = (w.style.display === 'none' || !w.style.display) ? 'block' : 'none';
+  setShown(w, !isShown(w));
 }
 function syncPasteApply(){
   const txt = (document.getElementById('syncPasteBox').value || '').trim();
-  if(!txt) return alert('کادر خالی است — متن همگام‌سازی را بچسبانید.');
-  let data; try{ data = JSON.parse(txt); }catch(e){ return alert('متن معتبر نیست: ' + e.message); }
+  if(!txt) return uiAlert('کادر خالی است — متن همگام‌سازی را بچسبانید.');
+  let data; try{ data = JSON.parse(txt); }catch(e){ return uiAlert('متن معتبر نیست: ' + e.message); }
   syncApply(data, 'متن چسبانده‌شده');
-  document.getElementById('syncPasteWrap').style.display = 'none';
+  setShown(document.getElementById('syncPasteWrap'), false);
   document.getElementById('syncPasteBox').value = '';
 }
 function syncImport(input){
@@ -2234,7 +2393,7 @@ function syncImport(input){
   const r = new FileReader();
   r.onload = e=>{
     let data; try{ data = JSON.parse(e.target.result); }
-    catch(err){ return alert('فایل JSON معتبر نیست: ' + err.message); }
+    catch(err){ return uiAlert('فایل JSON معتبر نیست: ' + err.message); }
     syncApply(data, file.name);
   };
   r.readAsText(file);
@@ -2245,7 +2404,7 @@ function syncApply(data, source){
   let incoming = null;
   if(data && data.app === 'seedcoord-sync' && data.state) incoming = data.state;
   else if(data && data.projects && Array.isArray(data.projects)) incoming = data;     // پشتیبان نسخه‌های قبلی
-  if(!incoming){ return alert('این فایل، فایل همگام‌سازی یا پشتیبان دفترچه نیست.\n(برای GeoJSON از دکمهٔ «بازیابی GeoJSON/JSON» استفاده کنید)'); }
+  if(!incoming){ return uiAlert('این فایل، فایل همگام‌سازی یا پشتیبان دفترچه نیست.\n(برای GeoJSON از دکمهٔ «بازیابی GeoJSON/JSON» استفاده کنید)'); }
 
   try{ abNow('پیش از ادغام'); }catch(e){}
 
@@ -2402,10 +2561,10 @@ function gsRender(msg){
   const miss = gsWhyNotReady();
   if(miss.length){
     GS.msg = '';
-    el.innerHTML = '<span style="color:#b3261e">اتصال برقرار نیست — این‌ها خالی یا ناقص است:</span> <b>' +
+    el.innerHTML = '<span class="c-danger">اتصال برقرار نیست — این‌ها خالی یا ناقص است:</span> <b>' +
       miss.join('</b> · <b>') + '</b>' +
       '<br>می‌توانید جای تایپ، «لینک راه‌اندازی» را باز کنید تا خودش پر شود.' +
-      (GS.url ? '' : '<br><span style="font-size:10px;color:#8a8f8b">راهنما: راهنمای-سرور-رایگان.md</span>');
+      (GS.url ? '' : '<br><span class="u-fs10 c-muted">راهنما: راهنمای-سرور-رایگان.md</span>');
     return;
   }
   try{ gsRenderBeat(); }catch(e){}
@@ -2414,7 +2573,7 @@ function gsRender(msg){
     ' · آخرین ارسال: <b>' + (GS.lastPush ? faDate(GS.lastPush) : '—') + '</b>' +
     ' · آخرین دریافت: <b>' + (GS.lastPull ? faDate(GS.lastPull) : '—') + '</b>' +
     ' · خودکار: ' + (GS.auto ? 'روشن' : 'خاموش') +
-    (msg ? '<br><span style="color:#1f6f43">' + msg + '</span>' : '');
+    (msg ? '<br><span class="c-accent">' + msg + '</span>' : '');
 }
 
 /* ---------- Supabase (REST/PostgREST) ---------- */
@@ -2503,8 +2662,8 @@ function cloudPayload(){
 
 async function gsTest(){
   gsSaveCfg();
-  if(!gsReady()) return alert('اول آدرس سرویس و کدِ همگام‌سازی را وارد کنید.');
-  if(!GS.token) return alert('کلید عمومی Supabase (anon key) را هم وارد کنید.');
+  if(!gsReady()) return uiAlert('اول آدرس سرویس و کدِ همگام‌سازی را وارد کنید.');
+  if(!GS.token) return uiAlert('کلید عمومی Supabase (anon key) را هم وارد کنید.');
   gsRender('در حال آزمایش…');
   try{
     const r2 = await fetch(sbBase() + '/rest/v1/' + SB_TABLE + '?select=key&limit=1', { headers: sbHeaders() });
@@ -2565,13 +2724,13 @@ async function gsDiag(){
   try{ await navigator.clipboard.writeText(txt); L.push(''); L.push('(گزارش در حافظه کپی شد — در پیام بچسبانید)'); }catch(e){}
   GS.msg = txt.replace(/\n/g, '<br>');
   gsRender(GS.msg);
-  alert(txt);
+  uiAlert(txt);
 }
 function atobSafe(t){
   try{ return decodeURIComponent(escape(atob(String(t).split('.')[1] || ''))); }catch(e){ return ''; }
 }
 async function gsPull(manual){
-  if(!gsReady()){ if(manual) alert('اول آدرس سرویس و کدِ همگام‌سازی را وارد کنید.'); return; }
+  if(!gsReady()){ if(manual) uiAlert('اول آدرس سرویس و کدِ همگام‌سازی را وارد کنید.'); return; }
   if(GS.pulling) return;
   GS.pulling = true;
   if(manual) gsRender('در حال دریافت…');
@@ -2592,7 +2751,7 @@ async function gsPull(manual){
 }
 
 async function gsPush(manual){
-  if(!gsReady()){ if(manual) alert('اول آدرس سرویس و کدِ همگام‌سازی را وارد کنید.'); return; }
+  if(!gsReady()){ if(manual) uiAlert('اول آدرس سرویس و کدِ همگام‌سازی را وارد کنید.'); return; }
   if(GS.busy) return;
   GS.busy = true;
   try{
@@ -2607,11 +2766,15 @@ async function gsPush(manual){
   finally{ GS.busy = false; }
 }
 
+/* ═══════════ ۳۰ — کارت‌ها، ضربان سرور و چیدمان موبایل ═══════════
+   توست ابری، ضربان (heartbeat) سرور، تبدیل کارت‌های کنار به کشویی در موبایل،
+   و به‌روزرسانی کارت هر قطعه. ═══════════════════════════════════════ */
+
 /* ---------- ضربان سرور ---------- */
 function cloudToast(msg, ms){
   try{ if(typeof MP !== 'undefined' && MP && MP.toast){ MP.toast(msg, ms||2600); return; } }catch(e){}
   const el = document.getElementById('syncLog');
-  if(el){ el.innerHTML = '<span style="color:#1f6f43">' + escSync(msg) + '</span>';
+  if(el){ el.innerHTML = '<span class="c-accent">' + escSync(msg) + '</span>';
           setTimeout(()=>{ if(el.innerHTML.indexOf(escSync(msg))>-1) el.innerHTML=''; }, ms||4000); }
 }
 const BEAT_LOCAL = 'seed_beat_v1';
@@ -2633,9 +2796,9 @@ async function sbLastBeat(){
   return (Array.isArray(rows) && rows[0]) ? rows[0] : null;
 }
 async function gsHeartbeat(manual){
-  if(!gsReady()){ if(manual) alert('اول آدرس سرویس و کد را وارد کنید.'); return; }
+  if(!gsReady()){ if(manual) uiAlert('اول آدرس سرویس و کد را وارد کنید.'); return; }
   if(GS.prov !== 'supabase'){
-    if(manual) alert('این قابلیت برای Supabase است. برای گوگل درایو هم یک زمان‌بند بیرونی (همان لینک /exec با کد) کافی است.');
+    if(manual) uiAlert('این قابلیت برای Supabase است. برای گوگل درایو هم یک زمان‌بند بیرونی (همان لینک /exec با کد) کافی است.');
     return;
   }
   if(manual) gsRenderBeat('در حال ثبت…');
@@ -2659,17 +2822,17 @@ async function gsRenderBeat(msg){
     line += '<br>برای این سرویس، زمان‌بند بیرونی را روی همان آدرس تنظیم کنید (راهنما را ببینید).';
   } else if(err){
     line += '<br>⚠ خواندن ضربان سرور ممکن نشد (اتصال یا تنظیمات را بررسی کنید)' +
-            '<br><span style="font-size:10px; color:#8a8f8b">' + escSync(String(err).slice(0,90)) + '</span>' +
+            '<br><span class="u-fs10 c-muted">' + escSync(String(err).slice(0,90)) + '</span>' +
             '<br>اگر تازه راه‌اندازی کرده‌اید: فایل <b>server-sync/keepalive.sql</b> را در SQL Editor اجرا کنید.';
   } else if(srv){
     const age = Date.now() - new Date(srv.at).getTime();
     const days = age / 86400000;
     line += '<br>آخرین ضربان رسیده به سرور: <b>' + faDate(new Date(srv.at).getTime()) + '</b> ' +
             '(' + (srv.source ? 'منبع: ' + escSync(srv.source) : '') + ')' +
-            (days > 2 ? ' <span style="color:#b3352a">⚠ بیش از ۲ روز است ضربانی نرسیده — زمان‌بند بیرونی اضافه کنید</span>'
-                      : ' <span style="color:#1f6f43">✅ به‌موقع</span>');
+            (days > 2 ? ' <span class="c-danger">⚠ بیش از ۲ روز است ضربانی نرسیده — زمان‌بند بیرونی اضافه کنید</span>'
+                      : ' <span class="c-accent">✅ به‌موقع</span>');
   } else {
-    line += '<br><span style="color:#b4761a">هنوز ضربانی روی سرور ثبت نشده — یک‌بار «ثبت ضربان حالا» را بزنید.</span>';
+    line += '<br><span class="c-warn">هنوز ضربانی روی سرور ثبت نشده — یک‌بار «ثبت ضربان حالا» را بزنید.</span>';
   }
   if(msg) line += '<br>' + msg;
   el.innerHTML = line;
@@ -2686,14 +2849,14 @@ function gsBeatCurl(){
   return lines.join('\n');
 }
 function gsBeatCopyCurl(){
-  if(!gsReady() || GS.prov !== 'supabase') return alert('اول سرویس Supabase و کلیدها را کامل کنید.');
+  if(!gsReady() || GS.prov !== 'supabase') return uiAlert('اول سرویس Supabase و کلیدها را کامل کنید.');
   const txt = gsBeatCurl();
   const done = ()=>cloudToast('فرمان زمان‌بند کپی شد — در cron-job.org بچسبانید', 4200);
-  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done).catch(()=>prompt('این متن را کپی کنید:', txt));
-  else prompt('این متن را کپی کنید:', txt);
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done).catch(()=>uiShowText('کپی دستی', txt));
+  else uiShowText('کپی دستی', txt);
 }
 function gsBeatDownloadWorkflow(){
-  if(!gsReady() || GS.prov !== 'supabase') return alert('اول سرویس Supabase و کلیدها را کامل کنید.');
+  if(!gsReady() || GS.prov !== 'supabase') return uiAlert('اول سرویس Supabase و کلیدها را کامل کنید.');
   var body = JSON.stringify(JSON.stringify({ p_key: GS.key }));
   var tail = '\\';
   var L = [
@@ -2815,7 +2978,7 @@ function updMsg(html){
 async function appUpdateCheck(manual){
   if(UPD.busy) return;
   UPD.busy = true;
-  if(manual) updMsg('<span style="color:#4d6b57">در حال بررسی…</span>');
+  if(manual) updMsg('<span class="c-soft">در حال بررسی…</span>');
   try{
     // فایل برنامه را بدون کش می‌خوانیم و شمارهٔ نسخه‌اش را می‌بینیم
     const url = (location.pathname.replace(/[^/]*$/, '') || './') + 'index.html';
@@ -2828,8 +2991,8 @@ async function appUpdateCheck(manual){
     UPD.latest = latest;
     const cmp = cmpVer(latest, APP_VERSION);
     if(cmp > 0){
-      updMsg('<span style="color:#b4761a;font-weight:700">نسخهٔ تازه ' + latest + ' آماده است</span> ' +
-             '<button class="small primary" style="min-height:0;padding:3px 8px" onclick="appForceUpdate()">به‌روزرسانی</button>');
+      updMsg('<span class="c-warn u-bold">نسخهٔ تازه ' + latest + ' آماده است</span> ' +
+             '<button class="small primary btn-mini-lg" data-act="app:force">به‌روزرسانی</button>');
       // یک‌بار هم به‌صورت پیام کوتاه روی صفحه (کارت بسته باشد هم دیده شود)
       if(!UPD.told || UPD.told !== latest){
         UPD.told = latest;
@@ -2837,11 +3000,11 @@ async function appUpdateCheck(manual){
       }
       if(manual) try{ cloudToast('نسخهٔ تازه ' + latest + ' موجود است — دکمهٔ «به‌روزرسانی» را بزنید'); }catch(e){}
     } else {
-      updMsg('<span style="color:#1f6f43">✅ به‌روز است (' + latest + ')</span>');
+      updMsg('<span class="c-accent">✅ به‌روز است (' + latest + ')</span>');
       if(manual) cloudToast('برنامه به‌روز است — نسخهٔ ' + APP_VERSION);
     }
   }catch(e){
-    updMsg('<span style="color:#8a8f8b">بررسی نشد (آفلاین؟)</span>');
+    updMsg('<span class="c-muted">بررسی نشد (آفلاین؟)</span>');
     if(manual) cloudToast('بررسی به‌روزرسانی ممکن نشد: ' + (e.message||e));
   }finally{ UPD.busy = false; }
 }
@@ -2912,8 +3075,8 @@ window.addEventListener('load', ()=>{
   }
 })();
 
-function addProject(){
-  const name = prompt('نام پروژه / پرونده:', 'پروژه ' + (state.projects.length+1));
+async function addProject(){
+  const name = await uiPrompt('نام پروژه / پرونده:', 'پروژه ' + (state.projects.length+1), { title:'پروژهٔ تازه', ok:'بساز' });
   if(name === null) return;
   const p = { id:uid(), name: name || 'پروژه بدون نام', crop:'', year:'', owner:'', province:'', notes:'', createdAt: Date.now(), plots:[] };
   state.projects.push(p);
@@ -2921,9 +3084,10 @@ function addProject(){
   save(); render();
 }
 function selectProject(id){ state.activeId = id; save(); render(); }
-function deleteProject(){
+async function deleteProject(){
   const p = activeProject(); if(!p) return;
-  if(!confirm('پروژهٔ «'+p.name+'» و همهٔ قطعاتش حذف شود؟')) return;
+  if(!(await uiConfirm('پروژهٔ «'+p.name+'» و همهٔ قطعاتش حذف شود؟',
+      { danger:true, ok:'بله، پروژه حذف شود', title:'حذف پروژه' }))) return;
   if(!state.grave) state.grave = { projects:[], plots:[] };
   state.grave.projects.push({ id:p.id, t:Date.now() });
   (p.plots||[]).forEach(pl=>state.grave.plots.push({ id:pl.id, t:Date.now() }));
@@ -2943,9 +3107,9 @@ function updateSidebar(){
   document.getElementById('projCount').textContent = state.projects.length;
   list.innerHTML = state.projects.map(p=>{
     const total = p.plots.reduce((s,pl)=>s + netAreaM2(pl)/10000, 0);
-    return `<div class="proj-item ${p.id===state.activeId?'active':''}" onclick="selectProject('${p.id}')">
+    return `<div class="proj-item ${p.id===state.activeId?'active':''}" data-act="proj:select" data-id="${p.id}">
       <div class="t">${esc(p.name)}</div>
-      <div class="s">${esc(p.year||'')} ${p.crop?'· '+esc(p.crop):''} · ${p.plots.length.toLocaleString('fa-IR')} قطعه · <b style="color:#1f6f43">${faFixed(total, 2)} هکتار</b></div>
+      <div class="s">${esc(p.year||'')} ${p.crop?'· '+esc(p.crop):''} · ${p.plots.length.toLocaleString('fa-IR')} قطعه · <b class="c-accent">${faFixed(total, 2)} هکتار</b></div>
     </div>`;
   }).join('') || '<div class="empty">هنوز پروژه‌ای نساخته‌اید</div>';
   updateProjectsTotal();
@@ -2966,31 +3130,31 @@ function updateProjectsTotal(){
     });
   });
   if(!plots){ el.innerHTML = ''; return; }
-  el.innerHTML = `<div class="stats" style="margin-top:0">
+  el.innerHTML = `<div class="stats u-mt0">
       <span>مجموع همهٔ پروژه‌ها:</span>
       <span><b>${faFixed(total/10000, 2)} هکتار</b></span>
       <span>(${Math.round(total).toLocaleString('fa-IR')} م² · ${plots.toLocaleString('fa-IR')} قطعه)</span>
     </div>`;
 }
-function addPlot(){
+async function addPlot(){
   const p = activeProject(); if(!p) return;
-  const name = prompt('نام قطعه:', 'قطعه ' + (p.plots.length+1));
+  const name = await uiPrompt('نام قطعه:', 'قطعه ' + (p.plots.length+1), { title:'قطعهٔ تازه', ok:'بساز' });
   if(name === null) return;
   p.plots.push({ id:uid(), name: name || ('قطعه '+(p.plots.length+1)), code:'', variety:'', seedClass:'', plantDate:'', seedRate:'', lastVisit:'',
     points:[], holes:[], mode:'geo', zone:40, north:true, warnings:[], raw:'', locked:false });
   save(); render();
 }
-function deletePlot(plotId){
+async function deletePlot(plotId){
   const p = activeProject(); if(!p) return;
-  if(!confirm('این قطعه حذف شود؟')) return;
+  if(!(await uiConfirm('این قطعه حذف شود؟', { danger:true, ok:'بله، قطعه حذف شود', title:'حذف قطعه' }))) return;
   if(!state.grave) state.grave = { projects:[], plots:[] };
   state.grave.plots.push({ id:plotId, t:Date.now() });
   p.plots = p.plots.filter(pl=>pl.id!==plotId);
   save(); render();
 }
-function renamePlot(plotId){
+async function renamePlot(plotId){
   const p = activeProject(); const pl = p.plots.find(x=>x.id===plotId); if(!pl) return;
-  const v = prompt('نام قطعه:', pl.name);
+  const v = await uiPrompt('نام قطعه:', pl.name, { title:'تغییر نام قطعه', ok:'ذخیره' });
   if(v === null) return;
   pl.name = v; save(); render();
 }
@@ -3014,10 +3178,10 @@ function statsHtml(pl){
 function warnHtml(pl){
   let out = '';
   if(pl.warnings && pl.warnings.length)
-    out += '<div class="warn" style="margin-top:8px">خط(های) نامعتبر نادیده گرفته شد: '+pl.warnings.join('، ')+'</div>';
+    out += '<div class="warn u-mt8">خط(های) نامعتبر نادیده گرفته شد: '+pl.warnings.join('، ')+'</div>';
   const outside = holesOutside(pl);
   if(outside.length)
-    out += '<div class="warn" style="margin-top:8px">حفرهٔ '+outside.join('، ')+' کامل داخل قطعه نیست؛ در استاندارد GeoJSON حلقهٔ داخلی باید داخل حلقهٔ بیرونی باشد وگرنه QGIS/سامانه ممکن است خطا بدهد.</div>';
+    out += '<div class="warn u-mt8">حفرهٔ '+outside.join('، ')+' کامل داخل قطعه نیست؛ در استاندارد GeoJSON حلقهٔ داخلی باید داخل حلقهٔ بیرونی باشد وگرنه QGIS/سامانه ممکن است خطا بدهد.</div>';
   return out;
 }
 /* به‌روزرسانی همان قطعه بدون رندر کل صفحه (فوکوس از دست نمی‌رود) */
@@ -3073,6 +3237,10 @@ function updatePlotPoints(plotId, text){
   clearTimeout(window.__pt);
   window.__pt = setTimeout(()=>refreshPlotCard(plotId), 300);
 }
+
+/* ═══════════ ۳۵ — خروجی فایل و پشتیبان ═══════════
+   KML، CSV، GeoJSON استاندارد (RFC 7946)، خروجی تک‌قطعه، پشتیبان JSON و بازیابی.
+   ═══════════════════════════════════════════════ */
 
 /* ---------- خروجی‌ها ---------- */
 function projectMeta(p){
@@ -3271,12 +3439,12 @@ function xml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,
 function stamp(){ const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function baseName(p){ return sanitize(p.name)+'_'+stamp(); }
 
-function exportProjectGeoJson(){
+async function exportProjectGeoJson(){
   const p = activeProject(); if(!p) return;
   const fc = geoJsonObj([p], { name: p.name });
-  if(!fc.features.length) return alert('این پروژه هیچ قطعه‌ای با حداقل ۳ نقطه ندارد.');
+  if(!fc.features.length) return uiAlert('این پروژه هیچ قطعه‌ای با حداقل ۳ نقطه ندارد.');
   const msgs = geoJsonCheck(fc);
-  if(msgs.length && !confirm('هشدار:\n- ' + msgs.join('\n- ') + '\n\nبا این حال فایل گرفته شود؟')) return;
+  if(msgs.length && !(await uiConfirm('هشدار:\n- ' + msgs.join('\n- ') + '\n\nبا این حال فایل گرفته شود؟', { title:'هشدار هندسی', ok:'با این حال بگیر' }))) return;
   download(baseName(p)+'.geojson', JSON.stringify(fc, null, 2), 'application/geo+json');
 }
 /* ---------- خروجی تک‌قطعه (GeoJSON / KML / CSV) ---------- */
@@ -3296,48 +3464,48 @@ function plotFileName(plotId, ext){
   const nm = sanitize((t.p.name || 'پروژه') + ' - ' + (t.pl.name || 'قطعه'));
   return nm + '_' + stamp() + '.' + ext;
 }
-function exportPlotGeoJson(plotId){
+async function exportPlotGeoJson(plotId){
   const t = plotAsProject(plotId);
-  if(!t) return alert('قطعه پیدا نشد.');
-  if(t.error) return alert(t.error);
+  if(!t) return uiAlert('قطعه پیدا نشد.');
+  if(t.error) return uiAlert(t.error);
   const fc = geoJsonObj([t.tmp], { name: t.pl.name });
-  if(!fc.features.length) return alert('این قطعه هیچ هندسهٔ معتبری ندارد.');
+  if(!fc.features.length) return uiAlert('این قطعه هیچ هندسهٔ معتبری ندارد.');
   const msgs = geoJsonCheck(fc);
-  if(msgs.length && !confirm('هشدار:\n- ' + msgs.join('\n- ') + '\n\nبا این حال فایل گرفته شود؟')) return;
+  if(msgs.length && !(await uiConfirm('هشدار:\n- ' + msgs.join('\n- ') + '\n\nبا این حال فایل گرفته شود؟', { title:'هشدار هندسی', ok:'با این حال بگیر' }))) return;
   download(plotFileName(plotId,'geojson'), JSON.stringify(fc, null, 2), 'application/geo+json');
 }
 function exportPlotKml(plotId){
   const t = plotAsProject(plotId);
-  if(!t) return alert('قطعه پیدا نشد.');
-  if(t.error) return alert(t.error);
+  if(!t) return uiAlert('قطعه پیدا نشد.');
+  if(t.error) return uiAlert(t.error);
   download(plotFileName(plotId,'kml'), kmlFor([t.tmp]), 'application/vnd.google-earth.kml+xml');
 }
 function exportPlotCsv(plotId){
   const t = plotAsProject(plotId);
-  if(!t) return alert('قطعه پیدا نشد.');
-  if(t.error) return alert(t.error);
+  if(!t) return uiAlert('قطعه پیدا نشد.');
+  if(t.error) return uiAlert(t.error);
   download(plotFileName(plotId,'csv'), csvFor([t.tmp]), 'text/csv;charset=utf-8');
 }
 /* خروجی GeoJSON همهٔ قطعات پروژه، هر کدام یک فایل جدا */
 function exportProjectPlotsZip(){
   const p = activeProject(); if(!p) return;
   const ok = (p.plots||[]).filter(pl=>(pl.points||[]).length >= 3);
-  if(!ok.length) return alert('این پروژه قطعهٔ کامل (۳ نقطه یا بیشتر) ندارد.');
+  if(!ok.length) return uiAlert('این پروژه قطعهٔ کامل (۳ نقطه یا بیشتر) ندارد.');
   ok.forEach((pl, i)=>setTimeout(()=>{ try{ exportPlotGeoJson(pl.id); }catch(e){} }, i*400));
   setTimeout(()=>toast('GeoJSON هر قطعه جداگانه دانلود شد (' + ok.length + ' فایل)'), ok.length*400 + 300);
 }
 
-function exportAllGeoJson(){
-  if(!state.projects.length) return alert('پروژه‌ای وجود ندارد.');
+async function exportAllGeoJson(){
+  if(!state.projects.length) return uiAlert('پروژه‌ای وجود ندارد.');
   const fc = geoJsonObj(state.projects, { name:'همه-پروژه-ها' });
-  if(!fc.features.length) return alert('هیچ قطعه‌ای با حداقل ۳ نقطه وجود ندارد.');
+  if(!fc.features.length) return uiAlert('هیچ قطعه‌ای با حداقل ۳ نقطه وجود ندارد.');
   const msgs = geoJsonCheck(fc);
-  if(msgs.length && !confirm('هشدار:\n- ' + msgs.join('\n- ') + '\n\nبا این حال فایل گرفته شود؟')) return;
+  if(msgs.length && !(await uiConfirm('هشدار:\n- ' + msgs.join('\n- ') + '\n\nبا این حال فایل گرفته شود؟', { title:'هشدار هندسی', ok:'با این حال بگیر' }))) return;
   download('همه-پروژه-ها_'+stamp()+'.geojson', JSON.stringify(fc, null, 2), 'application/geo+json');
 }
 function exportProjectKml(){
   const p = activeProject(); if(!p) return;
-  if(!p.plots.some(pl=>(pl.points||[]).length>=3)) return alert('هیچ قطعه‌ای با حداقل ۳ نقطه وجود ندارد.');
+  if(!p.plots.some(pl=>(pl.points||[]).length>=3)) return uiAlert('هیچ قطعه‌ای با حداقل ۳ نقطه وجود ندارد.');
   download(baseName(p)+'.kml', kmlFor([p]), 'application/vnd.google-earth.kml+xml');
 }
 function exportAllKml(){
@@ -3362,10 +3530,10 @@ function exportBackup(){
 function importBackup(input){
   const file = input.files && input.files[0]; if(!file) return;
   const reader = new FileReader();
-  reader.onload = e=>{
+  reader.onload = async e=>{
     let data;
     try{ data = JSON.parse(e.target.result); }
-    catch(err){ return alert('فایل JSON معتبر نیست: ' + err.message); }
+    catch(err){ return uiAlert('فایل JSON معتبر نیست: ' + err.message); }
 
     // حالت ۱: GeoJSON (FeatureCollection یا Feature تکی)
     if(data.type === 'FeatureCollection' || data.type === 'Feature'){
@@ -3373,7 +3541,8 @@ function importBackup(input){
     }
     // حالت ۲: پشتیبان کامل دفترچه
     if(data.projects && Array.isArray(data.projects)){
-      if(confirm('همهٔ پروژه‌های فعلی با فایل پشتیبان جایگزین شوند؟ (Cancel = افزودن به لیست)')){
+      if(await uiConfirm('همهٔ پروژه‌های فعلی با فایل پشتیبان جایگزین شوند؟\n«جایگزینی کن» = پاک‌کردن و گذاشتن فایل\n«افزودن» = پروژه‌های فایل به لیست اضافه شود',
+        { ok:'جایگزینی کن', cancel:true, title:'بازیابی پشتیبان' })){
         state = data;
       } else {
         data.projects.forEach(p=>{ p.id = uid(); state.projects.push(p); });
@@ -3390,7 +3559,7 @@ function importBackup(input){
       save(); render();
       return;
     }
-    alert('ساختار فایل شناخته نشد. (FeatureCollection یا پشتیبان دفترچه لازم است)');
+    uiAlert('ساختار فایل شناخته نشد. (FeatureCollection یا پشتیبان دفترچه لازم است)');
   };
   reader.readAsText(file);
   input.value = '';
@@ -3399,7 +3568,7 @@ function importBackup(input){
 /* ورود GeoJSON: هر feature به یک قطعه، گروه‌بندی بر اساس properties.project */
 function importGeoJson(data, fallbackName){
   const features = data.type === 'Feature' ? [data] : (data.features || []);
-  if(!features.length) return alert('هیچ عارضه‌ای در فایل نیست.');
+  if(!features.length) return uiAlert('هیچ عارضه‌ای در فایل نیست.');
   const groups = {};
   let skipped = 0;
 
@@ -3450,11 +3619,11 @@ function importGeoJson(data, fallbackName){
   });
 
   const list = Object.values(groups).filter(g=>g.plots.length);
-  if(!list.length) return alert('هیچ قطعهٔ قابل استفاده‌ای در فایل پیدا نشد.');
+  if(!list.length) return uiAlert('هیچ قطعهٔ قابل استفاده‌ای در فایل پیدا نشد.');
   list.forEach(g=>state.projects.push(g));
   state.activeId = list[0].id;
   save(); render();
-  alert('ورود انجام شد: ' + list.length + ' پروژه و ' + list.reduce((s,g)=>s+g.plots.length,0) + ' قطعه' + (skipped ? ' (' + skipped + ' عارضه بدون مختصات نادیده گرفته شد)' : ''));
+  uiAlert('ورود انجام شد: ' + list.length + ' پروژه و ' + list.reduce((s,g)=>s+g.plots.length,0) + ' قطعه' + (skipped ? ' (' + skipped + ' عارضه بدون مختصات نادیده گرفته شد)' : ''));
 }
 
 function printProject(){
@@ -3482,15 +3651,19 @@ function printProject(){
   توضیحات: ${esc(p.notes||'-')}<br>تاریخ چاپ: ${new Date().toLocaleDateString('fa-IR')}</div>
   <table><thead><tr><th>#</th><th>نام قطعه</th><th>مساحت خالص (هکتار)</th><th>تعداد حفره</th><th>تعداد رأس</th><th>مرکز (عرض، طول)</th><th>UTM زون | E / N</th></tr></thead>
   <tbody>${rows}</tbody></table>
-  <p style="margin-top:14px;font-size:11px;color:#555">مختصات کامل نقاط به‌صورت فایل <b>GeoJSON (EPSG:4326)</b> و در صورت نیاز KML/CSV پیوست ارائه می‌شود.</p>
-  <div style="margin-top:22px;border-top:1px dashed #9bb;padding-top:8px;text-align:center">
-    <div style="font-size:12.5px;font-weight:700">طراحی و توسعه: <span style="color:#1f6f43">سجاد جمشیدپور</span></div>
-    <div style="font-size:10.5px;color:#5d7768;direction:ltr">Designed &amp; Developed by Sajad Jamshidpour</div>
+  <p class="note-line">مختصات کامل نقاط به‌صورت فایل <b>GeoJSON (EPSG:4326)</b> و در صورت نیاز KML/CSV پیوست ارائه می‌شود.</p>
+  <div class="doc-sign">
+    <div class="u-fs125 u-bold">طراحی و توسعه: <span class="c-accent">سجاد جمشیدپور</span></div>
+    <div class="u-coord">Designed &amp; Developed by Sajad Jamshidpour</div>
   </div>
   </body></html>`);
   win.document.close();
   setTimeout(()=>win.print(), 400);
 }
+
+/* ═══════════ ۳۶ — گزارش‌ها، آمار و دادهٔ نمونه ═══════════
+   عدد فارسی، آمار هر پروژه، کارت‌های آماری (KPI)، گزارش فهرست پروژه‌ها
+   (نمایش، CSV، چاپ) و دادهٔ نمونه برای آزمایش. ═══════════════════ */
 
 /* ---------- داده نمونه ---------- */
 function demoData(){
@@ -3586,9 +3759,9 @@ function reportTableHTML(){
       '<td dir="ltr" class="mut">' + esc(p.farmerPhone||'—') + '</td>' +
       '<td dir="ltr">' + (st.ha ? numFa(st.ha, 2) : '—') + '</td>' +
       '<td>' + numFa(st.plots) + '</td>' +
-      '<td style="white-space:nowrap">' + esc(plant) + '</td>' +
+      '<td class="u-nowrap">' + esc(plant) + '</td>' +
       '<td dir="ltr">' + (st.seedAvg === null ? '—' : numFa(st.seedAvg, 0)) + '</td>' +
-      '<td style="white-space:nowrap">' + esc(st.last||'—') + '</td>' +
+      '<td class="u-nowrap">' + esc(st.last||'—') + '</td>' +
       '</tr>';
   }).join('');
   const head = '<tr><th>#</th><th>نام پروژه / پرونده</th><th>محصول</th><th>منطقه (استان / شهرستان)</th>' +
@@ -3609,7 +3782,7 @@ function openProjectReport(){
   wrap.innerHTML =
     '<div class="rp" role="dialog" aria-modal="true" aria-label="گزارش پروژه‌ها">' +
       '<div class="h"><h3>📋 گزارش پروژه‌ها</h3><span class="sp"></span>' +
-        '<button class="small" onclick="closeProjectReport()">✕ بستن</button></div>' +
+        '<button class="small" data-act="rep:close">✕ بستن</button></div>' +
       '<div class="b">' +
         '<div class="kpirow">' +
           '<span class="b2">پروژه: <b>' + numFa(rows.length) + '</b></span>' +
@@ -3617,14 +3790,14 @@ function openProjectReport(){
           '<span class="b2">مساحت کل: <b>' + numFa(ha, 2) + ' هکتار</b></span>' +
           '<span class="b2">دارای آخرین بازدید: <b>' + numFa(visited) + ' از ' + numFa(rows.length) + '</b></span>' +
         '</div>' +
-        '<div style="overflow:auto">' + reportTableHTML() + '</div>' +
-        '<div class="hint" style="margin-top:8px">مساحت‌ها خالص (بدون حفره‌ها) است. «تاریخ کشت» بازهٔ قطعات همان پروژه و «بذر» میانگین قطعات است.</div>' +
+        '<div class="u-scroll">' + reportTableHTML() + '</div>' +
+        '<div class="hint u-mt8">مساحت‌ها خالص (بدون حفره‌ها) است. «تاریخ کشت» بازهٔ قطعات همان پروژه و «بذر» میانگین قطعات است.</div>' +
       '</div>' +
       '<div class="f">' +
-        '<button class="primary" onclick="projectReportPrint()">🖨 چاپ / PDF</button>' +
-        '<button onclick="projectReportCsv()">⬇ CSV (اکسل)</button>' +
-        '<span class="sp" style="flex:1"></span>' +
-        '<button onclick="closeProjectReport()">بستن</button>' +
+        '<button class="primary" data-act="rep:print">🖨 چاپ / PDF</button>' +
+        '<button data-act="rep:csv">⬇ CSV (اکسل)</button>' +
+        '<span class="sp u-flex1"></span>' +
+        '<button data-act="rep:close">بستن</button>' +
       '</div>' +
     '</div>';
   document.body.appendChild(wrap);
@@ -3685,13 +3858,11 @@ function projectReportPrint(){
     '<th>مساحت (هکتار)</th><th>قطعه</th><th>تاریخ کشت</th><th>بذر (kg/ha)</th><th>آخرین بازدید</th></tr></thead>' +
     '<tbody>' + body + '</tbody>' +
     '<tfoot><tr><td colspan="6">مجموع</td><td>' + ha.toFixed(2) + '</td><td>' + plots + '</td><td colspan="3">-</td></tr></tfoot>' +
-    '</table><div class="sub" style="margin-top:8px">مساحت‌ها خالص (بدون حفره) — طراحی و توسعه: سجاد جمشیدپور</div>' +
+    '</table><div class="sub u-mt8">مساحت‌ها خالص (بدون حفره) — طراحی و توسعه: سجاد جمشیدپور</div>' +
     '</body></html>');
   win.document.close();
   setTimeout(() => { try{ win.focus(); win.print(); }catch(e){} }, 350);
 }
-
-
 /* ============================================================
    MP — نقشهٔ تعاملی ادغام‌شده (داده را مستقیم از state می‌خواند)
    ============================================================ */
@@ -3931,12 +4102,11 @@ const MP = (function(){
         netA = Math.max(0, netA);
         const haTxt = Number(netA/10000).toLocaleString('fa-IR', { minimumFractionDigits: netA/10000 < 1 ? 2 : 1,
                         maximumFractionDigits: netA/10000 < 1 ? 2 : 1 }) + ' هکتار';
-        out += `<text x="${mx.toFixed(1)}" y="${my.toFixed(1)}" text-anchor="middle" font-size="11.5"
-          font-family="Tahoma" fill="#12331f" style="paint-order:stroke;stroke:#fff;stroke-width:3px">${escapeHtml(f.pl.name||('قطعه '+(f.idx+1)))}</text>`;
+        out += `<text class="u-halo" x="${mx.toFixed(1)}" y="${my.toFixed(1)}" text-anchor="middle" font-size="11.5"
+          font-family="Tahoma" fill="#12331f">${escapeHtml(f.pl.name||('قطعه '+(f.idx+1)))}</text>`;
         // مساحت روی همهٔ قطعات همیشه نمایش داده می‌شود (قطعهٔ انتخاب‌شده پررنگ‌تر)
-        out += `<text x="${mx.toFixed(1)}" y="${(my+14).toFixed(1)}" text-anchor="middle" font-size="${isSel?11.5:11}"
-          font-family="Tahoma" font-weight="${isSel?700:500}" fill="${isSel?'#1f6f43':'#2c4437'}"
-          style="paint-order:stroke;stroke:#fff;stroke-width:3.2px">${haTxt}</text>`;
+        out += `<text class="u-halo-2" x="${mx.toFixed(1)}" y="${(my+14).toFixed(1)}" text-anchor="middle" font-size="${isSel?11.5:11}"
+          font-family="Tahoma" font-weight="${isSel?700:500}" fill="${isSel?'#1f6f43':'#2c4437'}">${haTxt}</text>`;
       }
     });
     // برچسب مجموع هر پروژه (بالای محدودهٔ همان پروژه)
@@ -4131,12 +4301,12 @@ const MP = (function(){
         const ha = x.totalM2/10000;
         const active = x.id === state.activeId;
         return `<button class="mp-chip ${active?'active':''}" title="نمایش این پروژه روی نقشه"
-                  onclick="MP.fitProjectById('${x.id}')">
+                  data-act="mp:fitById" data-id="${x.id}">
           <span class="cn">${escapeHtml(x.name)} · ${faNum(x.complete,0)} قطعه</span>
           <span class="cv">${ha>0 ? faFixed(ha, ha<1?3:2) + ' هکتار' : '—'}</span>
         </button>`;
       }).join('') +
-      `<button class="mp-chip total" title="نمایش همهٔ پروژه‌ها" onclick="MP.fitAll()">
+      `<button class="mp-chip total" title="نمایش همهٔ پروژه‌ها" data-act="mp:fitAll">
         <span class="cn">کل · ${faNum(allPlots,0)} قطعه</span>
         <span class="cv">${faFixed(all/10000, 2)} هکتار</span>
       </button>`;
@@ -4154,8 +4324,8 @@ const MP = (function(){
         <div class="n"><b>${escapeHtml(x.name)}</b>
           <span>${x.complete? faNum(x.complete,0)+' قطعهٔ کامل':'قطعهٔ کامل ندارد'}${x.incomplete?' · '+faNum(x.incomplete,0)+' ناقص':''}${x.crop?' · '+escapeHtml(x.crop):''}</span></div>
         <span class="ha">${ha>0?faNum(ha, ha<1?3:2)+' هکتار':'—'}</span>
-        <button class="small" onclick="MP.fitProjectById('${x.id}')">نمایش</button>
-        <button class="small" onclick="MP.downloadProjectById('${x.id}')" title="دانلود نقشهٔ آفلاین همین پروژه">⬇ نقشه</button>
+        <button class="small" data-act="mp:fitById" data-id="${x.id}">نمایش</button>
+        <button class="small" data-act="mp:downloadById" data-id="${x.id}" title="دانلود نقشهٔ آفلاین همین پروژه">⬇ نقشه</button>
       </div>`;
     }).join('') + `<div class="mp-sum"><span>مجموع همهٔ پروژه‌ها (${faNum(allPlots,0)} قطعه):</span>
         <b>${faNum(all/10000, 2)} هکتار</b></div>`;
@@ -4237,7 +4407,7 @@ const MP = (function(){
     if(proj){
       let pt = 0, pc = 0;
       (proj.plots||[]).forEach(x=>{ const a = plotNet(x); if(a>0){ pt += a; pc++; } });
-      projLine = '<br><span style="color:#1f6f43;font-weight:700">مجموع پروژه: ' + faFixed(pt/10000, pt/10000<1?3:2) +
+      projLine = '<br><span class="c-accent u-bold">مجموع پروژه: ' + faFixed(pt/10000, pt/10000<1?3:2) +
         ' هکتار (' + faNum(pc,0) + ' قطعه)</span>';
     }
     meta.innerHTML = parts.join(' · ') + '<br><span dir="ltr">' + c[0].toFixed(6) + ', ' + c[1].toFixed(6) + '</span>' + projLine;
@@ -4324,7 +4494,7 @@ const MP = (function(){
     const hit = hitVertex(sp); if(!hit) return toast('روی یک رأس کلیک کنید');
     const ring = ringOf(pl, hit.ring);
     if(!ring) return;
-    if(ring.length <= 3) return alert(hit.ring===0
+    if(ring.length <= 3) return uiAlert(hit.ring===0
       ? 'هر قطعه حداقل ۳ نقطه لازم دارد.'
       : 'هر حفره حداقل ۳ نقطه لازم دارد؛ کل حفره را از دفترچه حذف کنید.');
     snapshot(pl);
@@ -4426,7 +4596,7 @@ const MP = (function(){
             ? ' · <b>رأس ' + faSync(EDIT.sel.idx+1) + '</b>' + (EDIT.sel.ring ? ' (حفرهٔ ' + faSync(EDIT.sel.ring) + ')' : '') + ' انتخاب شد'
             : ' · هر رأس را بکش یا لمس کن';
           t.innerHTML = '✏️ <b>' + escapeHtml(pl ? (pl.name||'قطعه') : 'قطعه') + '</b> — ' + faSync(n) + ' رأس' + selTxt +
-            (EDIT.add ? '<br><span style="color:#7a5310">➕ حالت افزودن: روی نقشه بزن</span>' : '');
+            (EDIT.add ? '<br><span class="c-warn-dark">➕ حالت افزودن: روی نقشه بزن</span>' : '');
         }
         const a = document.getElementById('mpDockAdd');
         if(a) a.classList.toggle('on', !!EDIT.add);
@@ -4438,7 +4608,7 @@ const MP = (function(){
       if(DRAFT.on){
         const t = document.getElementById('mpNewTitle');
         if(t) t.innerHTML = '🆕 <b>قطعهٔ جدید</b> — ' + faSync(DRAFT.pts.length) + ' نقطه' +
-          (DRAFT.pts.length < 3 ? ' <span style="color:#8d2a22">(حداقل ۳ نقطه)</span>' : ' ✅');
+          (DRAFT.pts.length < 3 ? ' <span class="c-danger-dark">(حداقل ۳ نقطه)</span>' : ' ✅');
         const b = document.getElementById('mpNewSave');
         if(b) b.classList.toggle('off', DRAFT.pts.length < 3);
       }
@@ -4723,8 +4893,8 @@ const MP = (function(){
     const t = sec > 90 ? (sec/60).toFixed(0) + ' دقیقه' : Math.max(1, Math.round(sec)) + ' ثانیه';
     el.innerHTML = n.toLocaleString('fa-IR') + ' کاشی · ' + todo.toLocaleString('fa-IR') + ' کاشی جدید · ≈'
       + mb.toFixed(1) + ' مگابایت'
-      + (have ? '<br><span style="font-weight:400">' + have.toLocaleString('fa-IR') + ' کاشی از قبل ذخیره بود</span>' : '')
-      + (todo ? '<br><span style="font-weight:400">زمان تقریبی با سرعت فعلی: ≈ ' + t + '</span>' : '');
+      + (have ? '<br><span class="u-fw400">' + have.toLocaleString('fa-IR') + ' کاشی از قبل ذخیره بود</span>' : '')
+      + (todo ? '<br><span class="u-fw400">زمان تقریبی با سرعت فعلی: ≈ ' + t + '</span>' : '');
   }
   function zoomTiles(bb, list){
     const set = new Map();
@@ -4841,10 +5011,10 @@ const MP = (function(){
     const wrap = document.getElementById('mpJobWrap'), txt = document.getElementById('mpJobTxt');
     if(!wrap || !txt) return;
     const j = readJob();
-    if(!j || !j.tiles){ wrap.style.display = 'none'; return; }
+    if(!j || !j.tiles){ setShown(wrap, false); return; }
     let n = 0; try{ n = j.tiles.split(' ').filter(Boolean).length; }catch(e){}
     txt.textContent = 'دانلود ناتمام: ' + (j.name||'محدوده') + ' · ' + n.toLocaleString('fa-IR') + ' کاشی باقی مانده';
-    wrap.style.display = 'block';
+    setShown(wrap, true);
   }
   function resumeJob(){
     const j = readJob();
@@ -4861,7 +5031,7 @@ const MP = (function(){
   async function speedTest(){
     const out = document.getElementById('mpSpeedOut'), txt = document.getElementById('mpSpeedTxt');
     if(!out || !txt) return;
-    out.style.display = 'block';
+    setShown(out, true, 'u-block');   // قبلاً block بود، نه flexِ mp-stat
     txt.textContent = 'در حال تست سرعت… (چند ثانیه)';
     const [tx,ty] = latLonToTile(MS.lat, MS.lon, Math.min(MS.z, 17));
     const z = Math.min(MS.z, 17);
@@ -4889,7 +5059,7 @@ const MP = (function(){
       const mark = (r === best && r.ok) ? ' ⭐ سریع‌ترین' : '';
       return '<div>' + nm(r.p) + ' — ' + r.ok + '/۴ کاشی · '
         + (r.ok ? faNum(Math.round(r.kbs),0) + ' کیلوبایت/ثانیه' : 'بی‌پاسخ') + mark + '</div>';
-    }).join('') + '<div style="margin-top:4px;font-weight:400">' +
+    }).join('') + '<div class="u-mt4 u-fw400">' +
       (best && best.ok ? 'پیشنهاد: «<b>' + nm(best.p) + '</b>» را از منوی بالای نقشه انتخاب کنید.'
                        : 'هیچ سروری پاسخ نداد؛ اتصال اینترنت را بررسی کنید.') + '</div>';
   }
@@ -4902,7 +5072,7 @@ const MP = (function(){
     else if(Array.isArray(set)) list = set.slice();
     else if(set && set.size !== undefined) list = [...set.values()];
     if(!list.length) return toast('محدوده‌ای انتخاب نشده');
-    if(list.length > 6000 && !confirm('این محدوده ' + list.length.toLocaleString('fa-IR') + ' کاشی است. ادامه؟')) return;
+    if(list.length > 6000 && !(await uiConfirm('این محدوده ' + list.length.toLocaleString('fa-IR') + ' کاشی است. ادامه؟', { title:'دانلود بزرگ', ok:'ادامه' }))) return;
 
     // ترتیب: زوم کم→زیاد (اگر نیمه‌کاره ماند، نقشهٔ کلی آماده است)، در هر زوم از مرکز به بیرون
     let cx = 0, cy = 0;
@@ -4918,8 +5088,8 @@ const MP = (function(){
     const w = document.getElementById('mpProgWrap'), tEl = document.getElementById('mpProgTxt'),
           cBtn = document.getElementById('mpCancel'), pBtn = document.getElementById('mpPause');
     MS.downloading = true; MS.cancel = false; DL.paused = false;
-    w.style.display = 'block'; tEl.style.display = 'flex';
-    cBtn.style.display = 'inline-block'; pBtn.style.display = 'inline-block';
+    setShown(w, true); setShown(tEl, true);
+    setShown(cBtn, true); setShown(pBtn, true);
     pBtn.textContent = '⏸ توقف موقت';
     document.getElementById('mpProg').style.width = '0%';
 
@@ -4955,7 +5125,7 @@ const MP = (function(){
     };
     paint();
     if(!todo.length){
-      w.style.display='none'; tEl.style.display='none'; cBtn.style.display='none'; pBtn.style.display='none';
+      setShown(w, false); setShown(tEl, false); setShown(cBtn, false); setShown(pBtn, false);
       MS.downloading = false; clearJob();
       return toast('همهٔ ' + total.toLocaleString('fa-IR') + ' کاشی از قبل ذخیره بود', 4200);
     }
@@ -5032,7 +5202,7 @@ const MP = (function(){
     }
 
     await flush();
-    w.style.display='none'; tEl.style.display='none'; cBtn.style.display='none'; pBtn.style.display='none';
+    setShown(w, false); setShown(tEl, false); setShown(cBtn, false); setShown(pBtn, false);
     MS.downloading = false; DL.paused = false;
     const okCount = done - failedKeys.size;
     toast((MS.cancel ? 'متوقف شد — بعداً «ادامهٔ دانلود ناتمام» را بزنید · ذخیره‌شده: '
@@ -5068,7 +5238,7 @@ const MP = (function(){
       document.getElementById('mpAreas').innerHTML = areas.length ? areas.slice().reverse().map(a=>`
         <div class="mp-area">
           <div class="t"><span>${escapeHtml(a.name)}</span>
-            <button class="danger small" onclick="MP.deleteArea(${a.id})">حذف</button></div>
+            <button class="danger small" data-act="mp:deleteArea" data-id="${a.id}">حذف</button></div>
           <div class="m">zoom ${a.zooms.join(',')} · ${a.provider} · ${a.tiles.toLocaleString('fa-IR')} کاشی · ${(a.bytes/1048576).toFixed(1)}MB</div>
           <div class="m">${new Date(a.created).toLocaleString('fa-IR')}</div>
         </div>`).join('') : '<div class="hint">هنوز چیزی دانلود نشده.</div>';
@@ -5076,7 +5246,7 @@ const MP = (function(){
         `<div class="${navigator.onLine?'mp-ok':'mp-warn'}">${navigator.onLine
           ? 'اینترنت وصل است: کاشی‌های جدید ذخیره می‌شوند.'
           : 'آفلاین: فقط کاشی‌های ذخیره‌شده نمایش داده می‌شوند.'}</div>
-         <div style="margin-top:8px">کاشی ذخیره‌شده: <b>${keys.length.toLocaleString('fa-IR')}</b> · حجم تقریبی: <b>${(est/1048576).toFixed(1)} مگابایت</b></div>`;
+         <div class="u-mt8">کاشی ذخیره‌شده: <b>${keys.length.toLocaleString('fa-IR')}</b> · حجم تقریبی: <b>${(est/1048576).toFixed(1)} مگابایت</b></div>`;
     }catch(e){
       document.getElementById('mpCacheTag').textContent = 'خطا';
       document.getElementById('mpOfflineState').innerHTML = '<div class="mp-warn">ذخیره‌سازی مرورگر در دسترس نیست: '+escapeHtml(e.message)+'</div>';
@@ -5084,7 +5254,7 @@ const MP = (function(){
   }
   async function deleteArea(id){
     const areas = await idbAll('areas'); const a = areas.find(x=>x.id===id); if(!a) return;
-    if(!confirm('کاشی‌های «'+a.name+'» حذف شوند؟')) return;
+    if(!(await uiConfirm('کاشی‌های «'+a.name+'» حذف شوند؟', { danger:true, ok:'حذف کن', title:'حذف کاشی‌ها' }))) return;
     for(const z of a.zooms){
       const [x0,y0] = latLonToTile(a.bbox.maxLat,a.bbox.minLon,z);
       const [x1,y1] = latLonToTile(a.bbox.minLat,a.bbox.maxLon,z);
@@ -5095,7 +5265,7 @@ const MP = (function(){
     toast('حذف شد'); await refreshCache(); draw();
   }
   async function clearCache(){
-    if(!confirm('کل حافظهٔ نقشه پاک شود؟')) return;
+    if(!(await uiConfirm('کل حافظهٔ نقشه پاک شود؟', { danger:true, ok:'پاک کن', title:'پاک‌کردن حافظه' }))) return;
     const keys = await idbKeys('tiles');
     for(const k of keys) await idbDel('tiles',k);
     const areas = await idbAll('areas');
@@ -5250,11 +5420,11 @@ const MP = (function(){
     afterEdit(pl); drawFieldStat();
     toast('آخرین رأس حذف شد (' + fa(pts.length) + ' رأس مانده)');
   }
-  function fieldFinish(){
+  async function fieldFinish(){
     const pl = selPlot(); if(!pl) return toast('قطعه‌ای انتخاب نشده');
     const pts = pl.points || [];
     if(pts.length < 3){
-      if(!confirm('این قطعه کمتر از ۳ رأس دارد و مساحت ندارد. حذف شود؟')) return;
+      if(!(await uiConfirm('این قطعه کمتر از ۳ رأس دارد و مساحت ندارد. حذف شود؟', { danger:true, ok:'حذف کن', title:'قطعهٔ ناقص' }))) return;
       const proj = (state.projects||[]).find(p=>p.id===state.activeId);
       if(proj) proj.plots = (proj.plots||[]).filter(x=>x.id!==pl.id);
       MS.plotId = null;
@@ -5445,6 +5615,339 @@ load();
 if(!storageOK) showStorageWarning();
 if(!state.activeId && state.projects[0]) state.activeId = state.projects[0].id;
 render();
+/* ═══════════ ۹۰ — فرهنگ کنش‌ها ═══════════
+   هر دکمه در HTML فقط یک نام دارد:  data-act="plot:delete"
+   کارِ آن نام این‌جا نوشته شده است.
+
+   چرا؟ سه دلیل:
+     ۱) در HTML هیچ کد جاوااسکریپت نمی‌ماند؛ خواندن قالب راحت می‌شود.
+     ۲) فهرست کاملِ کارهایی که برنامه انجام می‌دهد، همین یک جدول است.
+     ۳) اگر روزی CSP سخت‌گیرانه لازم شد، همین‌جا یک‌جا حل می‌شود.
+
+   افزودن دکمهٔ تازه: یک سطر این‌جا + یک data-act در HTML. تمام.
+   ═══════════════════════════════════════════════════════════ */
+
+  const ACTIONS = {
+
+    /* ── نمایش و ناوبری ── */
+    'view:doc': el => setView('doc'),
+    'view:map': el => setView('map'),
+
+    /* ── دادهٔ نمونه ── */
+    'data:demo': el => demoData(),
+
+    /* ── پروژه ── */
+    'proj:add': el => addProject(),
+    'proj:select': el => selectProject(el.dataset.id),
+    'proj:delete': el => deleteProject(),
+
+    /* ── خروجی ── */
+    'exp:projGeo': el => exportProjectGeoJson(),
+    'exp:projKml': el => exportProjectKml(),
+    'exp:projCsv': el => exportProjectCsv(),
+    'exp:projZip': el => exportProjectPlotsZip(),
+    'exp:projJson': el => exportProjectJson(),
+    'exp:projPrint': el => printProject(),
+
+    /* ── قطعه ── */
+    'plot:add': el => addPlot(),
+    'plot:rename': el => renamePlot(el.dataset.id),
+    'plot:delete': el => deletePlot(el.dataset.id),
+    'plot:geo': el => exportPlotGeoJson(el.dataset.id),
+    'plot:kml': el => exportPlotKml(el.dataset.id),
+    'plot:csv': el => exportPlotCsv(el.dataset.id),
+    'plot:undo': el => undoPoints(el.dataset.id),
+
+    /* ── رأس ── */
+    'vert:lock': el => toggleLock(el.dataset.id),
+    'vert:delete': el => deleteSelectedVertex(el.dataset.id),
+    'vert:undo': el => undoPoints(el.dataset.id),
+
+    /* ── حفره ── */
+    'hole:add': el => addHole(el.dataset.id),
+    'hole:finish': el => finishHole(el.dataset.id),
+    'hole:delete': el => deleteHole(el.dataset.id, +el.dataset.i),
+
+    /* ── خروجی ── */
+    'exp:allGeo': el => exportAllGeoJson(),
+    'exp:allKml': el => exportAllKml(),
+    'exp:allCsv': el => exportAllCsv(),
+
+    /* ── پشتیبان ── */
+    'backup:export': el => exportBackup(),
+    'backup:importFile': el => document.getElementById('importFile').click(),
+
+    /* ── گزارش پروژه‌ها ── */
+    'rep:open': el => openProjectReport(),
+    'rep:close': el => closeProjectReport(),
+    'rep:csv': el => projectReportCsv(),
+    'rep:print': el => projectReportPrint(),
+
+    /* ── همگام‌سازی دستی ── */
+    'sync:exportOffline': el => syncExport(false),
+    'sync:exportShare': el => syncExport(true),
+    'sync:importFile': el => document.getElementById('syncFile').click(),
+    'sync:copy': el => syncCopy(),
+    'sync:pasteToggle': el => syncPasteToggle(),
+    'sync:pasteApply': el => syncPasteApply(),
+
+    /* ── ابر (Supabase) ── */
+    'gs:test': el => gsTest(),
+    'gs:diag': el => gsDiag(),
+    'gs:push': el => gsPush(true),
+    'gs:pull': el => gsPull(true),
+    'gs:heartbeat': el => gsHeartbeat(true),
+    'gs:beatCopy': el => gsBeatCopyCurl(),
+    'gs:beatDownload': el => gsBeatDownloadWorkflow(),
+    'gs:beatBoost': el => gsBeatBoost(),
+
+    /* ── پشتیبان خودکار ── */
+    'ab:save': el => abSaveNow(),
+    'ab:folder': el => abChooseFolder(),
+    'ab:download': el => abDownload(),
+    'ab:restore': el => abRestore(),
+    'ab:install': el => abInstall(),
+
+    /* ── به‌روزرسانی برنامه ── */
+    'app:check': el => appUpdateCheck(true),
+    'app:force': el => appForceUpdate(),
+
+    /* ── نقشهٔ تعاملی ── */
+    'mp:fitProject': el => MP.fitProject(),
+    'mp:fitAll': el => MP.fitAll(),
+    'mp:fitById': el => MP.fitProjectById(el.dataset.id),
+    'mp:locate': el => MP.locate(),
+    'mp:center': el => MP.centerProject(),
+    'mp:zoomIn': el => MP.zoomBy(1),
+    'mp:zoomOut': el => MP.zoomBy(-1),
+    'mp:toggleLabels': el => MP.toggleLabels(),
+    'mp:togglePanel': el => MP.togglePanel(),
+    'mp:modeMove': el => MP.setMode('move'),
+    'mp:modeAdd': el => MP.setMode('add'),
+    'mp:modeDelete': el => MP.setMode('delete'),
+    'mp:modeOff': el => MP.setMode('off'),
+    'mp:openEdit': el => MP.openEdit(),
+    'mp:endEdit': el => MP.endEdit(),
+    'mp:newPlot': el => MP.startNewPlot(),
+    'mp:newUndo': el => MP.newUndo(),
+    'mp:newSave': el => MP.newSave(),
+    'mp:newCancel': el => MP.newCancel(),
+    'mp:dockAdd': el => MP.dockAdd(),
+    'mp:dockDelete': el => MP.dockDelete(),
+    'mp:deleteArea': el => MP.deleteArea(+el.dataset.id),
+    'mp:downloadView': el => MP.downloadView(),
+    'mp:downloadProject': el => MP.downloadProject(),
+    'mp:downloadById': el => MP.downloadProjectById(el.dataset.id),
+    'mp:downloadAll': el => MP.downloadAll(),
+    'mp:downloadPlot': el => MP.downloadPlot(),
+    'mp:suggestZooms': el => MP.suggestZooms(),
+    'mp:cancelDownload': el => MP.cancelDownload(),
+    'mp:togglePause': el => MP.togglePause(),
+    'mp:resumeJob': el => MP.resumeJob(),
+    'mp:clearJob': el => MP.clearJob(),
+    'mp:speedTest': el => MP.speedTest(),
+    'mp:clearCache': el => MP.clearCache(),
+
+    /* ── حالت صحرا ── */
+    'field:toggle': el => MP.toggleField(),
+    'field:exit': el => MP.toggleField(false),
+    'field:capture': el => MP.fieldCapture(),
+    'field:undo': el => MP.fieldUndo(),
+    'field:finish': el => MP.fieldFinish(),
+    'field:newPlot': el => MP.fieldNewPlot(),
+    'field:auto': el => MP.fieldToggleAuto(),
+
+    /* ── نقشهٔ آفلاین ── */
+    'om:copyCmd': el => copyCmd(),
+    'om:embed': el => document.getElementById('omCmd').value = document.getElementById('omCmd').value + ' --embed',
+  };
+
+
+  /* ── رویداد «تایپ‌شدن» (oninput) ── */
+  const INPUTS = {
+    'proj:field': el => updateField(el.dataset.key, el.value),
+    'plot:field': el => setPlotField(el.dataset.id, el.dataset.key, el.value),
+    'plot:zone': el => setPlotZone(el.dataset.id, el.value),
+    'plot:points': el => updatePlotPoints(el.dataset.id, el.value),
+    'hole:points': el => updateHolePoints(el.dataset.id, +el.dataset.i, el.value),
+    'om:radius': el => setOfflineOpt('radius', el.value),
+  };
+
+  /* ── رویداد «تغییر مقدار» (onchange) ── */
+  const CHANGES = {
+    'gs:saveCfg': el => gsSaveCfg(),
+    'mp:updateEstimate': el => MP.updateEstimate(),
+    'mp:setConc': el => MP.setConc(),
+    'mp:saveTileUrl': el => MP.saveTileUrl(),
+    'mp:setProvider': el => MP.setProvider(el.value),
+    'mp:selectPlot': el => MP.selectPlot(el.value),
+    'plot:mode': el => setPlotMode(el.dataset.id, el.value),
+    'plot:hemisphere': el => setPlotHemisphere(el.dataset.id, el.value),
+    'om:provider': el => setOfflineOpt('provider', el.value),
+    'om:zoom': el => setOfflineOpt('zoom', +el.dataset.zoom),
+    'ab:toggle': el => abToggle(el.checked),
+    'backup:import': el => importBackup(el),
+    'sync:import': el => syncImport(el),
+  };
+
+
+  function runEvent(el, ev, table, attr){
+    const fn = table[el.dataset[attr]];
+    if(!fn){ console.warn('رویداد ناشناخته: ' + el.dataset[attr]); return; }
+    fn(el, ev);
+  }
+
+  function walkEvent(ev, table, attr){
+    let el = ev.target && ev.target.closest ? ev.target.closest('[' + (attr === 'input' ? 'data-input' : 'data-change') + ']') : null;
+    while(el){
+      runEvent(el, ev, table, attr);
+      el = el.parentElement ? el.parentElement.closest('[' + (attr === 'input' ? 'data-input' : 'data-change') + ']') : null;
+    }
+  }
+
+  /* یک شنونده برای همهٔ دکمه‌ها — به‌جای ۹۸ onclick پراکنده */
+  function runAction(el, ev){
+    const fn = ACTIONS[el.dataset.act];
+    if(!fn){ console.warn('کنش ناشناخته: ' + el.dataset.act); return; }
+    fn(el, ev);
+  }
+
+  function wireActions(){
+    document.addEventListener('input',  ev => walkEvent(ev, INPUTS, 'input'));
+    document.addEventListener('change', ev => walkEvent(ev, CHANGES, 'change'));
+    document.addEventListener('click', ev => {
+      let el = ev.target && ev.target.closest ? ev.target.closest('[data-act]') : null;
+      while(el){
+        runAction(el, ev);
+        if(ev.cancelBubble) break;                       // اگر خودش جلوی انتشار را گرفت
+        el = el.parentElement ? el.parentElement.closest('[data-act]') : null;
+      }
+    });
+  }
+
+  /* آخرین کارِ برنامه: وصل‌کردن شنونده. (این فایل آخرین فایل است، پس بعد از
+     بسته‌شدن بلوک نقشه و آماده‌بودن همهٔ تابع‌ها اجرا می‌شود.) */
+  wireActions();
+/* ═══════════ ۹۵ — پنجره‌های پیام ═══════════
+   جای سه تابع مزاحم مرورگر: alert / confirm / prompt.
+   مزیت‌ها: فارسی و راست‌به‌چپ، هم‌شکل بقیهٔ برنامه، روی گوشی کل صفحه را
+   نمی‌پوشاند، و مهم‌تر: از تست قابل بررسی است.
+
+   همه Promise برمی‌گردانند، پس در تابع async این‌طور استفاده می‌شوند:
+       await uiAlert('پیام')
+       if(!(await uiConfirm('حذف شود؟', {danger:true}))) return;
+       const name = await uiPrompt('نام قطعه:', 'قطعه ۱');
+   ═══════════════════════════════════════════════════════════════ */
+
+function uiModal(opt){
+  return new Promise(resolve => {
+    const kind = opt.kind || 'info';
+    const hasCancel = opt.cancel !== false;
+    const hasInput = !!opt.input;
+    let closed = false;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'dlg-wrap';
+    wrap.innerHTML =
+      '<div class="dlg ' + (kind === 'info' ? '' : kind) + '" role="dialog" aria-modal="true">' +
+        '<div class="dlg-h"><span class="ic">' + (kind === 'danger' ? '!' : kind === 'warn' ? '!' : 'i') + '</span>' +
+          '<span class="ttl"></span></div>' +
+        '<div class="dlg-b"><span class="msg"></span>' +
+          (hasInput ? (opt.multiline
+              ? '<textarea class="code" rows="4"></textarea>'
+              : '<input type="text">') : '') +
+          (opt.text ? '<textarea class="code" readonly></textarea>' : '') +
+        '</div>' +
+        '<div class="dlg-f">' +
+          '<button class="primary ok"></button>' +
+          (hasCancel ? '<button class="cancel">انصراف</button>' : '') +
+          (opt.text ? '<span class="sp"></span><button class="copy">کپی</button>' : '') +
+        '</div>' +
+      '</div>';
+
+    const box = wrap.querySelector('.dlg');
+    box.querySelector('.ttl').textContent = opt.title || 'پیام';
+    box.querySelector('.msg').textContent = opt.body || '';
+    const okBtn = box.querySelector('.ok');
+    okBtn.textContent = opt.ok || 'باشه';
+    if (kind === 'danger') okBtn.className = 'danger ok';
+    const cancelBtn = box.querySelector('.cancel');
+    const field = box.querySelector('input, textarea.code');
+    if (field){
+      if (hasInput) field.value = opt.value || '';
+      else field.value = opt.text || '';
+    }
+
+    function done(value){
+      if (closed) return;
+      closed = true;
+      document.removeEventListener('keydown', onKey, true);
+      wrap.remove();
+      resolve(value);
+    }
+    function okValue(){
+      if (hasInput) return field.value;
+      return true;
+    }
+    function onKey(e){
+      if (e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); done(hasInput ? null : false); }
+      else if (e.key === 'Enter' && !opt.multiline){
+        e.preventDefault(); e.stopPropagation(); done(okValue());
+      }
+    }
+
+    okBtn.addEventListener('click', () => done(okValue()));
+    if (cancelBtn) cancelBtn.addEventListener('click', () => done(hasInput ? null : false));
+    const copyBtn = box.querySelector('.copy');
+    if (copyBtn) copyBtn.addEventListener('click', () => {
+      const t = field.value;
+      const ok = () => { copyBtn.textContent = 'کپی شد ✓'; setTimeout(() => copyBtn.textContent = 'کپی', 1500); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(ok).catch(() => { field.select(); ok(); });
+      else { field.select(); ok(); }
+    });
+    wrap.addEventListener('mousedown', e => { if (e.target === wrap) done(hasInput ? null : false); });
+
+    document.addEventListener('keydown', onKey, true);
+    document.body.appendChild(wrap);
+    setTimeout(() => { (hasInput || opt.text ? field : okBtn).focus(); if (field && hasInput) field.select(); }, 30);
+  });
+}
+
+/* پیام ساده — فقط یک دکمه */
+function uiAlert(msg, opt){
+  opt = opt || {};
+  return uiModal({ title: opt.title || 'پیام', body: msg, kind: opt.kind || 'info',
+                   ok: opt.ok || 'باشه', cancel: false });
+}
+
+/* پرسش بله/خیر — مقدار true/false */
+function uiConfirm(msg, opt){
+  opt = opt || {};
+  return uiModal({ title: opt.title || 'تأیید', body: msg, kind: opt.kind || (opt.danger ? 'danger' : 'warn'),
+                   ok: opt.ok || (opt.danger ? 'بله، حذف کن' : 'تأیید'), cancel: true });
+}
+
+/* پرسش متنی — رشته یا null */
+function uiPrompt(msg, value, opt){
+  opt = opt || {};
+  return uiModal({ title: opt.title || 'نام', body: msg, value: value == null ? '' : String(value),
+                   input: true, ok: opt.ok || 'ثبت', cancel: true, multiline: !!opt.multiline });
+}
+
+/* نمایش متنی که باید دستی کپی شود */
+function uiShowText(title, text){
+  return uiModal({ title: title || 'متن قابل کپی', body: 'این متن را کپی کنید:', text: text, ok: 'بستن' });
+}
+
+/* کپی در حافظه — اگر مرورگر نتوانست، پنجرهٔ متن باز می‌شود */
+function uiCopy(text, okText){
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    return navigator.clipboard.writeText(text)
+      .then(() => { if (okText) uiAlert(okText); })
+      .catch(() => uiShowText('کپی دستی', text));
+  }
+  return uiShowText('کپی دستی', text);
+}
 </script>
 <script>
 
