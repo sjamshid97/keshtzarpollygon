@@ -334,6 +334,87 @@
     #mpPanel.hide{transform:translateY(calc(100% + 90px))}
     #mpAttr{display:none}
   }
+
+  /* ═══════════════ ظاهر تازه — نسخهٔ ۱٫۱۱٫۰ ═══════════════ */
+  :root{
+    --green:#16603a; --green2:#2c8a5a; --green-soft:#e7f3ec; --ink:#12241a;
+    --line:#dde5e0; --bg:#f1f5f3; --muted:#5d7468;
+    --shadow:0 1px 2px rgba(16,48,32,.05), 0 10px 26px -16px rgba(16,48,32,.35);
+  }
+  body{-webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility}
+  header.top{
+    position:sticky; top:0; z-index:50; padding:11px 18px 0;
+    background:linear-gradient(135deg,#0d4a2c 0%,#176b43 55%,#2c8a5a 100%);
+    box-shadow:0 8px 22px -12px rgba(7,40,24,.55);
+  }
+  header.top h1{font-size:17px; letter-spacing:-.2px}
+  header.top p{font-size:11.5px; opacity:.85; max-width:980px}
+  .tabs{margin-top:9px; gap:5px}
+  .tab{border-radius:10px 10px 0 0; padding:7px 16px; font-size:12.5px; font-weight:600;
+       background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.22)}
+  .tab:hover{background:rgba(255,255,255,.24)}
+  .wrap{padding:16px 16px 28px}
+  .card{border-radius:14px; border-color:#e4ebe6; padding:16px; box-shadow:var(--shadow)}
+  .card h2{font-size:14px; margin-bottom:12px}
+  input[type=text],input[type=number],textarea,select{
+    border-radius:10px; border-color:#d9e3dd; transition:border-color .15s, box-shadow .15s
+  }
+  input[type=text]:hover,textarea:hover,select:hover{border-color:#bccfc4}
+  input:focus,textarea:focus,select:focus{outline:0; border-color:var(--green2); box-shadow:0 0 0 3px rgba(44,138,90,.15)}
+  button{border-radius:10px; font-weight:600; transition:.15s}
+  button:active{transform:translateY(1px)}
+  button.primary{background:linear-gradient(180deg,#1d7a4c,#14603a); border-color:#14603a; box-shadow:0 1px 2px rgba(9,44,26,.22)}
+  button.primary:hover{background:linear-gradient(180deg,#23895a,#176b43)}
+  .proj-item{border-radius:11px; padding:9px 12px}
+  .proj-item.active{box-shadow:inset 3px 0 0 var(--green2)}
+  .sumtable{font-size:12.5px; border-radius:10px; overflow:hidden}
+  .sumtable th{background:#eaf4ee; font-size:11.5px; position:sticky; top:0; z-index:1}
+  .sumtable td,.sumtable th{padding:6px 8px}
+  .sumtable tbody tr:nth-child(even) td{background:#fafcfb}
+
+  /* کارت‌های آماری */
+  .kpis{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:14px}
+  @media (max-width:820px){ .kpis{grid-template-columns:repeat(2,minmax(0,1fr))} }
+  .kpi{background:#fff; border:1px solid #e4ebe6; border-radius:14px; padding:11px 14px;
+       box-shadow:var(--shadow); display:flex; flex-direction:column; gap:1px; min-width:0}
+  .kpi .l{font-size:11.5px; color:var(--muted)}
+  .kpi .v{font-size:22px; font-weight:800; color:var(--green); line-height:1.35; white-space:nowrap;
+          overflow:hidden; text-overflow:ellipsis; direction:rtl}
+  .kpi .v small{font-size:11.5px; font-weight:600; color:var(--muted)}
+  .kpi.alt{border-color:#efe2c9; background:#fffcf5}
+  .kpi.alt .v{color:#8a5b12}
+
+  /* گروه فیلد */
+  .fieldset{border:1px solid #e6ede9; border-radius:12px; padding:8px 12px 12px; margin-top:10px; background:#fbfdfc}
+  .fieldset .fst{font-size:12px; font-weight:700; color:var(--green); margin:2px 0 4px;
+                 display:flex; align-items:center; gap:6px}
+  .fieldset .fst::before{content:'▍'; color:var(--green2)}
+
+  /* گزارش پروژه‌ها */
+  .rp-wrap{position:fixed; inset:0; background:rgba(9,30,20,.5); z-index:9998;
+           display:none; align-items:center; justify-content:center; padding:14px}
+  .rp-wrap.on{display:flex}
+  .rp{background:#fff; border-radius:16px; width:min(1080px,100%); max-height:92vh;
+      display:flex; flex-direction:column; overflow:hidden;
+      box-shadow:0 30px 70px -24px rgba(6,30,18,.6)}
+  .rp .h{display:flex; align-items:center; gap:10px; padding:13px 16px; border-bottom:1px solid var(--line);
+         background:linear-gradient(180deg,#f6faf7,#fff)}
+  .rp .h h3{margin:0; font-size:15px; color:var(--green)}
+  .rp .h .sp{flex:1}
+  .rp .b{padding:14px 16px; overflow:auto; flex:1}
+  .rp .f{padding:11px 16px; border-top:1px solid var(--line); display:flex; gap:8px; flex-wrap:wrap; background:#fafcfb}
+  .rtable{width:100%; border-collapse:collapse; font-size:12.5px}
+  .rtable th,.rtable td{border:1px solid var(--line); padding:7px 8px; text-align:center; white-space:nowrap}
+  .rtable th{background:#eaf4ee; color:var(--green); font-size:11.5px; position:sticky; top:0}
+  .rtable td.n{text-align:right; font-weight:600}
+  .rtable td.mut{color:var(--muted)}
+  .rtable tbody tr:nth-child(even) td{background:#fafcfb}
+  .rtable tbody tr:hover td{background:#f2f9f5}
+  .rtable tfoot td{background:#eaf4ee; font-weight:800; color:var(--green); border-top:2px solid #c3ddcd}
+  .rp .kpirow{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px}
+  .rp .kpirow .b2{font-size:11.5px; background:#f2f7f4; border:1px solid #e4ebe6; border-radius:20px;
+                  padding:3px 11px; color:var(--muted)}
+  .rp .kpirow .b2 b{color:var(--green); font-size:13px}
 </style>
 </head>
 <body>
@@ -352,6 +433,12 @@
 </header>
 
 <div class="wrap" id="docView">
+  <div class="kpis" id="kpiStrip">
+    <div class="kpi"><span class="l">پروژه‌ها</span><span class="v" id="kpiProj">۰</span></div>
+    <div class="kpi"><span class="l">قطعات</span><span class="v" id="kpiPlots">۰</span></div>
+    <div class="kpi"><span class="l">مساحت کل</span><span class="v" id="kpiArea">۰ <small>هکتار</small></span></div>
+    <div class="kpi alt"><span class="l">آخرین بازدید ثبت‌شده</span><span class="v" id="kpiVisit" style="font-size:15px">—</span></div>
+  </div>
   <div class="grid">
 
     <!-- ستون پروژه‌ها -->
@@ -364,6 +451,7 @@
           <button class="primary" style="flex:1" onclick="addProject()">+ پروژه جدید</button>
         </div>
         <div class="row" style="margin-top:8px">
+          <button class="small primary" onclick="openProjectReport()" style="flex:1">📋 گزارش پروژه‌ها</button>
           <button class="small" onclick="demoData()">پروژه نمونه</button>
           <button class="small" onclick="exportBackup()">پشتیبان JSON</button>
           <button class="small" onclick="document.getElementById('importFile').click()">بازیابی GeoJSON/JSON</button>
@@ -676,7 +764,7 @@
 <script>
 /* ---------- ذخیره‌سازی ---------- */
 const STORE_KEY = 'seed_coord_notebook_v1';
-const APP_VERSION = '1.10.1';   // build-app.py این عدد را با VERSION هم‌تراز می‌کند
+const APP_VERSION = '1.11.0';   // build-app.py این عدد را با VERSION هم‌تراز می‌کند
 let state = { projects: [], activeId: null };
 
 let storageOK = true;
@@ -692,8 +780,8 @@ function load(){
 
 /* ---------- مهر زمانی: کدام قطعه/پروژه تغییر کرده است ---------- */
 const SIG = {};   // id → امضای محتوا
-function sigProject(p){ return JSON.stringify([p.name,p.crop,p.year,p.owner,p.province,p.notes]); }
-function sigPlot(pl){ return JSON.stringify([pl.name,pl.code,pl.variety,pl.seedClass,pl.plantDate,pl.points,pl.holes,pl.locked]); }
+function sigProject(p){ return JSON.stringify([p.name,p.crop,p.year,p.owner,p.province,p.region,p.farmerName,p.farmerPhone,p.farmerCity,p.farmerNationalId,p.farmerAddress,p.notes]); }
+function sigPlot(pl){ return JSON.stringify([pl.name,pl.code,pl.variety,pl.seedClass,pl.plantDate,pl.seedRate,pl.lastVisit,pl.points,pl.holes,pl.locked]); }
 function initHash(){
   Object.keys(SIG).forEach(k=>delete SIG[k]);
   (state.projects||[]).forEach(p=>{
@@ -1114,6 +1202,9 @@ function sumCardHtml(p){
       <td>${(i+1).toLocaleString('fa-IR')}</td>
       <td class="name">${esc(pl.name||('قطعه '+(i+1)))}</td>
       <td>${esc(pl.code||'—')}</td>
+    <td style="white-space:nowrap">${esc(pl.plantDate||'—')}</td>
+    <td dir="ltr">${esc(pl.seedRate||'—')}</td>
+    <td style="white-space:nowrap">${esc(pl.lastVisit||'—')}</td>
       <td dir="ltr">${ok ? faFixed(net/10000, net/10000 < 1 ? 3 : 2) : '—'}</td>
       <td dir="ltr">${ok ? Math.round(net).toLocaleString('fa-IR') : '—'}</td>
       <td>${(pts.length||0).toLocaleString('fa-IR')}</td>
@@ -1137,11 +1228,13 @@ function sumCardHtml(p){
     <div style="overflow:auto">
       <table class="sumtable">
         <thead><tr>
-          <th>#</th><th>نام قطعه</th><th>کد</th><th>مساحت (هکتار)</th><th>مساحت (م²)</th>
+          <th>#</th><th>نام قطعه</th><th>کد</th><th>تاریخ کشت</th><th>بذر (kg/ha)</th><th>آخرین بازدید</th>
+          <th>مساحت (هکتار)</th><th>مساحت (م²)</th>
           <th>رأس</th><th>حفره</th><th>مرکز (عرض، طول)</th><th>خروجی</th>
         </tr></thead>
         <tbody>${rows}
           <tr class="total"><td colspan="3">مجموع پروژه</td>
+            <td colspan="3">${avgSeedText(p)}</td>
             <td dir="ltr">${faFixed(totalHa, 2)}</td>
             <td dir="ltr">${Math.round(totalM2).toLocaleString('fa-IR')}</td>
             <td colspan="4">${completePlots.toLocaleString('fa-IR')} قطعهٔ کامل</td></tr>
@@ -1180,6 +1273,7 @@ function refreshSumCard(now){
 }
 
 function render(){
+  try{ renderKPIs(); }catch(e){}
   // لیست پروژه‌ها
   const list = document.getElementById('projList');
   document.getElementById('projCount').textContent = state.projects.length;
@@ -1219,7 +1313,22 @@ function render(){
           </div>
           <div class="row">
             <div style="flex:1"><label>تولیدکننده / شرکت</label><input type="text" value="${escAttr(p.owner)}" oninput="updateField('owner',this.value)"></div>
-            <div style="flex:1"><label>استان / شهرستان</label><input type="text" value="${escAttr(p.province)}" oninput="updateField('province',this.value)"></div>
+            <div style="flex:1"><label>استان</label><input type="text" value="${escAttr(p.province)}" oninput="updateField('province',this.value)" placeholder="مثلاً خراسان رضوی"></div>
+            <div style="flex:1"><label>شهرستان / منطقه</label><input type="text" value="${escAttr(p.region||'')}" oninput="updateField('region',this.value)" placeholder="مثلاً نیشابور"></div>
+          </div>
+          <div class="fieldset">
+            <div class="fst">کشاورز (بهره‌بردار)</div>
+            <div class="row">
+              <div style="flex:1.4"><label>نام و نام خانوادگی</label><input type="text" value="${escAttr(p.farmerName||'')}" oninput="updateField('farmerName',this.value)" placeholder="مثلاً محمد رضایی"></div>
+              <div style="flex:1"><label>شماره تماس</label><input type="text" inputmode="tel" value="${escAttr(p.farmerPhone||'')}" oninput="updateField('farmerPhone',this.value)" placeholder="۰۹۱۲۳۴۵۶۷۸۹" style="direction:ltr; text-align:right"></div>
+            </div>
+            <div class="row">
+              <div style="flex:1"><label>شهرستان / روستا</label><input type="text" value="${escAttr(p.farmerCity||'')}" oninput="updateField('farmerCity',this.value)" placeholder="روستای…"></div>
+              <div style="flex:1"><label>کد ملی / شناسهٔ بهره‌بردار</label><input type="text" inputmode="numeric" value="${escAttr(p.farmerNationalId||'')}" oninput="updateField('farmerNationalId',this.value)" placeholder="۱۰ رقم" style="direction:ltr; text-align:right"></div>
+            </div>
+            <label>آدرس کامل</label>
+            <textarea style="min-height:52px; direction:rtl; text-align:right; font-family:inherit; font-size:13px"
+              oninput="updateField('farmerAddress',this.value)" placeholder="روستا، بخش، نشانی پستی…">${esc(p.farmerAddress||'')}</textarea>
           </div>
           <label>توضیحات (شماره مجوز، طبقه بذری، نام ناظر…)</label>
           <textarea style="min-height:60px; direction:rtl; text-align:right; font-family:inherit; font-size:13px"
@@ -1267,7 +1376,9 @@ function render(){
           </div>
           <div class="row">
             <div style="flex:1"><label>طبقه بذری</label><input type="text" value="${escAttr(pl.seedClass)}" oninput="setPlotField('${pl.id}','seedClass',this.value)" placeholder="پرورش مادری / گواهی‌شده"></div>
-            <div style="flex:1"><label>تاریخ کاشت</label><input type="text" value="${escAttr(pl.plantDate)}" oninput="setPlotField('${pl.id}','plantDate',this.value)" placeholder="۱۴۰۴/۱۰/۱۵"></div>
+            <div style="flex:1"><label>تاریخ کشت</label><input type="text" value="${escAttr(pl.plantDate)}" oninput="setPlotField('${pl.id}','plantDate',this.value)" placeholder="۱۴۰۴/۱۰/۱۵"></div>
+            <div style="flex:1"><label>بذر مصرفی (کیلوگرم در هکتار)</label><input type="text" inputmode="decimal" value="${escAttr(pl.seedRate||'')}" oninput="setPlotField('${pl.id}','seedRate',this.value)" placeholder="مثلاً ۱۲۰" style="direction:ltr; text-align:right"></div>
+            <div style="flex:1"><label>آخرین بازدید</label><input type="text" value="${escAttr(pl.lastVisit||'')}" oninput="setPlotField('${pl.id}','lastVisit',this.value)" placeholder="۱۴۰۵/۰۸/۱۰"></div>
           </div>
           <label>مختصات (هر خط یک نقطه: عرض جغرافیایی، طول جغرافیایی)</label>
           <textarea data-ring="outer" oninput="updatePlotPoints('${pl.id}', this.value)" spellcheck="false"
@@ -2734,7 +2845,7 @@ function addPlot(){
   const p = activeProject(); if(!p) return;
   const name = prompt('نام قطعه:', 'قطعه ' + (p.plots.length+1));
   if(name === null) return;
-  p.plots.push({ id:uid(), name: name || ('قطعه '+(p.plots.length+1)), code:'', variety:'', seedClass:'', plantDate:'',
+  p.plots.push({ id:uid(), name: name || ('قطعه '+(p.plots.length+1)), code:'', variety:'', seedClass:'', plantDate:'', seedRate:'', lastVisit:'',
     points:[], holes:[], mode:'geo', zone:40, north:true, warnings:[], raw:'', locked:false });
   save(); render();
 }
@@ -3199,7 +3310,7 @@ function importGeoJson(data, fallbackName){
       code: pr.plot_code || pr.code || '',
       variety: pr.variety || '',
       seedClass: pr.seed_class || pr.seedClass || '',
-      plantDate: pr.plant_date || '',
+      plantDate: pr.plant_date || '', seedRate: pr.seed_rate || pr.seedRate || '', lastVisit: pr.last_visit || pr.lastVisit || '',
       points: pts,
       holes: holes,
       locked: false,
@@ -3233,7 +3344,8 @@ function printProject(){
   <style>body{font-family:Tahoma,sans-serif;font-size:12px;padding:18px;line-height:1.9}
   h1{font-size:16px;border-bottom:2px solid #1f6f43;padding-bottom:6px}
   table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border:1px solid #bbb;padding:5px;text-align:center}
-  th{background:#e8f3ec}.meta{background:#f7f7f7;border:1px solid #ddd;padding:8px;border-radius:6px}</style></head><body>
+  th{background:#e8f3ec}.meta{background:#f7f7f7;border:1px solid #ddd;padding:8px;border-radius:6px}
+</style></head><body>
   <h1>فهرست زمین‌های تولید بذر گواهی‌شده — ${esc(p.name)}</h1>
   <div class="meta">محصول: ${esc(p.crop||'-')} &nbsp;|&nbsp; سال زراعی: ${esc(p.year||'-')} &nbsp;|&nbsp; تولیدکننده: ${esc(p.owner||'-')} &nbsp;|&nbsp; استان/شهرستان: ${esc(p.province||'-')}<br>
   توضیحات: ${esc(p.notes||'-')}<br>تاریخ چاپ: ${new Date().toLocaleDateString('fa-IR')}</div>
@@ -3253,23 +3365,201 @@ function printProject(){
 function demoData(){
   const pts = [[35.7012,51.4021],[35.7019,51.4045],[35.7001,51.4050],[35.6995,51.4028]];
   const pts2 = [[35.6980,51.4100],[35.6990,51.4125],[35.6975,51.4131]];
-  const p = { id:uid(), name:'گندم – مزرعه نمونه', crop:'گندم', year:'۱۴۰۵-۱۴۰۴', owner:'شرکت نمونه', province:'تهران / ورامین',
+  const p = { id:uid(), name:'گندم – مزرعه نمونه', crop:'گندم', year:'۱۴۰۵-۱۴۰۴', owner:'شرکت نمونه',
+    province:'تهران', region:'ورامین', farmerName:'محمد رضایی', farmerPhone:'۰۹۱۲۳۴۵۶۷۸۹',
+    farmerCity:'ورامین — روستای نمونه', farmerNationalId:'0012345678',
+    farmerAddress:'ورامین، بخش مرکزی، روستای نمونه، پلاک ۱۲',
     notes:'طبقه بذری مادری — مجوز شماره …', createdAt: Date.now(), plots:[
-    { id:uid(), name:'قطعه شمالی', code:'03', variety:'چمران', seedClass:'پرورش مادری', plantDate:'۱۴۰۴/۱۰/۱۵', points:pts,
+    { id:uid(), name:'قطعه شمالی', code:'03', variety:'چمران', seedClass:'پرورش مادری', plantDate:'۱۴۰۴/۱۰/۱۵',
+      seedRate:'۱۲۰', lastVisit:'۱۴۰۵/۰۸/۱۰', points:pts,
       holes:[[[35.7008,51.4033],[35.7009,51.4039],[35.7005,51.4040],[35.7004,51.4034]]], mode:'geo', zone:40, north:true, warnings:[], raw:'', locked:false },
-    { id:uid(), name:'قطعه جنوبی', code:'04', variety:'چمران', seedClass:'پرورش مادری', plantDate:'۱۴۰۴/۱۰/۲۰', points:pts2, holes:[], mode:'geo', zone:40, north:true, warnings:[], raw:'', locked:false }
+    { id:uid(), name:'قطعه جنوبی', code:'04', variety:'چمران', seedClass:'پرورش مادری', plantDate:'۱۴۰۴/۱۰/۲۰',
+      seedRate:'۱۰۵', lastVisit:'۱۴۰۵/۰۷/۲۸', points:pts2, holes:[], mode:'geo', zone:40, north:true, warnings:[], raw:'', locked:false }
   ]};
   state.projects.push(p); state.activeId = p.id;
   save(); render();
 }
 
-/* ---------- شروع ---------- */
-load();
-if(!storageOK) showStorageWarning();
-if(!state.activeId && state.projects[0]) state.activeId = state.projects[0].id;
-render();
-</script>
-<script>
+/* ═══════════════════════════════════════════════════════════════
+   نسخهٔ ۱٫۱۱٫۰ — کارت‌های آماری + گزارش لیست پروژه‌ها
+   ═══════════════════════════════════════════════════════════════ */
+function numFa(n, d){
+  const x = (typeof d === 'number') ? n.toFixed(d) : String(n);
+  return Number(x).toLocaleString('fa-IR', (typeof d === 'number') ? {minimumFractionDigits:d, maximumFractionDigits:d} : undefined);
+}
+function gDateKey(s){
+  const k = (typeof latinDigits === 'function' ? latinDigits(String(s||'')) : String(s||'')).replace(/[^0-9]/g, '');
+  return k;
+}
+function plotSeed(pl){
+  const raw = (typeof latinDigits === 'function' ? latinDigits(String(pl.seedRate||'')) : String(pl.seedRate||''));
+  const v = parseFloat(raw.replace(/[^0-9.]/g, ''));
+  return isNaN(v) ? null : v;
+}
+function projectStats(p){
+  const plots = p.plots || [];
+  let m2 = 0, seedSum = 0, seedN = 0, last = '', lastKey = '', from = '', to = '', fromKey = '', toKey = '';
+  plots.forEach(pl => {
+    try{ m2 += netAreaM2(pl); }catch(e){}
+    const s = plotSeed(pl); if(s !== null && s > 0){ seedSum += s; seedN++; }
+    const d = (pl.plantDate||'').trim(), dk = gDateKey(d);
+    if(d){ if(!fromKey || dk < fromKey){ fromKey = dk; from = d; } if(dk > toKey){ toKey = dk; to = d; } }
+    const v = (pl.lastVisit||'').trim(), vk = gDateKey(v);
+    if(v){ if(!lastKey || vk > lastKey){ lastKey = vk; last = v; } }
+  });
+  return { plots: plots.length, ha: m2/10000, m2,
+           seedAvg: seedN ? seedSum/seedN : null, seedN,
+           plantFrom: from, plantTo: to, last };
+}
+function avgSeedText(p){
+  const st = projectStats(p);
+  if(st.seedAvg === null) return 'بذر: —';
+  return 'میانگین بذر: ' + numFa(st.seedAvg, 0) + ' kg/ha';
+}
+function renderKPIs(){
+  const ps = (typeof state !== 'undefined' && state.projects) ? state.projects : [];
+  let plots = 0, m2 = 0, last = '', lastKey = '';
+  ps.forEach(p => (p.plots||[]).forEach(pl => {
+    plots++;
+    try{ m2 += netAreaM2(pl); }catch(e){}
+    const v = (pl.lastVisit||'').trim(), vk = gDateKey(v);
+    if(v && vk > lastKey){ lastKey = vk; last = v; }
+  }));
+  const put = (id, html) => { const el = document.getElementById(id); if(el) el.innerHTML = html; };
+  put('kpiProj',  numFa(ps.length));
+  put('kpiPlots', numFa(plots));
+  put('kpiArea',  numFa(m2/10000, 2) + ' <small>هکتار</small>');
+  put('kpiVisit', last ? last : '—');
+}
+
+/* ---------- گزارش لیست پروژه‌ها ---------- */
+function reportData(){
+  return (state.projects||[]).map(p => ({ p, st: projectStats(p) }));
+}
+function reportTableHTML(){
+  const rows = reportData();
+  if(!rows.length) return '<div class="empty">هنوز پروژه‌ای ثبت نشده است.</div>';
+  let ha = 0, plots = 0;
+  rows.forEach(r => { ha += r.st.ha; plots += r.st.plots; });
+  const body = rows.map((r, i) => {
+    const p = r.p, st = r.st;
+    const region = [p.province||'', p.region||''].filter(Boolean).join(' / ') || '—';
+    const plant = (st.plantFrom && st.plantTo && st.plantFrom !== st.plantTo)
+      ? st.plantFrom + ' – ' + st.plantTo : (st.plantFrom || '—');
+    return '<tr>' +
+      '<td>' + numFa(i+1) + '</td>' +
+      '<td class="n">' + esc(p.name||'—') + '</td>' +
+      '<td>' + esc(p.crop||'—') + '</td>' +
+      '<td>' + esc(region) + '</td>' +
+      '<td>' + esc(p.farmerName||'—') + '</td>' +
+      '<td dir="ltr" class="mut">' + esc(p.farmerPhone||'—') + '</td>' +
+      '<td dir="ltr">' + (st.ha ? numFa(st.ha, 2) : '—') + '</td>' +
+      '<td>' + numFa(st.plots) + '</td>' +
+      '<td style="white-space:nowrap">' + esc(plant) + '</td>' +
+      '<td dir="ltr">' + (st.seedAvg === null ? '—' : numFa(st.seedAvg, 0)) + '</td>' +
+      '<td style="white-space:nowrap">' + esc(st.last||'—') + '</td>' +
+      '</tr>';
+  }).join('');
+  const head = '<tr><th>#</th><th>نام پروژه / پرونده</th><th>محصول</th><th>منطقه (استان / شهرستان)</th>' +
+               '<th>کشاورز</th><th>تماس</th><th>مساحت (هکتار)</th><th>قطعه</th>' +
+               '<th>تاریخ کشت</th><th>بذر (kg/ha)</th><th>آخرین بازدید</th></tr>';
+  const foot = '<tr><td colspan="6">مجموع ' + numFa(rows.length) + ' پروژه</td>' +
+               '<td dir="ltr">' + numFa(ha, 2) + '</td><td>' + numFa(plots) + '</td>' +
+               '<td colspan="3">—</td></tr>';
+  return '<table class="rtable"><thead>' + head + '</thead><tbody>' + body + '</tbody><tfoot>' + foot + '</tfoot></table>';
+}
+function openProjectReport(){
+  const old = document.getElementById('rpWrap'); if(old) old.remove();
+  const rows = reportData();
+  let ha = 0, plots = 0, visited = 0;
+  rows.forEach(r => { ha += r.st.ha; plots += r.st.plots; if(r.st.last) visited++; });
+  const wrap = document.createElement('div');
+  wrap.className = 'rp-wrap on'; wrap.id = 'rpWrap';
+  wrap.innerHTML =
+    '<div class="rp" role="dialog" aria-modal="true" aria-label="گزارش پروژه‌ها">' +
+      '<div class="h"><h3>📋 گزارش پروژه‌ها</h3><span class="sp"></span>' +
+        '<button class="small" onclick="closeProjectReport()">✕ بستن</button></div>' +
+      '<div class="b">' +
+        '<div class="kpirow">' +
+          '<span class="b2">پروژه: <b>' + numFa(rows.length) + '</b></span>' +
+          '<span class="b2">قطعه: <b>' + numFa(plots) + '</b></span>' +
+          '<span class="b2">مساحت کل: <b>' + numFa(ha, 2) + ' هکتار</b></span>' +
+          '<span class="b2">دارای آخرین بازدید: <b>' + numFa(visited) + ' از ' + numFa(rows.length) + '</b></span>' +
+        '</div>' +
+        '<div style="overflow:auto">' + reportTableHTML() + '</div>' +
+        '<div class="hint" style="margin-top:8px">مساحت‌ها خالص (بدون حفره‌ها) است. «تاریخ کشت» بازهٔ قطعات همان پروژه و «بذر» میانگین قطعات است.</div>' +
+      '</div>' +
+      '<div class="f">' +
+        '<button class="primary" onclick="projectReportPrint()">🖨 چاپ / PDF</button>' +
+        '<button onclick="projectReportCsv()">⬇ CSV (اکسل)</button>' +
+        '<span class="sp" style="flex:1"></span>' +
+        '<button onclick="closeProjectReport()">بستن</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(wrap);
+  wrap.addEventListener('mousedown', e => { if(e.target === wrap) closeProjectReport(); });
+  wrap.__esc = e => { if(e.key === 'Escape') closeProjectReport(); };
+  document.addEventListener('keydown', wrap.__esc);
+}
+function closeProjectReport(){
+  const w = document.getElementById('rpWrap');
+  if(w){ if(w.__esc) document.removeEventListener('keydown', w.__esc); w.remove(); }
+}
+function projectReportCsv(){
+  const rows = reportData();
+  const head = ['ردیف','نام پروژه','محصول','استان','شهرستان/منطقه','کشاورز','تلفن','مساحت (هکتار)','تعداد قطعه','تاریخ کشت از','تاریخ کشت تا','بذر میانگین (kg/ha)','آخرین بازدید'];
+  const lines = [head.join(',')];
+  rows.forEach((r, i) => {
+    const p = r.p, st = r.st;
+    const q = v => '"' + String(v === undefined || v === null ? '' : v).replace(/"/g, '""') + '"';
+    const lat = s => (typeof latinDigits === 'function' ? latinDigits(String(s||'')) : String(s||''));
+    lines.push([
+      i+1, q(p.name||''), q(p.crop||''), q(p.province||''), q(p.region||''), q(p.farmerName||''), q(lat(p.farmerPhone)),
+      st.ha ? st.ha.toFixed(2) : '', st.plots, q(lat(st.plantFrom)), q(lat(st.plantTo)),
+      st.seedAvg === null ? '' : st.seedAvg.toFixed(0), q(lat(st.last))
+    ].join(','));
+  });
+  const name = 'گزارش-پروژه‌ها_' + ((typeof stamp === 'function') ? stamp() : Date.now()) + '.csv';
+  download(name, '\ufeff' + lines.join('\r\n'), 'text/csv;charset=utf-8');
+  if(typeof toast === 'function') toast('گزارش CSV ذخیره شد');
+}
+function projectReportPrint(){
+  const rows = reportData();
+  let ha = 0, plots = 0;
+  rows.forEach(r => { ha += r.st.ha; plots += r.st.plots; });
+  const body = rows.map((r, i) => {
+    const p = r.p, st = r.st;
+    const region = [p.province||'', p.region||''].filter(Boolean).join(' / ') || '-';
+    const plant = (st.plantFrom && st.plantTo && st.plantFrom !== st.plantTo)
+      ? st.plantFrom + ' – ' + st.plantTo : (st.plantFrom || '-');
+    const lat = s => (typeof latinDigits === 'function' ? latinDigits(String(s||'')) : String(s||''));
+    return '<tr><td>' + (i+1) + '</td><td class="r">' + esc(p.name||'-') + '</td><td>' + esc(p.crop||'-') + '</td>' +
+      '<td>' + esc(region) + '</td><td>' + esc(p.farmerName||'-') + '</td><td dir="ltr">' + esc(lat(p.farmerPhone)) + '</td>' +
+      '<td>' + (st.ha ? st.ha.toFixed(2) : '-') + '</td><td>' + st.plots + '</td>' +
+      '<td>' + esc(lat(plant)) + '</td><td>' + (st.seedAvg === null ? '-' : st.seedAvg.toFixed(0)) + '</td>' +
+      '<td>' + esc(lat(st.last||'-')) + '</td></tr>';
+  }).join('');
+  const win = window.open('', '_blank');
+  if(!win){ if(typeof toast === 'function') toast('مرورگر پنجرهٔ چاپ را بست'); return; }
+  win.document.write('<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>گزارش پروژه‌ها</title>' +
+    '<style>body{font-family:Tahoma,sans-serif;font-size:11.5px;padding:16px;line-height:1.8}' +
+    'h1{font-size:15px;border-bottom:2px solid #16603a;padding-bottom:6px;margin:0 0 4px}' +
+    '.sub{font-size:11px;color:#555;margin-bottom:10px}' +
+    'table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:4px 5px;text-align:center}' +
+    'th{background:#e9f3ed}td.r{text-align:right}tfoot td{background:#e9f3ed;font-weight:700}' +
+    '@page{size:A4 landscape;margin:10mm}</style></head><body>' +
+    '<h1>گزارش پروژه‌ها — دفترچهٔ مختصات زمین‌های تولید بذر</h1>' +
+    '<div class="sub">تاریخ گزارش: ' + new Date().toLocaleDateString('fa-IR') + ' &nbsp;|&nbsp; ' + rows.length + ' پروژه &nbsp;|&nbsp; ' + plots + ' قطعه &nbsp;|&nbsp; مجموع ' + ha.toFixed(2) + ' هکتار</div>' +
+    '<table><thead><tr><th>#</th><th>نام پروژه</th><th>محصول</th><th>منطقه</th><th>کشاورز</th><th>تماس</th>' +
+    '<th>مساحت (هکتار)</th><th>قطعه</th><th>تاریخ کشت</th><th>بذر (kg/ha)</th><th>آخرین بازدید</th></tr></thead>' +
+    '<tbody>' + body + '</tbody>' +
+    '<tfoot><tr><td colspan="6">مجموع</td><td>' + ha.toFixed(2) + '</td><td>' + plots + '</td><td colspan="3">-</td></tr></tfoot>' +
+    '</table><div class="sub" style="margin-top:8px">مساحت‌ها خالص (بدون حفره) — طراحی و توسعه: سجاد جمشیدپور</div>' +
+    '</body></html>');
+  win.document.close();
+  setTimeout(() => { try{ win.focus(); win.print(); }catch(e){} }, 350);
+}
+
 
 /* ============================================================
    MP — نقشهٔ تعاملی ادغام‌شده (داده را مستقیم از state می‌خواند)
@@ -4129,7 +4419,7 @@ const MP = (function(){
     if(DRAFT.pts.length < 3) return toast('حداقل ۳ نقطه لازم است');
     const proj = ensureProject();
     const pl = { id: uid(), name:'قطعه ' + ((proj.plots||[]).length + 1), code:'', variety:'', seedClass:'',
-      plantDate:'', points: DRAFT.pts.map(p=>[+p[0].toFixed(7), +p[1].toFixed(7)]), holes: [], mode:'geo',
+      plantDate:'', seedRate:'', lastVisit:'', points: DRAFT.pts.map(p=>[+p[0].toFixed(7), +p[1].toFixed(7)]), holes: [], mode:'geo',
       zone: 40, north: true, warnings: [], raw:'', locked:false, updatedAt: Date.now() };
     proj.plots.push(pl);
     DRAFT.on = false; DRAFT.pts = [];
@@ -4859,7 +5149,7 @@ const MP = (function(){
     if(state.activeId !== proj.id){ state.activeId = proj.id; }
     const n = (proj.plots||[]).length + 1;
     const pl = { id: (typeof uid === 'function' ? uid() : ('pl' + Date.now())), name: 'قطعهٔ ' + n.toLocaleString('fa-IR'),
-      code:'', variety:'', seedClass:'', plantDate:'', points:[], holes:[], mode:'geo', zone:40, north:true,
+      code:'', variety:'', seedClass:'', plantDate:'', seedRate:'', lastVisit:'', points:[], holes:[], mode:'geo', zone:40, north:true,
       warnings:[], raw:'', locked:false };
     (proj.plots = proj.plots || []).push(pl);
     save(); if(typeof render==='function') render();
@@ -5018,6 +5308,14 @@ function setView(v){
   }
 }
 MP.init();
+
+/* ---------- شروع ---------- */
+load();
+if(!storageOK) showStorageWarning();
+if(!state.activeId && state.projects[0]) state.activeId = state.projects[0].id;
+render();
+</script>
+<script>
 
 </script>
 </body>
