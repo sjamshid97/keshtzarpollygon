@@ -1,6 +1,6 @@
-/* Service Worker — دفترچهٔ مختصات قطعات (نسخه 1.11.0)
+/* Service Worker — دفترچهٔ مختصات قطعات (نسخه 1.12.0)
    هدف: باز شدن برنامه بدون اینترنت. کاشی‌های نقشه در IndexedDB خود برنامه ذخیره می‌شوند. */
-const CACHE = 'seedcoord-v1.11.0';
+const CACHE = 'seedcoord-v1.12.1';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {
