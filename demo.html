@@ -885,6 +885,9 @@
           <button class="small primary u-flex1" data-act="gs:pull">دریافت از سرور</button>
         </div>
         <div class="row u-mt6">
+          <button class="small" data-act="gs:restoreVisit">رفع اختلاف: بازگرداندن بازدید</button>
+        </div>
+        <div class="row u-mt6">
           <label class="u-check-row">
             <input class="u-wauto" type="checkbox" id="gsAuto" data-change="gs:saveCfg">
             همگام‌سازی خودکار (هر تغییر ↑ و هر بار باز شدن ↓)
@@ -1131,7 +1134,7 @@
 <script>
 /* ---------- ذخیره‌سازی ---------- */
 const STORE_KEY = 'seed_coord_notebook_demo_v1';
-const APP_VERSION = '2.1.1';   // build-app.py این عدد را با VERSION هم‌تراز می‌کند
+const APP_VERSION = '2.1.2';   // build-app.py این عدد را با VERSION هم‌تراز می‌کند
 let state = { projects: [], activeId: null };
 
 let storageOK = true;
@@ -2430,9 +2433,18 @@ function vNow(){ try{ return new Date().toLocaleTimeString('fa-IR', { hour:'2-di
 function vFa(n){ return Number(n).toLocaleString('fa-IR'); }
 
 // سابقهٔ محدودِ اثرانگشت برای تشخیص ویرایش هم‌زمان؛ نمونهٔ آزمایشی
+function vCanonical(value){
+  if(Array.isArray(value)) return value.map(vCanonical);
+  if(value && typeof value === 'object'){
+    const out = {};
+    Object.keys(value).sort().forEach(k => { out[k] = vCanonical(value[k]); });
+    return out;
+  }
+  return value;
+}
 function vRevision(v){
   const copy = Object.assign({}, v); delete copy.touch; delete copy._anc;
-  const s = JSON.stringify(copy); let a = 2166136261, b = 2246822519;
+  const s = JSON.stringify(vCanonical(copy)); let a = 2166136261, b = 2246822519;
   for(let i=0; i<s.length; i++){ a=Math.imul(a ^ s.charCodeAt(i),16777619); b=Math.imul(b ^ s.charCodeAt(i),3266489917); }
   return (a>>>0).toString(16) + ':' + (b>>>0).toString(16) + ':' + s.length;
 }
@@ -3854,6 +3866,57 @@ async function gsDiag(){
 function atobSafe(t){
   try{ return decodeURIComponent(escape(atob(String(t).split('.')[1] || ''))); }catch(e){ return ''; }
 }
+/* با تأیید کاربر، یک بازدید حذف‌شدهٔ محلی از سرور به همین دستگاه بازمی‌گردد.
+   هیچ داده‌ای روی سرور نوشته یا حذف نمی‌شود. */
+async function gsRestoreVisit(){
+  if(!gsReady()) return uiAlert('اول تنظیمات سرور را وارد کنید.');
+  if(GS.busy || GS.pulling) return uiAlert('همگام‌سازی در حال انجام است؛ کمی صبر کنید.');
+  GS.pulling=true;
+  try{
+    const data=await cloudPull();
+    if(!data || !data.state || !Array.isArray(data.state.projects)) return uiAlert('دادهٔ سرور برای بررسی در دسترس نیست.');
+    let candidate=null;
+    for(const rp of data.state.projects){
+      const lp=(state.projects||[]).find(p=>p.id===rp.id); if(!lp) continue;
+      for(const rpl of rp.plots||[]){
+        const lpl=(lp.plots||[]).find(p=>p.id===rpl.id); if(!lpl) continue;
+        for(const v of rpl.visits||[]){
+          if(!v || !v.id || (lpl.visits||[]).some(x=>x.id===v.id)) continue;
+          const graves=(lpl.visitGrave||[]).filter(g=>g.id===v.id);
+          if(graves.length && !graves.some(g=>vDeletedMatches(g,v))){ candidate={lp,lpl,v,pid:rp.id,plotid:rpl.id}; break; }
+        }
+        if(candidate) break;
+      }
+      if(candidate) break;
+    }
+    if(!candidate) return uiAlert('بازدید حذف‌شدهٔ محلی که با نسخهٔ سرور اختلاف داشته باشد پیدا نشد. در صورت ادامهٔ خطا، از هر دو دستگاه پشتیبان بگیرید.');
+    const {lp,lpl,v,pid,plotid}=candidate;
+    const f=v.f||{};
+    const details='پروژه: '+(lp.name||'—')+'\nقطعه: '+(lpl.name||'—')+'\nتاریخ: '+(f.date||'—')+' · ساعت: '+(f.time||'—')+
+      '\nنوع: '+(f.type||'—')+'\nعکس: '+(v.photos||[]).length+' · امضا: '+(v.sig?'ثبت شده':'ثبت نشده')+
+      '\n\nاین بازدید روی این دستگاه علامت حذف دارد ولی در سرور هست. آیا نسخهٔ سرور به همین دستگاه برگردد؟'+
+      '\nهیچ بازدیدی از سرور حذف نمی‌شود. فایل عکس و تصویر امضا نیز با سرور منتقل نمی‌شوند.';
+    if(!(await uiConfirm(details,{title:'بازگرداندن بازدید',ok:'بازگردانی بازدید'}))) return;
+    // پس از تأیید، همان بازدید را دوباره از سرور بخوان؛ اگر عوض شده حدس نزن.
+    const latest=await cloudPull();
+    const currentP=((latest&&latest.state&&latest.state.projects)||[]).find(p=>p.id===pid);
+    const currentPl=(currentP&&currentP.plots||[]).find(p=>p.id===plotid);
+    const current=(currentPl&&currentPl.visits||[]).find(x=>x.id===v.id);
+    const localP=(state.projects||[]).find(p=>p.id===pid);
+    const localPl=(localP&&localP.plots||[]).find(p=>p.id===plotid);
+    if(!current || !localPl || vRevision(current)!==vRevision(v)) return uiAlert('بازدید سرور تغییر کرد؛ هیچ اقدامی نشد. دوباره بررسی کنید.');
+    if((localPl.visits||[]).some(x=>x.id===v.id)) return uiAlert('این بازدید از قبل روی دستگاه موجود است؛ تغییری انجام نشد.');
+    if(!(localPl.visitGrave||[]).some(g=>g.id===v.id)) return uiAlert('وضعیت حذف روی دستگاه عوض شده است؛ تغییری انجام نشد.');
+    localPl.visitGrave=(localPl.visitGrave||[]).filter(g=>g.id!==v.id);
+    localPl.visits=localPl.visits||[];
+    localPl.visits.push(JSON.parse(JSON.stringify(current)));
+    save(true); render();
+    gsRender('بازدید روی این دستگاه بازگردانده شد؛ برای همگام‌سازی، پس از بررسی بازدید «ارسال به سرور» را بزنید.');
+    uiAlert('بازدید به این دستگاه بازگردانده شد. سرور تغییری نکرده است.');
+  }catch(e){ gsRender('⚠ بررسی ناموفق: '+escSync(gsHumanErr(e))); uiAlert('بازگردانی انجام نشد؛ اتصال و وضعیت سرور را بررسی کنید.'); }
+  finally{ GS.pulling=false; }
+}
+
 async function gsPull(manual){
   if(!gsReady()){ if(manual) uiAlert('اول آدرس سرویس و کدِ همگام‌سازی را وارد کنید.'); return; }
   if(GS.pulling) return;
@@ -6835,6 +6898,7 @@ render();
     'gs:diag': el => gsDiag(),
     'gs:push': el => gsPush(true),
     'gs:pull': el => gsPull(true),
+    'gs:restoreVisit': el => gsRestoreVisit(),
     'gs:heartbeat': el => gsHeartbeat(true),
     'gs:beatCopy': el => gsBeatCopyCurl(),
     'gs:beatDownload': el => gsBeatDownloadWorkflow(),
