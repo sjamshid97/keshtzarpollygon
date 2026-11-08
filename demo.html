@@ -1131,7 +1131,7 @@
 <script>
 /* ---------- ذخیره‌سازی ---------- */
 const STORE_KEY = 'seed_coord_notebook_demo_v1';
-const APP_VERSION = '2.1.0';   // build-app.py این عدد را با VERSION هم‌تراز می‌کند
+const APP_VERSION = '2.1.1';   // build-app.py این عدد را با VERSION هم‌تراز می‌کند
 let state = { projects: [], activeId: null };
 
 let storageOK = true;
@@ -1148,7 +1148,16 @@ function load(){
 /* ---------- مهر زمانی: کدام قطعه/پروژه تغییر کرده است ---------- */
 const SIG = {};   // id → امضای محتوا
 function sigProject(p){ return JSON.stringify([p.name,p.crop,p.year,p.owner,p.province,p.region,p.farmerName,p.farmerPhone,p.farmerCity,p.farmerNationalId,p.farmerAddress,p.notes]); }
-function sigPlot(pl){ return JSON.stringify([pl.name,pl.code,pl.variety,pl.seedClass,pl.plantDate,pl.seedRate,pl.lastVisit,pl.points,pl.holes,pl.locked]); }
+/* اثر انگشت بازدیدها — بدون مهر زمانی، تا فقط تغییر «محتوا» دیده شود */
+function visitsSig(pl){
+  const vs = (pl && pl.visits) || [];
+  if(!vs.length) return '0';
+  const s = JSON.stringify(vs.map(v => ({ id:v.id, f:v.f, p:v.pests, s:v.samples, r:v.recs, n:(v.photos||[]).length, g:v.sig })));
+  let h = 2166136261;
+  for(let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return vs.length + ':' + (h >>> 0).toString(16);
+}
+function sigPlot(pl){ return JSON.stringify([pl.name,pl.code,pl.variety,pl.seedClass,pl.plantDate,pl.seedRate,pl.lastVisit,pl.points,pl.holes,pl.locked, visitsSig(pl)]); }
 function initHash(){
   Object.keys(SIG).forEach(k=>delete SIG[k]);
   (state.projects||[]).forEach(p=>{
@@ -1170,8 +1179,8 @@ function stampUpdated(){
     });
   });
 }
-function save(){
-  try{ queueMicrotask(()=>{ try{ abQueue(); }catch(e){} try{ gsQueue(); }catch(e){} }); }catch(e){}
+function save(suppressCloud){
+  try{ queueMicrotask(()=>{ try{ abQueue(); }catch(e){} if(!suppressCloud) try{ gsQueue(); }catch(e){} }); }catch(e){}
   if(AB.on) { /* نسخهٔ خودکار */ }
   if(!storageOK) return;
   try{
@@ -2420,12 +2429,23 @@ function vToday(){ try{ return new Date().toLocaleDateString('fa-IR'); }catch(e)
 function vNow(){ try{ return new Date().toLocaleTimeString('fa-IR', { hour:'2-digit', minute:'2-digit' }); }catch(e){ return ''; } }
 function vFa(n){ return Number(n).toLocaleString('fa-IR'); }
 
+// سابقهٔ محدودِ اثرانگشت برای تشخیص ویرایش هم‌زمان؛ نمونهٔ آزمایشی
+function vRevision(v){
+  const copy = Object.assign({}, v); delete copy.touch; delete copy._anc;
+  const s = JSON.stringify(copy); let a = 2166136261, b = 2246822519;
+  for(let i=0; i<s.length; i++){ a=Math.imul(a ^ s.charCodeAt(i),16777619); b=Math.imul(b ^ s.charCodeAt(i),3266489917); }
+  return (a>>>0).toString(16) + ':' + (b>>>0).toString(16) + ':' + s.length;
+}
+function vMark(v){
+  const rev=vRevision(v); const a=Array.isArray(v._anc)?v._anc:[];
+  if(!a.includes(rev)) a.push(rev); v._anc=a.length > 128 ? a.slice(0,64).concat(a.slice(-64)) : a;
+}
 function vNew(plotId){
   const pl = vPlot(plotId); if (!pl) return null;
   const list = vList(pl);
   const v = { id: uid(), f: { date: vToday(), time: vNow(), type: V_TYPE[0], stage: '', weather: '', inspector: '' },
               pests: [{ kind: V_PKIND[0], name: '', sev: '', pct: '', action: '' }],
-              samples: [], recs: [], photos: [], sig: null, made: Date.now() };
+              samples: [], recs: [], photos: [], sig: null, made: Date.now(), touch: Date.now() };
   list.push(v);
   save();
   return v;
@@ -2442,6 +2462,7 @@ function vGet(v, key){
 }
 function vSet(plotId, vid, key, val){
   const v = vFind(plotId, vid); if (!v) return;
+  vMark(v);
   const [scope, a, b] = String(key).split(':');
   if (scope === 'f') { v.f = v.f || {}; v.f[a] = val; }
   else {
@@ -2450,6 +2471,7 @@ function vSet(plotId, vid, key, val){
     const row = v[L.rows][+a]; if (!row) return;
     row[b] = val;
   }
+  v.touch = Date.now();
   save();
 }
 
@@ -2642,6 +2664,7 @@ function visitEditorHtml(pl, v){
     +   '<button class="small" data-act="visit:close" data-id="' + pl.id + '" data-vid="' + v.id + '">بستن</button>'
     + '</div>'
     + '<div class="vs-eb">' + secs
+    + ((v.photos||[]).length || (v.sig && !v.sig.refused) ? '<div class="vs-warn">عکس‌ها و تصویر امضا میان دستگاه‌ها منتقل نمی‌شوند؛ برای گزارش کامل، از دستگاه ثبت‌کننده خروجی ورد بگیرید.</div>' : '')
     + '<div class="vs-sec"><div class="vs-st">آفت‌ها، بیماری‌ها و علف‌های هرز</div>' + pests
     +   '<button class="small" data-act="visit:addRow" data-id="' + pl.id + '" data-vid="' + v.id + '" data-list="p">+ افزودن ردیف</button></div>'
     + '<div class="vs-sec"><div class="vs-st">نمونهٔ ارسالی و نتیجهٔ آزمایشگاه</div>' + (samples || '')
@@ -2681,6 +2704,7 @@ async function visitDel(plotId, vid){
   const pl = vPlot(plotId); if (!pl) return;
   if (!(await uiConfirm('این بازدید و عکس‌هایش حذف شود؟', { danger:true, ok:'حذف کن', title:'حذف بازدید' }))) return;
   const v = vFind(plotId, vid);
+  if(v){ pl.visitGrave = (pl.visitGrave || []).filter(g=>g.id!==vid); pl.visitGrave.push({id:vid, rev:vRevision(v), anc:(v._anc||[]).slice()}); }
   for (const p of (v && v.photos) || []) { try{ await vIdbDel('photos', vPhotoKey(plotId, vid, p.id)); }catch(e){} }
   try{ await vIdbDel('sigs', vid); }catch(e){}
   pl.visits = vList(pl).filter(x => x.id !== vid);
@@ -2701,26 +2725,26 @@ function visitAddRow(plotId, vid, list){
   const row = {}; L.defs.forEach(d => { row[d.k] = ''; });
   if (list === 'r') row.cat = V_CAT[0];
   if (list === 'p') { row.kind = V_PKIND[0]; }
-  v[L.rows].push(row); save(); render();
+  vMark(v); v[L.rows].push(row); v.touch = Date.now(); save(); render();
 }
 function visitDelRow(plotId, vid, list, i){
   const v = vFind(plotId, vid); if (!v) return;
   const L = V_LISTS[list]; if (!L) return;
-  (v[L.rows] || []).splice(i, 1); save(); render();
+  vMark(v); (v[L.rows] || []).splice(i, 1); v.touch = Date.now(); save(); render();
 }
 function visitSignClear(plotId, vid){
   const v = vFind(plotId, vid); if (!v) return;
-  v.sig = null; save();
+  vMark(v); v.sig = null; v.touch = Date.now(); save();
   vIdbDel('sigs', vid).catch(() => {});
   render();
 }
 async function visitSignRefuse(plotId, vid){
   const v = vFind(plotId, vid); if (!v) return;
-  if (v.sig && v.sig.refused) { v.sig = null; save(); render(); return; }
+  if (v.sig && v.sig.refused) { vMark(v); v.sig = null; v.touch=Date.now(); save(); render(); return; }
   const witness = await uiPrompt('اگر کسی شاهد بود، نامش را بنویسید (اختیاری):', '', { title:'امتناع از امضا', ok:'ثبت کن' });
   if (witness === null) return;
-  v.sig = { refused: true, witness: String(witness || '').trim(), at: vToday(), name: 'کشاورز (امتناع)' };
-  save(); render();
+  vMark(v); v.sig = { refused: true, witness: String(witness || '').trim(), at: vToday(), name: 'کشاورز (امتناع)' };
+  v.touch = Date.now(); save(); render();
 }
 
 /* ── امضا: خواندن بوم و ذخیره ── */
@@ -2733,8 +2757,8 @@ async function visitSign(plotId, vid){
   await vIdbPut('sigs', vid, blob);
   const v = vFind(plotId, vid); if (!v) return;
   const who = await uiPrompt('نام امضاکننده:', '', { title:'ثبت امضا', ok:'ثبت' });
-  v.sig = { name: String(who || 'کشاورز').trim() || 'کشاورز', at: vToday(), code: vHash(v), refused: false };
-  save(); render();
+  vMark(v); v.sig = { name: String(who || 'کشاورز').trim() || 'کشاورز', at: vToday(), code: vHash(v), refused: false };
+  v.touch = Date.now(); save(); render();
   vToast('امضا ثبت شد');
 }
 function vHash(v){
@@ -2795,17 +2819,17 @@ async function visitPhotoAdd(input){
     if (!blob) continue;
     const pid = uid();
     try { await vIdbPut('photos', vPhotoKey(plotId, vid, pid), blob); } catch(e) { vToast('ذخیرهٔ عکس انجام نشد'); continue; }
-    v.photos = v.photos || [];
+    vMark(v); v.photos = v.photos || [];
     v.photos.push({ id: pid, cap: '', kb: Math.round(blob.size / 1024) });
     added++;
   }
-  if (added) { save(); render(); vToast(vFa(added) + ' عکس اضافه شد'); }
+  if (added) { v.touch = Date.now(); save(); render(); vToast(vFa(added) + ' عکس اضافه شد'); }
 }
 async function visitPhotoDel(plotId, vid, pid){
   const v = vFind(plotId, vid); if (!v) return;
   try { await vIdbDel('photos', vPhotoKey(plotId, vid, pid)); } catch(e) {}
-  v.photos = (v.photos || []).filter(p => p.id !== pid);
-  save(); render();
+  vMark(v); v.photos = (v.photos || []).filter(p => p.id !== pid);
+  v.touch = Date.now(); save(); render();
 }
 
 /* ── پرکردن تصویرها و آماده‌کردن بوم امضا بعد از هر رندر ── */
@@ -2815,7 +2839,7 @@ function hydrateVisits(){
     if (V_URLS.has(key)) { img.src = V_URLS.get(key); return; }
     try {
       const blob = await vIdbGet('photos', key);
-      if (!blob) return;
+      if (!blob) { img.alt = 'عکس در این دستگاه نیست'; img.closest('.vs-ph')?.classList.add('vs-missing'); return; }
       const url = URL.createObjectURL(blob);
       V_URLS.set(key, url);
       img.src = url;
@@ -2827,7 +2851,7 @@ function hydrateVisits(){
     if (V_URLS.has(key)) { img.src = V_URLS.get(key); return; }
     try {
       const blob = await vIdbGet('sigs', vid);
-      if (!blob) return;
+      if (!blob) { img.alt = 'تصویر امضا در این دستگاه نیست؛ گزارش کامل را از دستگاه اصلی بگیرید'; return; }
       const url = URL.createObjectURL(blob);
       V_URLS.set(key, url);
       img.src = url;
@@ -3160,9 +3184,10 @@ async function visitWord(plotId, vid){
   /* ۱۰ — امضا */
   blocks.push(vP('۱۰ — امضاها', { size:24, b:true, color:'1F6F43', after:60 }));
   if (v.sig && !v.sig.refused) {
+    let sigImagePresent = false;
     try {
       const blob = await vIdbGet('sigs', vid);
-      if (blob) {
+      if (blob) { sigImagePresent = true;
         const { w, h } = await vImgSize(blob);
         const bytes = await vBlobBytes(blob);
         const rid = 'rId' + (ridN++);
@@ -3172,6 +3197,7 @@ async function visitWord(plotId, vid){
         blocks.push(vImg(rid, 990, name, cx, Math.round(cx * (h / w))));
       }
     } catch(e) {}
+    if (!sigImagePresent) blocks.push(vP('تصویر امضا در این دستگاه موجود نیست؛ گزارش کامل را از دستگاه اصلی بگیرید.', { size:18, color:'AA0000' }));
     blocks.push(vP('امضای ' + (v.sig.name || 'کشاورز') + ' · ' + (v.sig.at || '') + ' · کد اثر انگشت فرم: ' + (v.sig.code || ''), { size:18, align:'center', color:'555F5A' }));
   } else if (v.sig && v.sig.refused) {
     blocks.push(vP('کشاورز از امضا امتناع کرد' + (v.sig.witness ? ' — شاهد: ' + v.sig.witness : ''), { size:20 }));
@@ -3451,11 +3477,54 @@ function syncImport(input){
 }
 
 /* --- مغز ادغام: هیچ‌چیز پاک نمی‌شود، تازه‌ترین نسخه برنده است --- */
+/* ادغام آزمایشی؛ اختلاف ویرایش/حذف بدون حدس‌زدن متوقف می‌شود. */
+function vAnc(v,rev){ return Array.isArray(v._anc) && v._anc.includes(rev); }
+function vDeletedMatches(g,v){ const rev=vRevision(v); return g.rev===rev || (Array.isArray(g.anc) && g.anc.includes(rev)); }
+function vVisitConflict(local,incoming){
+  const lv=Array.isArray(local.visits)?local.visits:[], iv=Array.isArray(incoming.visits)?incoming.visits:[];
+  const lg=Array.isArray(local.visitGrave)?local.visitGrave:[], ig=Array.isArray(incoming.visitGrave)?incoming.visitGrave:[];
+  for(const v of iv){
+    if(!v || !v.id) return true;
+    const x=lv.find(y=>y.id===v.id), gr=lg.filter(g=>g.id===v.id);
+    if(gr.length && !gr.some(g=>vDeletedMatches(g,v))) return true;
+    if(x){ const a=vRevision(x), b=vRevision(v); if(a!==b && !vAnc(x,b) && !vAnc(v,a)) return true; }
+  }
+  for(const v of lv){ const gr=ig.filter(g=>g.id===v.id); if(gr.length && !gr.some(g=>vDeletedMatches(g,v))) return true; }
+  return false;
+}
+function mergeVisits(local, incoming){
+  local.visits=Array.isArray(local.visits)?local.visits:[];
+  local.visitGrave=Array.isArray(local.visitGrave)?local.visitGrave:[];
+  const before=JSON.stringify([local.visits,local.visitGrave]);
+  (incoming.visitGrave||[]).forEach(g=>{
+    if(g && g.id && !local.visitGrave.some(x=>x.id===g.id && x.rev===g.rev)) local.visitGrave.push(JSON.parse(JSON.stringify(g)));
+  });
+  local.visits=local.visits.filter(v=>!local.visitGrave.some(g=>g.id===v.id && vDeletedMatches(g,v)));
+  (incoming.visits||[]).forEach(iv=>{
+    if(!iv || !iv.id || local.visitGrave.some(g=>g.id===iv.id && vDeletedMatches(g,iv))) return;
+    const i=local.visits.findIndex(x=>x.id===iv.id);
+    if(i<0) local.visits.push(JSON.parse(JSON.stringify(iv)));
+    else if(vAnc(iv,vRevision(local.visits[i]))) local.visits[i]=JSON.parse(JSON.stringify(iv));
+  });
+  return before!==JSON.stringify([local.visits,local.visitGrave]);
+}
+function vStateConflict(incoming){
+  for(const ip of incoming.projects||[]){
+    const lp=(state.projects||[]).find(p=>p.id===ip.id); if(!lp) continue;
+    for(const ipl of ip.plots||[]){
+      const lpl=(lp.plots||[]).find(pl=>pl.id===ipl.id);
+      if(lpl && vVisitConflict(lpl,ipl)) return true;
+    }
+  }
+  return false;
+}
 function syncApply(data, source){
   let incoming = null;
   if(data && data.app === 'seedcoord-sync' && data.state) incoming = data.state;
   else if(data && data.projects && Array.isArray(data.projects)) incoming = data;     // پشتیبان نسخه‌های قبلی
   if(!incoming){ return uiAlert('این فایل، فایل همگام‌سازی یا پشتیبان دفترچه نیست.\n(برای GeoJSON از دکمهٔ «بازیابی GeoJSON/JSON» استفاده کنید)'); }
+
+  if(vStateConflict(incoming)){ uiAlert('بازدیدی در دو دستگاه به شکل متفاوت تغییر کرده است. برای جلوگیری از پاک‌شدن اطلاعات، ادغام متوقف شد. از هر دو دستگاه پشتیبان بگیرید.'); return false; }
 
   try{ abNow('پیش از ادغام'); }catch(e){}
 
@@ -3502,11 +3571,16 @@ function syncApply(data, source){
         lp.plots.push(JSON.parse(JSON.stringify(ipl)));
         st.newPlots++; return;
       }
+      // اطلاعات قطعه و بازدیدها جداگانه ادغام می‌شوند؛ جایگزینی قطعه
+      // نباید فهرست بازدیدهای محلی را از بین ببرد.
       const a = ipl.updatedAt || 0, b = lpl.updatedAt || 0;
-      const same = sigPlot(lpl) === sigPlot(ipl);
-      if(same){ st.same++; return; }
+      const baseLocal = Object.assign({}, lpl, {visits: []});
+      const baseIncoming = Object.assign({}, ipl, {visits: []});
+      const plotSame = sigPlot(baseLocal) === sigPlot(baseIncoming);
+      const mergedVisits = mergeVisits(lpl, ipl);
+      if(plotSame){ if(mergedVisits) st.updPlots++; else st.same++; return; }
       if(a > b){
-        Object.keys(ipl).forEach(k=>{ lpl[k] = ipl[k]; });
+        Object.keys(ipl).forEach(k=>{ if(k !== 'visits' && k !== 'visitGrave') lpl[k] = ipl[k]; });
         st.updPlots++;
       } else if(b > a){
         /* محلی تازه‌تر است */
@@ -3541,7 +3615,7 @@ function syncApply(data, source){
 
   if(!state.activeId || !findProj(state.activeId)) state.activeId = state.projects[0] ? state.projects[0].id : null;
   initHash();
-  save(); render();
+  save(true); render();
   try{ if(document.body.classList.contains('map-mode')){ MP.fillPlotSelect(); MP.renderProjectList(); MP.renderSumBar(); MP.updateAreaBadge(); MP.draw(); } }catch(e){}
 
   const msg = 'ادغام انجام شد (منبع: ' + escSync(source||'دستگاه دیگر') + '): ' +
@@ -3552,12 +3626,13 @@ function syncApply(data, source){
       faSync(state.projects.reduce((a,p)=>a+(p.plots||[]).length,0)) + '</b> قطعه.';
   syncLog(msg);
   renderAutoCard();
+  return true;
 }
 
 /* ================= سرور ابری (Supabase / گوگل / سرویس JSON دلخواه) ================= */
 const GS = { prov:'supabase', url:'', token:'', key:'', auto:false, busy:false, pulling:false,
              pending:false, timer:null, lastPush:0, lastPull:0, ready:false };
-const GS_LOCAL = 'seed_cloud_v2';
+const GS_LOCAL = 'seed_cloud_demo_v2';
 try{
   const o = JSON.parse(localStorage.getItem(GS_LOCAL) || localStorage.getItem('seed_gdrive_demo_v1') || '{}');
   GS.prov = 'supabase';   /* فقط Supabase پشتیبانی می‌شود؛ روش‌های قدیمی حذف شدند */
@@ -3684,29 +3759,28 @@ async function sbErr(r){
   try{ const j = JSON.parse(t); msg = j.message || j.hint || j.error || t; }catch(e){}
   return new Error('HTTP ' + r.status + (msg ? ' — ' + String(msg).slice(0,140) : ''));
 }
-async function sbPull(){
+// فقط برای آزمایش: هر نوشتن بر اساس نسخهٔ خوانده‌شده از سرور انجام می‌شود.
+async function sbPullRow(){
   const r = await fetch(sbBase() + '/rest/v1/' + SB_TABLE + '?key=eq.' + encodeURIComponent(GS.key) + '&select=key,data,updated_at', { headers: sbHeaders() });
   if(!r.ok) throw await sbErr(r);
   const rows = await r.json();
-  return (Array.isArray(rows) && rows[0]) ? rows[0].data : null;
+  return (Array.isArray(rows) && rows[0]) ? rows[0] : null;
 }
-async function sbPush(payload){
-  const r = await fetch(sbBase() + '/rest/v1/' + SB_TABLE, {
-    method:'POST',
-    headers: sbHeaders({ Prefer:'resolution=merge-duplicates,return=minimal' }),
-    body: JSON.stringify([{ key: GS.key, data: payload, updated_at: new Date().toISOString() }])
-  });
+async function sbPull(){ const row = await sbPullRow(); return row ? row.data : null; }
+async function sbPushConditional(payload, prior){
+  const oldTime = prior && Date.parse(prior.updated_at);
+  const now = new Date(Math.max(Date.now(), Number.isFinite(oldTime) ? oldTime + 1 : 0)).toISOString();
+  const base = sbBase() + '/rest/v1/' + SB_TABLE;
+  const url = prior ? base + '?key=eq.' + encodeURIComponent(GS.key) + '&updated_at=eq.' + encodeURIComponent(prior.updated_at) : base;
+  const body = prior ? { data: payload, updated_at: now } : [{ key: GS.key, data: payload, updated_at: now }];
+  const r = await fetch(url, { method: prior ? 'PATCH' : 'POST',
+    headers: sbHeaders({ Prefer:'return=representation' }), body: JSON.stringify(body) });
+  if(r.status === 409) return false;
   if(!r.ok) throw await sbErr(r);
-  return true;
+  const rows = await r.json();
+  return Array.isArray(rows) && rows.length === 1;
 }
-
-/* ---------- عملیات مشترک ---------- */
-async function cloudPull(){
-  return await sbPull();
-}
-async function cloudPush(payload){
-  return await sbPush(payload);
-}
+async function cloudPull(){ return await sbPull(); }
 function cloudPayload(){
   return { app:'seedcoord-sync', v:2, device: syncDeviceName(), exportedAt: Date.now(), updatedAt: Date.now(), state: state };
 }
@@ -3793,7 +3867,7 @@ async function gsPull(manual){
     } else {
       GS.lastPull = Date.now(); gsPersist();
       const before = state.projects.length;
-      syncApply({ app:'seedcoord-sync', device: d.device || 'سرور', state: d.state }, (PROVIDERS[GS.prov]||{}).name || 'سرور');
+      if(syncApply({ app:'seedcoord-sync', device: d.device || 'سرور', state: d.state }, (PROVIDERS[GS.prov]||{}).name || 'سرور') === false) throw new Error('اختلاف بازدید؛ دریافت متوقف شد.');
       gsRender('دریافت شد (از ' + (d.device || 'دستگاه دیگر') + ' · ' + faDate(d.updatedAt || d.exportedAt) + ')؛ پروژه: ' +
         faSync(before) + ' → ' + faSync(state.projects.length));
     }
@@ -3805,16 +3879,30 @@ async function gsPush(manual){
   if(!gsReady()){ if(manual) uiAlert('اول آدرس سرویس و کدِ همگام‌سازی را وارد کنید.'); return; }
   if(GS.busy) return;
   GS.busy = true;
+  let editedWhileSending = false;
   try{
-    await cloudPush(cloudPayload());
-    GS.lastPush = Date.now(); GS.pending = false; GS.ready = true; gsPersist();
+    let sent = false;
+    for(let attempt=0; attempt<4 && !sent; attempt++){
+      const prior = await sbPullRow();
+      if(prior && prior.data && prior.data.state){
+        if(syncApply(prior.data, 'سرور پیش از ارسال') === false) throw new Error('اختلاف بازدید؛ ارسال متوقف شد.');
+      } else if(prior && (!prior.data || !prior.data.state)){
+        throw new Error('دادهٔ سرور معتبر نیست؛ ارسال برای جلوگیری از بازنویسی متوقف شد.');
+      }
+      const payload = cloudPayload();
+      const snapshot = JSON.stringify(payload.state);
+      sent = await sbPushConditional(payload, prior);
+      if(sent) editedWhileSending = snapshot !== JSON.stringify(state);
+    }
+    if(!sent) throw new Error('سرور هم‌زمان تغییر کرد؛ ارسال انجام نشد، دوباره تلاش کنید.');
+    GS.lastPush = Date.now(); GS.pending = editedWhileSending; GS.ready = true; gsPersist();
     gsRender('ارسال شد ✅ (' + faSync(state.projects.length) + ' پروژه · ' +
       faSync(state.projects.reduce((a,p)=>a+(p.plots||[]).length,0)) + ' قطعه)');
   }catch(e){
     GS.pending = true;
     gsRender('⚠ ارسال ناموفق: ' + escSync(gsHumanErr(e)) + ' — وقتی اتصال برقرار شد دوباره فرستاده می‌شود.');
   }
-  finally{ GS.busy = false; }
+  finally{ GS.busy = false; if(editedWhileSending && GS.auto) gsQueue(); }
 }
 
 /* ═══════════ ۳۰ — کارت‌ها، ضربان سرور و چیدمان موبایل ═══════════
