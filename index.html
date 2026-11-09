@@ -820,10 +820,14 @@
         <div class="row u-mt8">
           <button class="small primary u-flex1" data-act="rep:open">📋 گزارش پروژه‌ها</button>
           <button class="small" data-act="data:demo">پروژه نمونه</button>
+          <button class="small primary" data-act="fullBackup:export">پشتیبان کامل (با عکس و امضا)</button>
+          <button class="small" data-act="fullBackup:choose">ادغام پشتیبان کامل</button>
+          <input type="file" id="fullBackupFile" accept=".json,application/json" class="u-hidden" data-change="fullBackup:import">
           <button class="small" data-act="backup:export">پشتیبان JSON</button>
           <button class="small" data-act="backup:importFile">بازیابی GeoJSON/JSON</button>
           <input type="file" id="importFile" accept=".json,.geojson" class="u-hidden" data-change="backup:import">
         </div>
+        <div class="hint">پشتیبان کامل شامل اطلاعات محرمانه، عکس‌ها و امضاهاست؛ آن را در جای امن نگه دارید. همگام‌سازی ابری خودکار عکس‌ها را منتقل نمی‌کند.</div>
       </div>
 
       <details class="card fold" id="syncCard"><summary class="fold-sum"><h2>همگام‌سازی گوشی ↔ کامپیوتر <span class="badge chip-blue">دستی و امن</span></h2></summary>
@@ -1131,7 +1135,7 @@
 <script>
 /* ---------- ذخیره‌سازی ---------- */
 const STORE_KEY = 'seed_coord_notebook_v1';
-const APP_VERSION = '2.4.2';   // build-app.py این عدد را با VERSION هم‌تراز می‌کند
+const APP_VERSION = '2.5.1';   // build-app.py این عدد را با VERSION هم‌تراز می‌کند
 let state = { projects: [], activeId: null };
 
 let storageOK = true;
@@ -3115,11 +3119,11 @@ function vDocShell(body, relsXml){
 
 /* اندازهٔ تصویر از روی بلاب */
 function vImgSize(blob){
-  return new Promise(res => {
+  return new Promise((res, rej) => {
     const url = URL.createObjectURL(blob);
     const img = new Image();
     img.onload = () => { const r = { w: img.naturalWidth || 1, h: img.naturalHeight || 1 }; URL.revokeObjectURL(url); res(r); };
-    img.onerror = () => { URL.revokeObjectURL(url); res({ w: 4, h: 3 }); };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('تصویر خوانده نشد')); };
     img.src = url;
   });
 }
@@ -3137,6 +3141,37 @@ async function visitWord(plotId, vid){
   const pl = vPlot(plotId), v = vFind(plotId, vid);
   if (!pl || !v) return uiAlert('بازدید پیدا نشد.');
   const pr = activeProject() || {};
+  const revision = vRevision(v), projectId = pr.id;
+  const photoCache = new Map(); let sigCache = null, missingPhotos = 0, missingSig = false;
+  // عکس‌ها و تصویر امضا فقط محلی‌اند؛ یک بار خوانده می‌شوند تا هشدار و فایل همخوان باشند.
+  for(const photo of (v.photos || [])){
+    try{
+      const blob = await vIdbGet('photos', vPhotoKey(plotId, vid, photo.id));
+      if(!(blob instanceof Blob)) throw new Error('تصویر موجود نیست');
+      const size = await vImgSize(blob), bytes = await vBlobBytes(blob);
+      photoCache.set(photo.id, { ...size, bytes });
+    }catch(e){ missingPhotos++; }
+  }
+  if(v.sig && !v.sig.refused){
+    try{
+      const blob = await vIdbGet('sigs', vid);
+      if(!(blob instanceof Blob)) throw new Error('تصویر امضا موجود نیست');
+      const size = await vImgSize(blob), bytes = await vBlobBytes(blob);
+      sigCache = { ...size, bytes };
+    }catch(e){ missingSig = true; }
+  }
+  if(missingPhotos || missingSig){
+    const problems = [];
+    if(missingPhotos) problems.push(vFa(missingPhotos) + ' عکس ثبت‌شده');
+    if(missingSig) problems.push('تصویر امضای ثبت‌شده');
+    const message = problems.join(' و ') + ' روی این دستگاه موجود نیست یا خوانده نمی‌شود.\n'
+      + 'این تصاویر در فایل Word نخواهند بود. برای گزارش کامل، از دستگاه دارای تصاویر خروجی بگیرید یا پشتیبان کامل را ادغام کنید.\n\n'
+      + 'آیا گزارش ناقص ساخته شود؟';
+    if(!(await uiConfirm(message, { title:'هشدار تصاویر گزارش', ok:'ساخت گزارش ناقص' }))) return;
+  }
+  if(!activeProject() || activeProject().id !== projectId || vFind(plotId,vid)!==v || vRevision(v)!==revision){
+    return uiAlert('بازدید هنگام آماده‌سازی گزارش تغییر کرد؛ لطفاً دوباره «⬇ ورد» را بزنید.', { title:'گزارش بازدید' });
+  }
   vToast('در حال ساخت فایل ورد…');
 
   const media = [];     /* {rid, name, bytes, w, h} */
@@ -3217,10 +3252,9 @@ async function visitWord(plotId, vid){
       for (const p of pair) {
         let xml = '';
         try {
-          const blob = await vIdbGet('photos', vPhotoKey(plotId, vid, p.id));
-          if (blob) {
-            const { w, h } = await vImgSize(blob);
-            const bytes = await vBlobBytes(blob);
+          const image = photoCache.get(p.id);
+          if (image) {
+            const { w, h, bytes } = image;
             const rid = 'rId' + (ridN++);
             const name = 'photo' + media.length + '.jpg';
             media.push({ rid, name, bytes });
@@ -3243,10 +3277,9 @@ async function visitWord(plotId, vid){
   if (v.sig && !v.sig.refused) {
     let sigImagePresent = false;
     try {
-      const blob = await vIdbGet('sigs', vid);
-      if (blob) { sigImagePresent = true;
-        const { w, h } = await vImgSize(blob);
-        const bytes = await vBlobBytes(blob);
+      const image = sigCache;
+      if (image) { sigImagePresent = true;
+        const { w, h, bytes } = image;
         const rid = 'rId' + (ridN++);
         const name = 'signature.png';
         media.push({ rid, name, bytes });
@@ -4915,6 +4948,206 @@ function printProject(){
   setTimeout(()=>win.print(), 400);
 }
 
+/* پشتیبان کامل محلی: دادهٔ دفترچه + فایل‌های عکس و امضای ارجاع‌شده.
+   فایل JSON است و رمزگذاری نشده؛ اتصال و رمز سامانهٔ ابری را شامل نمی‌شود.
+   ورود محافظه‌کارانه است: هیچ پروژه، قطعه، بازدید یا تصویر موجودی جایگزین نمی‌شود. */
+const FB_FORMAT = 'seedcoord-full-backup-1';
+const FB_MAX_BYTES = 80 * 1024 * 1024;
+const FB_MAX_ASSETS = 10000;
+let FB_BUSY = false;
+function fbClone(x){ return JSON.parse(JSON.stringify(x)); }
+function fbSame(a,b){ return JSON.stringify(vCanonical(a)) === JSON.stringify(vCanonical(b)); }
+function fbFail(message){ throw new Error(message); }
+function fbId(x){ return typeof x === 'string' && x.length>0 && x.length<=200 && !/[|\x00-\x1f]/.test(x); }
+function fbSafeTree(root){
+  const stack=[[root,0]]; let n=0;
+  while(stack.length){
+    const [v,depth]=stack.pop(); if(++n>1000000 || depth>80) fbFail('ساختار فایل بیش از حد پیچیده است.');
+    if(!v || typeof v!=='object') continue;
+    for(const k of Object.keys(v)){
+      if(k==='__proto__' || k==='constructor' || k==='prototype') fbFail('ساختار فایل معتبر نیست.');
+      stack.push([v[k],depth+1]);
+    }
+  }
+}
+function fbIndex(s){
+  fbSafeTree(s);
+  if(!s || !Array.isArray(s.projects)) fbFail('ساختار پروژه‌های فایل معتبر نیست.');
+  const projects=new Map(), plots=new Map(), visits=new Map(), assets=new Map();
+  function add(kind,key){
+    const tag=kind+'|'+key;
+    if(assets.has(tag)) fbFail('شناسهٔ تصویر تکراری است.');
+    assets.set(tag,{kind,key});
+  }
+  for(const p of s.projects){
+    if(!p || !fbId(p.id) || projects.has(p.id) || !Array.isArray(p.plots)) fbFail('شناسهٔ پروژه یا فهرست قطعات معتبر نیست.');
+    projects.set(p.id,p);
+    for(const pl of p.plots){
+      if(!pl || !fbId(pl.id) || plots.has(pl.id) || (pl.visits!=null && !Array.isArray(pl.visits))) fbFail('شناسهٔ قطعه یا فهرست بازدیدها معتبر نیست.');
+      plots.set(pl.id,{project:p,plot:pl});
+      for(const v of pl.visits||[]){
+        if(!v || !fbId(v.id) || visits.has(v.id) || (v.photos!=null && !Array.isArray(v.photos))) fbFail('شناسهٔ بازدید یا فهرست عکس‌ها معتبر نیست.');
+        visits.set(v.id,{project:p,plot:pl,visit:v});
+        for(const ph of v.photos||[]){
+          if(!ph || !fbId(ph.id)) fbFail('شناسهٔ عکس معتبر نیست.');
+          add('photos',vPhotoKey(pl.id,v.id,ph.id));
+        }
+        if(v.sig && !v.sig.refused) add('sigs',v.id);
+      }
+    }
+  }
+  if(assets.size>FB_MAX_ASSETS) fbFail('تعداد عکس‌ها و امضاها بیش از حد مجاز است.');
+  return {projects,plots,visits,assets};
+}
+function fbDataUrl(blob){ return new Promise((resolve,reject)=>{
+  const r=new FileReader();r.onload=()=>resolve(String(r.result));r.onerror=()=>reject(r.error||new Error('خواندن تصویر انجام نشد.'));r.readAsDataURL(blob);
+}); }
+async function fbExport(){
+  if(FB_BUSY) return;
+  FB_BUSY=true;
+  try{
+    if(!storageOK) fbFail('ذخیره‌سازی این دستگاه در دسترس نیست؛ ابتدا مشکل حافظه را رفع کنید.');
+    const snapshot=JSON.stringify(state), data=JSON.parse(snapshot), refs=fbIndex(data).assets;
+    const media=[]; let bytes=0, missingPhotos=0, missingSigs=0;
+    vToast('در حال آماده‌سازی پشتیبان کامل…');
+    for(const {kind,key} of refs.values()){
+      const blob=await vIdbGet(kind,key);
+      if(!(blob instanceof Blob)) { if(kind==='photos') missingPhotos++; else missingSigs++; continue; }
+      bytes+=blob.size;
+      if(bytes>FB_MAX_BYTES*0.70) fbFail('حجم عکس‌ها و امضاها برای پشتیبان یک‌فایلی بیش از حد مجاز است.');
+      const raw=new Uint8Array(await blob.arrayBuffer());
+      const url=await fbDataUrl(blob), pos=url.indexOf(',');
+      if(pos<0) fbFail('خواندن یکی از تصویرها انجام نشد.');
+      media.push({kind,key,type:blob.type||'application/octet-stream',size:raw.length,crc:vCrc32(raw),data:url.slice(pos+1)});
+    }
+    if(missingPhotos || missingSigs) fbFail('پشتیبان کامل ساخته نشد: '+vFa(missingPhotos)+' عکس و '+vFa(missingSigs)+' تصویر امضا در این دستگاه موجود نیست. از دستگاهی که تصاویر را دارد پشتیبان بگیرید.');
+    if(JSON.stringify(state)!==snapshot) fbFail('اطلاعات هنگام ساخت پشتیبان تغییر کرد. لطفاً دوباره دکمهٔ پشتیبان کامل را بزنید.');
+    const content=JSON.stringify({format:FB_FORMAT,appVersion:APP_VERSION,created:new Date().toISOString(),state:data,media});
+    if(new Blob([content]).size>FB_MAX_BYTES) fbFail('حجم پشتیبان از حد مجاز ۸۰ مگابایت بیشتر است.');
+    download('پشتیبان-کامل-مختصات_'+stamp()+'.json',content,'application/json;charset=utf-8');
+    vToast('پشتیبان کامل آماده شد. فایل را در جای امن نگه دارید.');
+  }catch(e){ await uiAlert(e.message||'ساخت پشتیبان انجام نشد.',{title:'پشتیبان کامل'}); }
+  finally{ FB_BUSY=false; }
+}
+function fbBase64(s){
+  if(typeof s!=='string' || s.length>FB_MAX_BYTES || s.length%4 || !/^[A-Za-z0-9+/]*={0,2}$/.test(s)) fbFail('دادهٔ یکی از تصاویر معتبر نیست.');
+  let binary; try{ binary=atob(s); }catch(e){ fbFail('دادهٔ یکی از تصاویر معتبر نیست.'); }
+  const out=new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++) out[i]=binary.charCodeAt(i);
+  return out;
+}
+function fbWithout(obj,keys){ const copy=Object.assign({},obj); keys.forEach(k=>delete copy[k]); return copy; }
+function fbGraveIds(list){
+  if(list==null) return new Set();
+  if(!Array.isArray(list)) fbFail('فهرست حذف‌های قبلی معتبر نیست.');
+  const out=new Set(); for(const g of list){ if(!g||!fbId(g.id)) fbFail('شناسهٔ حذف قبلی معتبر نیست.');out.add(g.id); } return out;
+}
+function fbPlan(local,incoming){
+  const li=fbIndex(local), ii=fbIndex(incoming), merged=fbClone(local), mi=fbIndex(merged);
+  const lg=local.grave||{}, ig=incoming.grave||{};
+  const lgp=fbGraveIds(lg.projects), lgl=fbGraveIds(lg.plots);
+  const igp=fbGraveIds(ig.projects), igl=fbGraveIds(ig.plots);
+  for(const id of ii.projects.keys()) if(lgp.has(id) || igp.has(id)) fbFail('یک پروژه در سابقهٔ حذف وجود دارد؛ برای جلوگیری از بازگشت یا حذف ناخواسته، ادغام متوقف شد.');
+  for(const id of ii.plots.keys()) if(lgl.has(id) || igl.has(id)) fbFail('یک قطعه در سابقهٔ حذف وجود دارد؛ ادغام متوقف شد.');
+  for(const id of igp) if(li.projects.has(id)) fbFail('پشتیبان و دستگاه دربارهٔ حذف یک پروژه اختلاف دارند؛ ادغام متوقف شد.');
+  for(const id of igl) if(li.plots.has(id)) fbFail('پشتیبان و دستگاه دربارهٔ حذف یک قطعه اختلاف دارند؛ ادغام متوقف شد.');
+  for(const {plot} of ii.plots.values()){
+    const bg=fbGraveIds(plot.visitGrave);
+    for(const v of plot.visits||[]) if(bg.has(v.id)) fbFail('یک بازدید در سابقهٔ حذف پشتیبان وجود دارد؛ ادغام متوقف شد.');
+    for(const id of bg) if(li.visits.has(id)) fbFail('پشتیبان و دستگاه دربارهٔ حذف یک بازدید اختلاف دارند؛ ادغام متوقف شد.');
+  }
+  let addedProjects=0,addedPlots=0,addedVisits=0;
+  for(const ip of incoming.projects){
+    let mp=mi.projects.get(ip.id);
+    if(!mp){
+      mp=fbClone(ip);
+      // حذف‌های تاریخی پشتیبان به سرور یا دستگاه دیگر تحمیل نمی‌شوند.
+      for(const pl of mp.plots||[]) pl.visitGrave=[];
+      merged.projects.push(mp);addedProjects++;addedPlots+=(mp.plots||[]).length;
+      addedVisits+=(mp.plots||[]).reduce((n,pl)=>n+(pl.visits||[]).length,0);
+      continue;
+    }
+    if(!fbSame(fbWithout(mp,['plots','updatedAt']),fbWithout(ip,['plots','updatedAt']))) fbFail('اطلاعات یک پروژه در پشتیبان و دستگاه متفاوت است. برای جلوگیری از جایگزینی، ادغام متوقف شد.');
+    for(const ipl of ip.plots){
+      const entry=mi.plots.get(ipl.id);
+      if(!entry){ const copy=fbClone(ipl);copy.visitGrave=[];mp.plots.push(copy);addedPlots++;addedVisits+=(copy.visits||[]).length;continue; }
+      if(entry.project.id!==ip.id) fbFail('یک قطعه در دو پروژهٔ متفاوت قرار دارد؛ ادغام متوقف شد.');
+      const mpl=entry.plot;
+      if(!fbSame(fbWithout(mpl,['visits','visitGrave','updatedAt']),fbWithout(ipl,['visits','visitGrave','updatedAt']))) fbFail('اطلاعات یک قطعه در پشتیبان و دستگاه متفاوت است. ادغام متوقف شد.');
+      const mg=fbGraveIds(mpl.visitGrave), bg=fbGraveIds(ipl.visitGrave);
+      for(const iv of ipl.visits||[]) if(mg.has(iv.id) || bg.has(iv.id)) fbFail('یک بازدید در سابقهٔ حذف وجود دارد؛ ادغام متوقف شد.');
+      for(const lv of mpl.visits||[]) if(bg.has(lv.id)) fbFail('پشتیبان و دستگاه دربارهٔ حذف یک بازدید اختلاف دارند؛ ادغام متوقف شد.');
+      mpl.visits=mpl.visits||[];
+      for(const iv of ipl.visits||[]){
+        const lv=mpl.visits.find(v=>v.id===iv.id);
+        if(!lv){mpl.visits.push(fbClone(iv));addedVisits++;}
+        else if(vRevision(lv)!==vRevision(iv)) fbFail('یک بازدید در پشتیبان و دستگاه متفاوت است. برای جلوگیری از جایگزینی، ادغام متوقف شد.');
+      }
+    }
+  }
+  if(!merged.activeId || !merged.projects.some(p=>p.id===merged.activeId)) merged.activeId=merged.projects[0]?.id||null;
+  // بررسی دوبارهٔ یکتایی شناسه‌ها، از جمله برخورد شناسه بین پروژه‌ها.
+  fbIndex(merged);
+  return {merged,addedProjects,addedPlots,addedVisits};
+}
+async function fbSameBlob(a,b){
+  if(a.size!==b.size) return false;
+  const x=new Uint8Array(await a.arrayBuffer()),y=new Uint8Array(await b.arrayBuffer());
+  for(let i=0;i<x.length;i++) if(x[i]!==y[i]) return false;
+  return true;
+}
+async function fbAddAssets(items){
+  if(!items.length) return;
+  const db=await vDb();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(['photos','sigs'],'readwrite');
+    try{for(const x of items) tx.objectStore(x.kind).add(x.blob,x.key);}catch(e){tx.abort();reject(e);return;}
+    tx.oncomplete=()=>resolve();tx.onabort=()=>reject(new Error('ذخیرهٔ تصاویر انجام نشد؛ شاید تصویر هم‌زمان تغییر کرده باشد.'));tx.onerror=()=>{};
+  });
+}
+async function fbImport(input){
+  const file=input.files&&input.files[0]; input.value=''; if(!file || FB_BUSY) return;
+  FB_BUSY=true;
+  try{
+    if(!storageOK) fbFail('ذخیره‌سازی این دستگاه در دسترس نیست.');
+    if(file.size>FB_MAX_BYTES) fbFail('فایل بزرگ‌تر از حد مجاز ۸۰ مگابایت است.');
+    let pack;try{pack=JSON.parse(await file.text());}catch(e){fbFail('فایل پشتیبان کامل معتبر نیست.');}
+    if(!pack || pack.format!==FB_FORMAT || !Array.isArray(pack.media)) fbFail('این فایل پشتیبان کامل برنامه نیست.');
+    const wanted=fbIndex(pack.state).assets;
+    if(pack.media.length!==wanted.size) fbFail('تعداد تصویرهای فایل کامل نیست؛ ادغام متوقف شد.');
+    const decoded=[], seen=new Set();let total=0;
+    for(const item of pack.media){
+      if(!item || !['photos','sigs'].includes(item.kind) || typeof item.key!=='string') fbFail('مشخصات یکی از تصاویر معتبر نیست.');
+      const tag=item.kind+'|'+item.key;
+      if(!wanted.has(tag)||seen.has(tag)) fbFail('تصویر اضافی یا تکراری در فایل وجود دارد.');
+      seen.add(tag);
+      if(!Number.isSafeInteger(item.size)||item.size<0 || typeof item.type!=='string' || item.type.length>100) fbFail('مشخصات تصویر معتبر نیست.');
+      const bytes=fbBase64(item.data);total+=bytes.length;
+      if(total>FB_MAX_BYTES || bytes.length!==item.size || vCrc32(bytes)!==item.crc) fbFail('یکی از تصاویر ناقص یا خراب است؛ ادغام متوقف شد.');
+      decoded.push({kind:item.kind,key:item.key,blob:new Blob([bytes],{type:item.type})});
+    }
+    const before=JSON.stringify(state), beforeStored=localStorage.getItem(STORE_KEY), plan=fbPlan(state,pack.state), additions=[];
+    for(const x of decoded){
+      const old=await vIdbGet(x.kind,x.key);
+      if(old && !(old instanceof Blob)) fbFail('تصویر موجود در دستگاه قابل بررسی نیست.');
+      if(old && !(await fbSameBlob(old,x.blob))) fbFail('تصویر یا امضایی با شناسهٔ یکسان ولی محتوای متفاوت وجود دارد. برای جلوگیری از جایگزینی، ادغام متوقف شد.');
+      if(!old) additions.push(x);
+    }
+    if(JSON.stringify(state)!==before || localStorage.getItem(STORE_KEY)!==beforeStored) fbFail('اطلاعات هنگام بررسی تغییر کرد؛ لطفاً دوباره فایل را انتخاب کنید.');
+    const consent=await uiConfirm('فایل بررسی شد.\nپروژهٔ تازه: '+vFa(plan.addedProjects)+'\nقطعهٔ تازه: '+vFa(plan.addedPlots)+'\nبازدید تازه: '+vFa(plan.addedVisits)+'\nعکس و تصویر امضای تازه: '+vFa(additions.length)+'\n\nهیچ مورد موجودی جایگزین یا حذف نمی‌شود. حذف‌های تاریخی فایل وارد نمی‌شوند. فایل به سرور ارسال نمی‌شود. ادامه دهید؟',{title:'ادغام پشتیبان کامل',ok:'ادغام کن'});
+    if(!consent) return;
+    if(JSON.stringify(state)!==before || localStorage.getItem(STORE_KEY)!==beforeStored) fbFail('اطلاعات هنگام تأیید تغییر کرد؛ لطفاً دوباره تلاش کنید.');
+    await fbAddAssets(additions);
+    if(JSON.stringify(state)!==before || localStorage.getItem(STORE_KEY)!==beforeStored) fbFail('اطلاعات هنگام ادغام تغییر کرد. ادغام اطلاعات انجام نشد؛ دوباره تلاش کنید.');
+    // رسانه‌ها پیش از داده نوشته می‌شوند. اگر حافظهٔ متن پر باشد، هیچ دادهٔ قبلی
+    // جایگزین نمی‌شود؛ رسانه‌های اضافه‌شده ممکن است تا تلاش بعدی بدون ارجاع بمانند.
+    try{localStorage.setItem(STORE_KEY,JSON.stringify(plan.merged));}
+    catch(e){fbFail('حافظه برای ذخیرهٔ اطلاعات کافی نیست؛ ادغام اطلاعات انجام نشد. تصویرهای تازه ممکن است در حافظه مانده باشند؛ دوباره تلاش کنید.');}
+    state=plan.merged; initHash(); render();
+    await uiAlert('ادغام کامل شد.\nپروژهٔ تازه: '+vFa(plan.addedProjects)+' · قطعهٔ تازه: '+vFa(plan.addedPlots)+'\nبازدید تازه: '+vFa(plan.addedVisits)+' · عکس و تصویر امضای تازه: '+vFa(additions.length)+'\n\nبرای دیدن تصویرها، بازدید را باز کنید. این کار به سرور ارسال نشد.',{title:'ادغام کامل'});
+  }catch(e){ await uiAlert(e.message||'ادغام انجام نشد.',{title:'پشتیبان کامل'}); }
+  finally{FB_BUSY=false;}
+}
 /* ═══════════ ۳۶ — گزارش‌ها، آمار و دادهٔ نمونه ═══════════
    عدد فارسی، آمار هر پروژه، کارت‌های آماری (KPI)، گزارش فهرست پروژه‌ها
    (نمایش، CSV، چاپ) و دادهٔ نمونه برای آزمایش. ═══════════════════ */
@@ -6928,6 +7161,8 @@ render();
     'exp:allCsv': el => exportAllCsv(),
 
     /* ── پشتیبان ── */
+    'fullBackup:export': el => fbExport(),
+    'fullBackup:choose': el => document.getElementById('fullBackupFile').click(),
     'backup:export': el => exportBackup(),
     'backup:importFile': el => document.getElementById('importFile').click(),
 
@@ -7059,6 +7294,7 @@ render();
     'om:provider': el => setOfflineOpt('provider', el.value),
     'om:zoom': el => setOfflineOpt('zoom', +el.dataset.zoom),
     'ab:toggle': el => abToggle(el.checked),
+    'fullBackup:import': el => fbImport(el),
     'backup:import': el => importBackup(el),
     'sync:import': el => syncImport(el),
     'visit:field': el => vSet(el.dataset.id, el.dataset.vid, el.dataset.k, el.value),
