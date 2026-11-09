@@ -1134,7 +1134,7 @@
 <script>
 /* ---------- ذخیره‌سازی ---------- */
 const STORE_KEY = 'seed_coord_notebook_demo_v1';
-const APP_VERSION = '2.4.1';   // build-app.py این عدد را با VERSION هم‌تراز می‌کند
+const APP_VERSION = '2.4.2';   // build-app.py این عدد را با VERSION هم‌تراز می‌کند
 let state = { projects: [], activeId: null };
 
 let storageOK = true;
@@ -2394,10 +2394,10 @@ const V_SCHEMA = [
     { k: 'weeding', l: 'وجین و حذف بوتهٔ خارج از رقم', t: 'text' },
     { k: 'harvest', l: 'برداشت و زمان پیش‌بینی‌شده', t: 'text' },
   ]},
-  { id: 'end', title: 'جمع‌بندی و رأی', fields: [
+  { id: 'end', title: 'جمع‌بندی و نتیجه بازدید', fields: [
     { k: 'prev', l: 'اجرای توصیهٔ بازدید قبلی', t: 'chips', o: V_PREV },
     { k: 'trend', l: 'روند نسبت به بازدید قبل', t: 'sel', o: V_TREND },
-    { k: 'verdict', l: 'رأی بازدید', t: 'chips', o: V_VERDICT },
+    { k: 'verdict', l: 'نتیجه بازدید', t: 'chips', o: V_VERDICT },
     { k: 'nextDate', l: 'تاریخ پیشنهادی بازدید بعدی', t: 'text' },
     { k: 'summary', l: 'جمع‌بندی و توصیهٔ کلی', t: 'area', full: 1 },
   ]},
@@ -3207,7 +3207,7 @@ async function visitWord(plotId, vid){
     ...(recRows.length ? recRows : [['—', '—', '—', '—', '—']])],
     [1.2, 2.6, 7.4, 2.6, 4.2], { head:true }));
 
-  /* ۸ — جمع‌بندی و رأی */
+  /* ۹ — جمع‌بندی و نتیجه بازدید */
   secBlock('end', 9);
 
   /* ۹ — عکس‌ها */
@@ -3306,7 +3306,7 @@ async function visitWordAll(plotId){
   blocks.push(vP('اطلاعات پروژه', { heading:true, size:24, b:true, color:'1F6F43', after:60 }));
   blocks.push(vTbl([['نوع قرارداد', pr.contractType || '—', 'ثبت در سامانه نظارت', vOfisCell(pr.ofisStatus)]],
     [3.6, 5.2, 3.4, 5.6], { labelCols:[0,2] }));
-  const rows = [['#', 'تاریخ', 'مرحلهٔ رشد', 'آفت/بیماری', 'توصیه‌ها', 'رأی', 'اجرای توصیهٔ قبل']];
+  const rows = [['#', 'تاریخ', 'مرحلهٔ رشد', 'آفت/بیماری', 'توصیه‌ها', 'نتیجه بازدید', 'اجرای توصیهٔ قبل']];
   list.forEach((v, i) => {
     const pests = (v.pests || []).filter(p => p && (p.name || p.sev))
       .map(p => (p.name || p.kind || '') + (p.sev ? ' (' + p.sev + ')' : '')).join('، ');
