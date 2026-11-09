@@ -1131,7 +1131,7 @@
 <script>
 /* ---------- ذخیره‌سازی ---------- */
 const STORE_KEY = 'seed_coord_notebook_v1';
-const APP_VERSION = '2.4.0';   // build-app.py این عدد را با VERSION هم‌تراز می‌کند
+const APP_VERSION = '2.4.1';   // build-app.py این عدد را با VERSION هم‌تراز می‌کند
 let state = { projects: [], activeId: null };
 
 let storageOK = true;
@@ -2367,10 +2367,12 @@ const V_SCHEMA = [
     { k: 'border', l: 'حاشیهٔ مزرعه', t: 'sel', o: ['تمیز', 'نیاز به اصلاح'] },
     { k: 'noteGen', l: 'توضیح وضعیت عمومی', t: 'area', full: 1 },
   ]},
-  { id: 'iso', title: 'خلوص رقم و فاصلهٔ جداسازی', fields: [
+  { id: 'iso', title: 'ایزولاسیون', fields: [
     { k: 'distSame', l: 'فاصله از مزرعهٔ همان رقم (متر)', t: 'text' },
     { k: 'distOther', l: 'فاصله از ارقام دیگر (متر)', t: 'text' },
     { k: 'source', l: 'منبع آلودگی همجوار', t: 'sel', o: ['ندارد', 'دارد'] },
+  ]},
+  { id: 'purity', title: 'خلوص مزرعه', fields: [
     { k: 'offType', l: 'بوتهٔ خارج از رقم (تعداد / درصد)', t: 'text' },
     { k: 'weedKin', l: 'علف هرز خویشاوند', t: 'sel', o: ['ندارد', 'کم', 'زیاد'] },
     { k: 'sterility', l: 'نسبت نر عقیم / بارور', t: 'sel', o: ['مناسب', 'نامناسب', 'کاربرد ندارد'] },
@@ -3175,8 +3177,8 @@ async function visitWord(plotId, vid){
 
   /* جداسازی و خلوص، هر کدام در یک بند جدا؛ کلیدهای ذخیره‌شده ثابت‌اند. */
   secBlock('gen', 2);
-  secBlock('iso', 3, 'ایزولاسیون', ['distSame','distOther','source']);
-  secBlock('iso', 4, 'خلوص مزرعه', ['offType','weedKin','sterility']);
+  secBlock('iso', 3);
+  secBlock('purity', 4);
   secBlock('agro', 5);
 
   /* ۶ — آفت‌ها */
