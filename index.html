@@ -1131,7 +1131,7 @@
 <script>
 /* ---------- ذخیره‌سازی ---------- */
 const STORE_KEY = 'seed_coord_notebook_v1';
-const APP_VERSION = '2.1.2';   // build-app.py این عدد را با VERSION هم‌تراز می‌کند
+const APP_VERSION = '2.4.0';   // build-app.py این عدد را با VERSION هم‌تراز می‌کند
 let state = { projects: [], activeId: null };
 
 let storageOK = true;
@@ -1147,7 +1147,7 @@ function load(){
 
 /* ---------- مهر زمانی: کدام قطعه/پروژه تغییر کرده است ---------- */
 const SIG = {};   // id → امضای محتوا
-function sigProject(p){ return JSON.stringify([p.name,p.crop,p.year,p.owner,p.province,p.region,p.farmerName,p.farmerPhone,p.farmerCity,p.farmerNationalId,p.farmerAddress,p.notes]); }
+function sigProject(p){ return JSON.stringify([p.name,p.crop,p.year,p.owner,p.province,p.region,p.farmerName,p.farmerPhone,p.farmerCity,p.farmerNationalId,p.farmerAddress,p.notes,p.contractType||'',p.ofisStatus||'']); }
 /* اثر انگشت بازدیدها — بدون مهر زمانی، تا فقط تغییر «محتوا» دیده شود */
 function visitsSig(pl){
   const vs = (pl && pl.visits) || [];
@@ -1733,6 +1733,27 @@ function projCardHtml(p, totalHa, completePlots){
             <label>آدرس کامل</label>
             <textarea class="u-textarea"
               data-input="proj:field" data-key="farmerAddress" placeholder="روستا، بخش، نشانی پستی…">${esc(p.farmerAddress||'')}</textarea>
+          </div>
+          <div class="fieldset">
+            <div class="fst">قرارداد و سامانه نظارت</div>
+            <div class="row">
+              <div class="u-flex1"><label for="contractType">نوع قرارداد</label>
+                <select id="contractType" data-change="proj:field" data-key="contractType">
+                  <option value="" ${!p.contractType?'selected':''}>انتخاب کنید</option>
+                  <option value="اعلام سطح کشت به مؤسسه" ${p.contractType==='اعلام سطح کشت به مؤسسه'?'selected':''}>اعلام سطح کشت به مؤسسه</option>
+                  <option value="کنترل کشت بدون قرارداد" ${p.contractType==='کنترل کشت بدون قرارداد'?'selected':''}>کنترل کشت بدون قرارداد</option>
+                </select>
+              </div>
+              <div class="u-flex1"><label for="ofisStatus">ثبت در سامانه نظارت</label>
+                <select id="ofisStatus" data-change="proj:field" data-key="ofisStatus">
+                  <option value="" ${!p.ofisStatus?'selected':''}>انتخاب کنید</option>
+                  <option value="ثبت شده" ${p.ofisStatus==='ثبت شده'?'selected':''}>ثبت شده</option>
+                  <option value="ثبت نشده" ${p.ofisStatus==='ثبت نشده'?'selected':''}>ثبت نشده</option>
+                </select>
+              </div>
+            </div>
+            <div class="hint">وضعیت بالا دستی تعیین می‌شود؛ برنامه از سامانه استعلام نمی‌گیرد.</div>
+            <a href="https://ofis.spcri.ir/login" target="_blank" rel="noopener noreferrer">مشاهده در سامانه</a>
           </div>
           <label>توضیحات (شماره مجوز، طبقه بذری، نام ناظر…)</label>
           <textarea class="u-textarea-lg"
@@ -2347,7 +2368,7 @@ const V_SCHEMA = [
     { k: 'noteGen', l: 'توضیح وضعیت عمومی', t: 'area', full: 1 },
   ]},
   { id: 'iso', title: 'خلوص رقم و فاصلهٔ جداسازی', fields: [
-    { k: 'distSame', l: 'فاصله از مزرعهٔ همان محصول (متر)', t: 'text' },
+    { k: 'distSame', l: 'فاصله از مزرعهٔ همان رقم (متر)', t: 'text' },
     { k: 'distOther', l: 'فاصله از ارقام دیگر (متر)', t: 'text' },
     { k: 'source', l: 'منبع آلودگی همجوار', t: 'sel', o: ['ندارد', 'دارد'] },
     { k: 'offType', l: 'بوتهٔ خارج از رقم (تعداد / درصد)', t: 'text' },
@@ -2355,6 +2376,12 @@ const V_SCHEMA = [
     { k: 'sterility', l: 'نسبت نر عقیم / بارور', t: 'sel', o: ['مناسب', 'نامناسب', 'کاربرد ندارد'] },
   ]},
   { id: 'agro', title: 'عملیات زراعی و تغذیه', fields: [
+    { k: 'previousCrop', l: 'کشت سال قبل و تناوب', t: 'text' },
+    { k: 'soilPreparation', l: 'آماده‌سازی زمین پیش از کاشت (شخم، دیسک، تسطیح)', t: 'text' },
+    { k: 'prePlantFertilizer', l: 'کود پیش از کاشت (نوع، مقدار، تاریخ)', t: 'text' },
+    { k: 'prePlantHerbicide', l: 'کنترل علف هرز پیش از کاشت (روش، ماده، تاریخ)', t: 'text' },
+    { k: 'seedTreatment', l: 'ضدعفونی و آماده‌سازی بذر پیش از کاشت', t: 'text' },
+    { k: 'prePlantIrrigation', l: 'آبیاری پیش از کاشت (روش، تاریخ)', t: 'text' },
     { k: 'irrigation', l: 'آبیاری (روش، نوبت، کفایت)', t: 'text' },
     { k: 'nutrition', l: 'تغذیه و کود (نوع، مقدار، تاریخ)', t: 'text' },
     { k: 'spray', l: 'سمپاشی (سم، دوز، تاریخ)', t: 'text' },
@@ -2660,7 +2687,7 @@ function visitEditorHtml(pl, v){
   const sig = v.sig && !v.sig.refused
     ? '<div class="vs-sig"><img data-sig="' + v.id + '" alt="امضای کشاورز">'
       + '<div class="vs-sigmeta">' + esc(v.sig.name || 'کشاورز') + ' · ' + esc(v.sig.at || '')
-      + ' · کد اثر انگشت فرم: ' + esc(v.sig.code || '') + '</div></div>'
+      + '</div></div>'
     : (v.sig && v.sig.refused
       ? '<div class="vs-warn">کشاورز از امضا امتناع کرد' + (v.sig.witness ? ' — شاهد: ' + esc(v.sig.witness) : '') + '</div>'
       : '<div class="vs-sig"><canvas data-sigcv="' + v.id + '"></canvas></div>'
@@ -2766,17 +2793,10 @@ async function visitSign(plotId, vid){
   await vIdbPut('sigs', vid, blob);
   const v = vFind(plotId, vid); if (!v) return;
   const who = await uiPrompt('نام امضاکننده:', '', { title:'ثبت امضا', ok:'ثبت' });
-  vMark(v); v.sig = { name: String(who || 'کشاورز').trim() || 'کشاورز', at: vToday(), code: vHash(v), refused: false };
+  vMark(v); v.sig = { name: String(who || 'کشاورز').trim() || 'کشاورز', at: vToday(), refused: false };
   v.touch = Date.now(); save(); render();
   vToast('امضا ثبت شد');
 }
-function vHash(v){
-  const payload = JSON.stringify({ f: v.f, p: v.pests, s: v.samples, r: v.recs });
-  let h = 2166136261;
-  for (let i = 0; i < payload.length; i++) { h ^= payload.charCodeAt(i); h = Math.imul(h, 16777619); }
-  return (h >>> 0).toString(16).toUpperCase().padStart(8, '0');
-}
-
 /* ── عکس: گرفتن، فشرده‌کردن، ذخیره ── */
 let V_FILE_INPUT = null;
 function visitPhoto(plotId, vid, src){
@@ -2970,17 +2990,35 @@ function vZip(files){
 /* ── تکه‌های XML ── */
 function vX(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c])); }
 
+/* در فایل ورد تنها علامت اضافهٔ بالای «ه» حذف می‌شود؛ دادهٔ ذخیره‌شده دست‌نخورده است. */
+function vWordText(text){
+  return String(text == null ? '' : text).replace(/ه[\u200c\u200d]?\u0654/g, 'ه').replace(/\u06c0/g, 'ه');
+}
 function vP(text, o){
+  text = vWordText(text);
   o = o || {};
   const size = o.size || 22;
   const rpr = '<w:rPr><w:rFonts w:ascii="B Nazanin" w:hAnsi="B Nazanin" w:cs="B Nazanin"/>'
-    + (o.b ? '<w:b/><w:bCs/>' : '') + '<w:rtl/>'
-    + '<w:sz w:val="' + size + '"/><w:szCs w:val="' + size + '"/>'
-    + (o.color ? '<w:color w:val="' + o.color + '"/>' : '') + '</w:rPr>';
-  return '<w:p><w:pPr><w:bidi/><w:jc w:val="' + (o.align || 'right') + '"/>'
-    + '<w:spacing w:after="' + (o.after == null ? 60 : o.after) + '" w:before="' + (o.before || 0) + '"/></w:pPr>'
+    + (o.b ? '<w:b/><w:bCs/>' : '')
+    + (o.color ? '<w:color w:val="' + o.color + '"/>' : '')
+    + '<w:sz w:val="' + size + '"/><w:szCs w:val="' + size + '"/><w:rtl/></w:rPr>';
+  return '<w:p><w:pPr>' + (o.heading ? '<w:pStyle w:val="Heading1"/>' : '') + '<w:bidi/>'
+    + '<w:spacing w:after="' + (o.after == null ? 60 : o.after) + '" w:before="' + (o.before || 0) + '"/>'
+    + '<w:jc w:val="' + (o.align || 'start') + '"/>' + (o.heading ? '<w:outlineLvl w:val="0"/>' : '') + '</w:pPr>'
     + '<w:r>' + rpr + '<w:t xml:space="preserve">' + vX(text) + '</w:t></w:r></w:p>';
 }
+
+/* پیوند واقعی و کلیک‌پذیر در همان خانهٔ وضعیت سامانه؛ بدون استعلام خودکار. */
+function vOfisCell(status){
+  const link = '<w:hyperlink r:id="rIdOfis" w:history="1"><w:r><w:rPr>'
+    + '<w:rFonts w:ascii="B Nazanin" w:hAnsi="B Nazanin" w:cs="B Nazanin"/>'
+    + '<w:color w:val="0563C1"/><w:sz w:val="20"/><w:szCs w:val="20"/>'
+    + '<w:u w:val="single"/><w:rtl/></w:rPr>'
+    + '<w:t xml:space="preserve">مشاهده در سامانه</w:t></w:r></w:hyperlink>';
+  return vP((status || '—') + '  |  ', { size:20, after:0 }).replace('</w:p>',link + '</w:p>');
+}
+const V_STYLES_REL = '<Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>';
+const V_OFIS_REL = '<Relationship Id="rIdOfis" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target="https://ofis.spcri.ir/login" TargetMode="External"/>';
 
 function vBorder(){
   return '<w:tblBorders>'
@@ -2996,18 +3034,19 @@ function vTbl(rows, widthsCm, opts){
   const body = rows.map((row, ri) => '<w:tr>' + row.map((cell, ci) => {
     const w = Math.round((widthsCm[ci] || 3) * V_TWIP_CM);
     const head = opts.head && ri === 0;
+    const fixed = head || (Array.isArray(opts.labelCols) && opts.labelCols.includes(ci));
     /* اگر محتوای خانه خودش XML باشد (مثل تصویر)، همان‌طور گذاشته می‌شود */
     const raw = typeof cell === 'string' && cell.indexOf('<w:p') === 0;
     const inner = raw ? cell
       : vP(String(cell == null ? '' : cell), { size: 20, b: head, after: 0, color: head ? '1F6F43' : null });
     return '<w:tc><w:tcPr><w:tcW w:w="' + w + '" w:type="dxa"/>'
-      + (head ? '<w:shd w:val="clear" w:color="auto" w:fill="EEF3EF"/>' : '')
+      + '<w:shd w:val="clear" w:color="auto" w:fill="' + (fixed ? 'EEF3EF' : 'FFFFFF') + '"/>' 
       + '<w:vAlign w:val="center"/></w:tcPr>'
       + inner
       + '</w:tc>';
   }).join('') + '</w:tr>').join('');
-  return '<w:tbl><w:tblPr><w:tblW w:w="' + Math.round(total * V_TWIP_CM) + '" w:type="dxa"/>'
-    + '<w:jc w:val="center"/>' + vBorder() + '<w:bidiVisual/>'
+  return '<w:tbl><w:tblPr><w:bidiVisual/><w:tblW w:w="' + Math.round(total * V_TWIP_CM) + '" w:type="dxa"/>'
+    + '<w:jc w:val="center"/>' + vBorder()
     + '<w:tblCellMar><w:top w:w="40" w:type="dxa"/><w:left w:w="70" w:type="dxa"/>'
     + '<w:bottom w:w="40" w:type="dxa"/><w:right w:w="70" w:type="dxa"/></w:tblCellMar>'
     + '</w:tblPr><w:tblGrid>' + grid + '</w:tblGrid>' + body + '</w:tbl>'
@@ -3039,6 +3078,9 @@ function vDocShell(body, relsXml){
     + '<w:body>' + body
     + '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/>'
     + '<w:pgMar w:top="900" w:right="850" w:bottom="900" w:left="850" w:header="500" w:footer="500" w:gutter="0"/>'
+    + '<w:pgBorders w:offsetFrom="page">'
+    + ['top','left','bottom','right'].map(s=>'<w:'+s+' w:val="single" w:sz="6" w:space="24" w:color="9BB5A3"/>').join('')
+    + '</w:pgBorders>'
     + '<w:bidi/></w:sectPr></w:body></w:document>';
 
   const CT = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
@@ -3061,8 +3103,9 @@ function vDocShell(body, relsXml){
     + '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
     + '<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="B Nazanin" w:hAnsi="B Nazanin" w:cs="B Nazanin"/>'
     + '<w:sz w:val="22"/><w:szCs w:val="22"/><w:rtl/></w:rPr></w:rPrDefault>'
-    + '<w:pPrDefault><w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr></w:pPrDefault></w:docDefaults>'
+    + '<w:pPrDefault><w:pPr><w:bidi/><w:jc w:val="start"/></w:pPr></w:pPrDefault></w:docDefaults>'
     + '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style>'
+    + '<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:uiPriority w:val="9"/><w:qFormat/><w:pPr><w:outlineLvl w:val="0"/></w:pPr></w:style>'
     + '</w:styles>';
 
   return { CT, RELS, STYLES, DOCRELS: relsXml, doc };
@@ -3098,13 +3141,13 @@ async function visitWord(plotId, vid){
   let ridN = 10;
   const blocks = [];
 
-  blocks.push(vP('مؤسسهٔ ثبت و گواهی بذر و نهال', { align:'center', size:20, color:'555F5A', after:20 }));
+  blocks.push(vP('شرکت زرین دانه کشتزار', { align:'center', size:20, color:'555F5A', after:20 }));
   blocks.push(vP('گزارش بازدید مزرعهٔ تولید بذر', { align:'center', size:34, b:true, color:'1F6F43', after:60 }));
   blocks.push(vP(String(pr.name || '') + ' · ' + String(pr.crop || '') + ' · ' + String(pr.region || pr.province || ''),
     { align:'center', size:22, after:120 }));
 
   /* ۱ — شناسنامه */
-  blocks.push(vP('۱ — شناسنامهٔ قطعه و بازدید', { size:24, b:true, color:'1F6F43', after:60 }));
+  blocks.push(vP('۱ — شناسنامهٔ قطعه و بازدید', { heading:true, size:24, b:true, color:'1F6F43', after:60 }));
   const area = (typeof netAreaM2 === 'function') ? (netAreaM2(pl) / 10000) : 0;
   const kv = [
     ['کشاورز (بهره‌بردار)', pr.farmerName || '—', 'تاریخ بازدید', vGet(v, 'f:date') || '—'],
@@ -3113,37 +3156,40 @@ async function visitWord(plotId, vid){
     ['طبقهٔ بذری', pl.seedClass || '—', 'مرحلهٔ رشد', vGet(v, 'f:stage') || '—'],
     ['مساحت قطعه', (typeof faFixed === 'function' ? faFixed(area, 2) : area.toFixed(2)) + ' هکتار', 'وضعیت هوا', vGet(v, 'f:weather') || '—'],
     ['تاریخ کشت', pl.plantDate || '—', 'بازدیدکننده', vGet(v, 'f:inspector') || '—'],
+    ['نوع قرارداد', pr.contractType || '—', 'ثبت در سامانه نظارت', vOfisCell(pr.ofisStatus)],
   ];
-  blocks.push(vTbl(kv, [3.6, 5.2, 3.4, 5.6]));
+  blocks.push(vTbl(kv, [3.6, 5.2, 3.4, 5.6], { labelCols:[0,2] }));
 
   /* یک بخش از نقشه را با شماره می‌نویسد */
-  const secBlock = (id, num) => {
+  const secBlock = (id, num, title, keys) => {
     const sec = V_SCHEMA.find(s => s.id === id); if (!sec) return;
-    blocks.push(vP(vFa2(num) + ' — ' + sec.title, { size:24, b:true, color:'1F6F43', after:60 }));
-    const rows = sec.fields.filter(f => f.t !== 'area').map(f => [f.l, vGet(v, 'f:' + f.k) || '—']);
-    if (rows.length) blocks.push(vTbl(rows, [7.0, 11.0], { head:false }));
-    sec.fields.filter(f => f.t === 'area').forEach(f => {
+    const fields = keys ? sec.fields.filter(f=>keys.includes(f.k)) : sec.fields;
+    blocks.push(vP(vFa2(num) + ' — ' + (title || sec.title), { heading:true, size:24, b:true, color:'1F6F43', after:60 }));
+    const rows = fields.filter(f => f.t !== 'area').map(f => [f.l, vGet(v, 'f:' + f.k) || '—']);
+    if (rows.length) blocks.push(vTbl(rows, [7.0, 11.0], { labelCols:[0] }));
+    fields.filter(f => f.t === 'area').forEach(f => {
       blocks.push(vP(f.l + ':', { size:20, b:true, after:20 }));
       blocks.push(vP(vGet(v, 'f:' + f.k) || '—', { size:20, after:80 }));
     });
   };
 
-  /* ۲ تا ۴ — وضعیت عمومی، خلوص، عملیات زراعی */
+  /* جداسازی و خلوص، هر کدام در یک بند جدا؛ کلیدهای ذخیره‌شده ثابت‌اند. */
   secBlock('gen', 2);
-  secBlock('iso', 3);
-  secBlock('agro', 4);
+  secBlock('iso', 3, 'ایزولاسیون', ['distSame','distOther','source']);
+  secBlock('iso', 4, 'خلوص مزرعه', ['offType','weedKin','sterility']);
+  secBlock('agro', 5);
 
   /* ۶ — آفت‌ها */
   const pestRows = (v.pests || []).filter(p => p && (p.kind || p.name || p.action))
     .map(p => [p.kind || '—', p.name || '—', p.sev || '—', p.pct || '—', p.action || '—']);
-  blocks.push(vP('۵ — آفات، بیماری‌ها و علف‌های هرز', { size:24, b:true, color:'1F6F43', after:60 }));
+  blocks.push(vP('۶ — آفات، بیماری‌ها و علف‌های هرز', { heading:true, size:24, b:true, color:'1F6F43', after:60 }));
   blocks.push(vTbl([['نوع', 'نام', 'شدت', 'درصد / سطح', 'اقدام'], ...(pestRows.length ? pestRows : [['—', '—', '—', '—', '—']])],
     [2.4, 4.6, 2.0, 2.6, 6.4], { head:true }));
 
   /* ۷ — نمونه‌ها */
   const smpRows = (v.samples || []).filter(s => s && (s.code || s.germ))
     .map(s => [s.code || '—', s.date || '—', s.germ || '—', s.purity || '—', s.moisture || '—', s.tkw || '—', s.health || '—']);
-  blocks.push(vP('۶ — نمونهٔ ارسالی و نتیجهٔ آزمایشگاه', { size:24, b:true, color:'1F6F43', after:60 }));
+  blocks.push(vP('۷ — نمونهٔ ارسالی و نتیجهٔ آزمایشگاه', { heading:true, size:24, b:true, color:'1F6F43', after:60 }));
   blocks.push(vTbl([['کد نمونه', 'تاریخ ارسال', 'قوهٔ نامیه', 'خلوص', 'رطوبت', 'وزن هزار دانه', 'سلامت بذر'],
     ...(smpRows.length ? smpRows : [['—', '—', '—', '—', '—', '—', '—']])],
     [2.2, 2.6, 2.4, 2.2, 2.2, 3.0, 3.4], { head:true }));
@@ -3151,17 +3197,17 @@ async function visitWord(plotId, vid){
   /* ۸ — توصیه‌ها */
   const recRows = (v.recs || []).filter(r => r && (r.text || r.cat))
     .map((r, i) => [vFa2(i + 1), r.cat || '—', r.text || '—', r.due || '—', r.done || '—']);
-  blocks.push(vP('۷ — توصیه‌های ابلاغی و پیگیری', { size:24, b:true, color:'1F6F43', after:60 }));
+  blocks.push(vP('۸ — توصیه‌های ابلاغی و پیگیری', { heading:true, size:24, b:true, color:'1F6F43', after:60 }));
   blocks.push(vTbl([['#', 'دسته', 'متن توصیه', 'مهلت', 'اجرا در بازدید بعد'],
     ...(recRows.length ? recRows : [['—', '—', '—', '—', '—']])],
     [1.2, 2.6, 7.4, 2.6, 4.2], { head:true }));
 
   /* ۸ — جمع‌بندی و رأی */
-  secBlock('end', 8);
+  secBlock('end', 9);
 
   /* ۹ — عکس‌ها */
   const photos = v.photos || [];
-  blocks.push(vP('۹ — عکس‌های بازدید (' + vFa2(photos.length) + ')', { size:24, b:true, color:'1F6F43', after:60 }));
+  blocks.push(vP('۱۰ — عکس‌های بازدید (' + vFa2(photos.length) + ')', { heading:true, size:24, b:true, color:'1F6F43', after:60 }));
   if (photos.length) {
     for (let i = 0; i < photos.length; i += 2) {
       const pair = photos.slice(i, i + 2);
@@ -3191,7 +3237,7 @@ async function visitWord(plotId, vid){
   }
 
   /* ۱۰ — امضا */
-  blocks.push(vP('۱۰ — امضاها', { size:24, b:true, color:'1F6F43', after:60 }));
+  blocks.push(vP('۱۱ — امضاها', { heading:true, size:24, b:true, color:'1F6F43', after:60 }));
   if (v.sig && !v.sig.refused) {
     let sigImagePresent = false;
     try {
@@ -3207,7 +3253,7 @@ async function visitWord(plotId, vid){
       }
     } catch(e) {}
     if (!sigImagePresent) blocks.push(vP('تصویر امضا در این دستگاه موجود نیست؛ گزارش کامل را از دستگاه اصلی بگیرید.', { size:18, color:'AA0000' }));
-    blocks.push(vP('امضای ' + (v.sig.name || 'کشاورز') + ' · ' + (v.sig.at || '') + ' · کد اثر انگشت فرم: ' + (v.sig.code || ''), { size:18, align:'center', color:'555F5A' }));
+    blocks.push(vP('امضای ' + (v.sig.name || 'کشاورز') + ' · ' + (v.sig.at || ''), { size:18, align:'center', color:'555F5A' }));
   } else if (v.sig && v.sig.refused) {
     blocks.push(vP('کشاورز از امضا امتناع کرد' + (v.sig.witness ? ' — شاهد: ' + v.sig.witness : ''), { size:20 }));
   } else {
@@ -3220,7 +3266,7 @@ async function visitWord(plotId, vid){
   blocks.push(vP('', { after:100 }));
   blocks.push(vP('طراحی و توسعه: سجاد جمشیدپور', { size:16, align:'center', color:'8A948F' }));
 
-  const rels = media.map(m => '<Relationship Id="' + m.rid + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/' + m.name + '"/>').join('');
+  const rels = V_STYLES_REL + V_OFIS_REL + media.map(m => '<Relationship Id="' + m.rid + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/' + m.name + '"/>').join('');
   const shell = vDocShell(blocks.join(''), rels);
   const files = [
     { name: '[Content_Types].xml', data: shell.CT },
@@ -3248,10 +3294,13 @@ async function visitWordAll(plotId){
   const pr = activeProject() || {};
   vToast('در حال ساخت کارنامه…');
   const blocks = [];
-  blocks.push(vP('مؤسسهٔ ثبت و گواهی بذر و نهال', { align:'center', size:20, color:'555F5A', after:20 }));
+  blocks.push(vP('شرکت زرین دانه کشتزار', { align:'center', size:20, color:'555F5A', after:20 }));
   blocks.push(vP('کارنامهٔ بازدیدهای قطعه', { align:'center', size:34, b:true, color:'1F6F43', after:60 }));
   blocks.push(vP(String(pr.name || '') + ' · ' + String(pr.crop || '') + ' · قطعه ' + String(pl.code || '—')
     + ' · ' + (pr.farmerName || '—'), { align:'center', size:22, after:120 }));
+  blocks.push(vP('اطلاعات پروژه', { heading:true, size:24, b:true, color:'1F6F43', after:60 }));
+  blocks.push(vTbl([['نوع قرارداد', pr.contractType || '—', 'ثبت در سامانه نظارت', vOfisCell(pr.ofisStatus)]],
+    [3.6, 5.2, 3.4, 5.6], { labelCols:[0,2] }));
   const rows = [['#', 'تاریخ', 'مرحلهٔ رشد', 'آفت/بیماری', 'توصیه‌ها', 'رأی', 'اجرای توصیهٔ قبل']];
   list.forEach((v, i) => {
     const pests = (v.pests || []).filter(p => p && (p.name || p.sev))
@@ -3260,20 +3309,21 @@ async function visitWordAll(plotId){
     rows.push([vFa2(i + 1), vGet(v, 'f:date') || '—', vGet(v, 'f:stage') || '—',
       pests || '—', recs || '—', vGet(v, 'f:verdict') || '—', vGet(v, 'f:prev') || '—']);
   });
+  blocks.push(vP('بازدیدهای قطعه', { heading:true, size:24, b:true, color:'1F6F43', after:60 }));
   blocks.push(vTbl(rows, [1.0, 2.4, 2.4, 4.2, 4.6, 2.0, 3.0], { head:true }));
   const open = list.flatMap(v => (v.recs || []).filter(r => r && r.text && r.done !== 'انجام شد').map(r => r.text));
-  blocks.push(vP('کارهای باز (توصیه‌هایی که هنوز انجام‌نشده‌اند):', { size:22, b:true, after:40 }));
+  blocks.push(vP('کارهای باز (توصیه‌هایی که هنوز انجام‌نشده‌اند):', { heading:true, size:22, b:true, after:40 }));
   blocks.push(vP(open.length ? open.map((t, i) => vFa2(i + 1) + ') ' + t).join('\n') : 'همهٔ توصیه‌ها انجام شده است.', { size:20 }));
   blocks.push(vP('', { after:120 }));
   blocks.push(vP('طراحی و توسعه: سجاد جمشیدپور', { size:16, align:'center', color:'8A948F' }));
-  const shell = vDocShell(blocks.join(''), '');
+  const shell = vDocShell(blocks.join(''), V_STYLES_REL + V_OFIS_REL);
   const blob = vZip([
     { name: '[Content_Types].xml', data: shell.CT },
     { name: '_rels/.rels', data: shell.RELS },
     { name: 'word/document.xml', data: shell.doc },
     { name: 'word/styles.xml', data: shell.STYLES },
     { name: 'word/_rels/document.xml.rels',
-      data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>' },
+      data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + V_STYLES_REL + V_OFIS_REL + '</Relationships>' },
   ]);
   vDownloadBlob('کارنامه_' + sanitize(pl.code || String(pl.id).slice(0,4)) + '_' + sanitize(pr.crop || '') + '_' + sanitize(pr.farmerName || pr.name || '') + '.docx', blob);
   vToast('کارنامه ساخته شد');
@@ -3565,11 +3615,14 @@ function syncApply(data, source){
     const st_l = ip.updatedAt || 0, st_m = lp.updatedAt || 0;
     if(ip.name || ip.crop || ip.year || ip.owner || ip.province || ip.notes){
       if(st_l > st_m){
-        lp.name = ip.name; lp.crop = ip.crop; lp.year = ip.year; lp.owner = ip.owner;
-        lp.province = ip.province; lp.notes = ip.notes; lp.updatedAt = st_l;
+        // فقط فیلدهای حاضر در دستگاه مقابل کپی شوند؛ نسخه‌های قدیمی فیلد تازه ندارند.
+        ['name','crop','year','owner','province','region','farmerName','farmerPhone','farmerCity','farmerNationalId','farmerAddress','notes','contractType','ofisStatus'].forEach(k=>{
+          if(Object.prototype.hasOwnProperty.call(ip,k)) lp[k]=ip[k];
+        });
+        lp.updatedAt = st_l;
         st.updProjects++;
       } else if(st_m > st_l){ /* نسخهٔ محلی تازه‌تر است */ }
-      else if(sigProject(lp) !== JSON.stringify([ip.name,ip.crop,ip.year,ip.owner,ip.province,ip.notes])){ st.conflicts++; }
+      else if(sigProject(lp) !== sigProject(ip)){ st.conflicts++; }
     }
     (ip.plots||[]).forEach(ipl=>{
       if(inGraveL[ipl.id]) return;
@@ -6992,6 +7045,7 @@ render();
 
   /* ── رویداد «تغییر مقدار» (onchange) ── */
   const CHANGES = {
+    'proj:field': el => updateField(el.dataset.key, el.value),
     'gs:saveCfg': el => gsSaveCfg(),
     'mp:updateEstimate': el => MP.updateEstimate(),
     'mp:setConc': el => MP.setConc(),
