@@ -776,6 +776,30 @@
     .vs-main{flex:1 0 60%}
   }
 
+  /* ── گزارش کلی پروژه: همان برگهٔ بازدید، در کارت جدا ── */
+  .vs-bar.vs-gen{border-top:0; padding-top:0; margin-top:8px}
+  .vs-copy{display:flex; align-items:center; gap:8px; flex-wrap:wrap; background:var(--green-soft2,#eef6f0);
+           border:1px dashed #c9d8ce; border-radius:9px; padding:8px 10px; margin-bottom:12px;
+           font-size:11.5px; color:var(--muted); line-height:1.8}
+  .vs-copy span{flex:1 1 180px}
+  /* پنجرهٔ «کپی از بازدید قطعه» */
+  .vc-dlg .dlg-b{white-space:normal}
+  .vc-dlg .dlg-b label.vc-l{font-size:12px; color:var(--muted); margin:2px 0 3px}
+  .vc-dlg .dlg-b select{width:100%; margin-top:0}
+  .vc-sum{font-size:11px; color:var(--muted); margin:5px 0 8px; line-height:1.8}
+  .vc-dlg .vc-opt{display:flex; align-items:flex-start; gap:7px; font-size:12.5px; line-height:1.8; margin:7px 0;
+                  cursor:pointer; color:var(--ink)}
+  .vc-dlg .vc-opt input{margin:6px 0 0; flex:0 0 auto; width:auto}
+  .vc-dlg .vc-opt small{display:block; font-size:11px; color:var(--muted)}
+  .vc-dlg .vc-opt.off{opacity:.55; cursor:default}
+  .vc-note{font-size:11px; color:var(--muted); margin-top:8px; padding-top:7px; border-top:1px dashed var(--line)}
+  @media (max-width:640px){
+    .vs-bar.vs-gen{flex-wrap:wrap}
+    .vs-bar.vs-gen h4{flex:1 0 100%}
+    .vs-bar.vs-gen .sp{display:none}
+    .vs-bar.vs-gen button{flex:1 1 0}
+  }
+
   /* ── پیام کوتاه بازدیدها ── */
   .v-toast{position:fixed; bottom:18px; left:50%; transform:translateX(-50%) translateY(12px);
            background:#1d2321; color:#fff; font-size:12px; padding:9px 16px; border-radius:20px;
@@ -1138,7 +1162,7 @@
 <script>
 /* ---------- ذخیره‌سازی ---------- */
 const STORE_KEY = 'seed_coord_notebook_demo_v1';
-const APP_VERSION = '2.5.1';   // build-app.py این عدد را با VERSION هم‌تراز می‌کند
+const APP_VERSION = '2.6.0';   // build-app.py این عدد را با VERSION هم‌تراز می‌کند
 let state = { projects: [], activeId: null };
 
 let storageOK = true;
@@ -1697,6 +1721,8 @@ function render(){
     blocks.push(sumCardHtml(p));
   }
 
+  blocks.push(generalCardHtml(p));
+
   p.plots.forEach((pl, i)=>{ blocks.push(plotCardHtml(pl, i)); });
 
   blocks.push(offlineCardHtml(p));
@@ -1776,6 +1802,16 @@ function projCardHtml(p, totalHa, completePlots){
           <button class="small danger u-w100" data-act="proj:delete">حذف پروژه</button>
         </div>
       </div>
+    </div>`;
+}
+
+/* ── کارت «گزارش کلی پروژه»: همان برگهٔ بازدید قطعه، ولی برای کل پروژه ── */
+function generalCardHtml(p){
+  const n = Array.isArray(p.visits) ? p.visits.length : 0;
+  return `<div class="card" id="genCard">
+      <h2>گزارش کلی پروژه <span class="badge">${n ? n.toLocaleString('fa-IR') + ' گزارش' : 'ثبت نشده'}</span></h2>
+      <div class="hint">این گزارش برای کل پروژه است، نه یک قطعه. همان برگهٔ بازدید قطعه را دارد: می‌توانید خودتان پر کنید، یا با «📋 کپی از بازدید قطعه» اطلاعات بازدید یکی از قطعه‌ها را در آن بگذارید و بعد تغییر دهید.</div>
+      ${visitsHtml(p)}
     </div>`;
 }
 
@@ -2447,20 +2483,40 @@ function vToast(msg){
   V_TOAST_TIMER = setTimeout(() => el.classList.remove('on'), 2200);
 }
 
-/* ── دسترسی به داده ── */
+/* ── دسترسی به داده ──
+   «نگه‌دارندهٔ» بازدید یا یک قطعه است، یا خودِ پروژه (گزارش کلی پروژه).
+   گزارش کلی همان ساختار بازدید قطعه را دارد و در p.visits می‌ماند؛ پس فرم، عکس،
+   امضا، ورد، همگام‌سازی و پشتیبان برای هر دو یکی است. */
 function vPlot(plotId){
   const p = activeProject();
-  return p ? (p.plots || []).find(x => x.id === plotId) : null;
+  if (!p) return null;
+  if (p.id === plotId) return p;                    /* گزارش کلی: نگه‌دارنده خودِ پروژه است */
+  return (p.plots || []).find(x => x.id === plotId) || null;
 }
+function vIsProj(h){ return !!h && Array.isArray(h.plots); }
 function vList(pl){
   if (!pl) return [];
-  if (!Array.isArray(pl.visits)) pl.visits = [];
+  if (!Array.isArray(pl.visits)) {
+    /* به پروژه‌ای که گزارش کلی ندارد کلید تازه اضافه نمی‌شود (سازگاری با نسخه‌های قبلی برنامه) */
+    if (vIsProj(pl)) return [];
+    pl.visits = [];
+  }
   return pl.visits;
 }
 function vFind(plotId, vid){
   const pl = vPlot(plotId);
   return vList(pl).find(v => v.id === vid) || null;
 }
+/* واژه‌های روی صفحه: برای قطعه «بازدید»، برای پروژه «گزارش کلی» */
+const V_WORDS = {
+  plot: { tag: 'بازدید', count: 'بازدید', list: 'بازدیدها', add: '+ بازدید تازه', all: '⬇ کارنامهٔ بازدیدها',
+          empty: 'برای این قطعه هنوز بازدیدی ثبت نشده. با دکمهٔ «+ بازدید تازه» شروع کنید.',
+          sheet: 'برگهٔ بازدید', del: 'حذف بازدید', photos: 'عکس‌های بازدید' },
+  gen:  { tag: 'گزارش', count: 'گزارش', list: 'گزارش‌های کلی', add: '+ گزارش کلی تازه', all: '⬇ کارنامهٔ گزارش‌های کلی',
+          empty: 'برای این پروژه هنوز گزارش کلی ثبت نشده. با دکمهٔ «+ گزارش کلی تازه» شروع کنید.',
+          sheet: 'برگهٔ گزارش کلی', del: 'حذف گزارش', photos: 'عکس‌های گزارش' }
+};
+function vWords(h){ return vIsProj(h) ? V_WORDS.gen : V_WORDS.plot; }
 function vToday(){ try{ return new Date().toLocaleDateString('fa-IR'); }catch(e){ return ''; } }
 function vNow(){ try{ return new Date().toLocaleTimeString('fa-IR', { hour:'2-digit', minute:'2-digit' }); }catch(e){ return ''; } }
 function vFa(n){ return Number(n).toLocaleString('fa-IR'); }
@@ -2487,7 +2543,8 @@ function vMark(v){
 }
 function vNew(plotId){
   const pl = vPlot(plotId); if (!pl) return null;
-  const list = vList(pl);
+  if (!Array.isArray(pl.visits)) pl.visits = [];
+  const list = pl.visits;
   const v = { id: uid(), f: { date: vToday(), time: vNow(), type: V_TYPE[0], stage: '', weather: '', inspector: '' },
               pests: [{ kind: V_PKIND[0], name: '', sev: '', pct: '', action: '' }],
               samples: [], recs: [], photos: [], sig: null, made: Date.now(), touch: Date.now() };
@@ -2601,13 +2658,14 @@ async function vPhotoKeysOf(plotId, vid){
 /* ── قالب: بخش بازدیدها داخل کارت قطعه ── */
 function visitsHtml(pl){
   if (!pl) return '';
+  const W = vWords(pl);
   const list = vList(pl);
   const rows = list.map((v, i) => {
     const open = V_OPEN === v.id;
     return '<div class="vs-item ' + vRowClass(v) + (open ? ' open' : '') + '">'
       + '<i class="vs-dot"></i>'
       + '<div class="vs-main">'
-      +   '<div class="vs-date">' + esc(vGet(v, 'f:date') || vToday()) + ' <span class="vs-tag">بازدید ' + vFa(i + 1) + '</span></div>'
+      +   '<div class="vs-date">' + esc(vGet(v, 'f:date') || vToday()) + ' <span class="vs-tag">' + W.tag + ' ' + vFa(i + 1) + '</span></div>'
       +   '<div class="vs-sub" data-rowsum="' + v.id + '">' + esc(vRowSummary(v)) + '</div>'
       + '</div>'
       + '<button class="small" data-act="visit:open" data-id="' + pl.id + '" data-vid="' + v.id + '">' + (open ? 'بستن' : 'باز کردن') + '</button>'
@@ -2617,13 +2675,13 @@ function visitsHtml(pl){
 
   const openVisit = V_OPEN ? list.find(v => v.id === V_OPEN) : null;
 
-  return '<div class="vs-bar">'
-    + '<h4>بازدیدها <span class="vs-count">' + (list.length ? vFa(list.length) + ' بازدید' : 'ثبت نشده') + '</span></h4>'
+  return '<div class="vs-bar' + (W === V_WORDS.gen ? ' vs-gen' : '') + '">'
+    + '<h4>' + W.list + ' <span class="vs-count">' + (list.length ? vFa(list.length) + ' ' + W.count : 'ثبت نشده') + '</span></h4>'
     + '<span class="sp"></span>'
-    + '<button class="small" data-act="visit:wordAll" data-id="' + pl.id + '">⬇ کارنامهٔ بازدیدها</button>'
-    + '<button class="small primary" data-act="visit:add" data-id="' + pl.id + '">+ بازدید تازه</button>'
+    + '<button class="small" data-act="visit:wordAll" data-id="' + pl.id + '">' + W.all + '</button>'
+    + '<button class="small primary" data-act="visit:add" data-id="' + pl.id + '">' + W.add + '</button>'
     + '</div>'
-    + '<div class="vs-list">' + (rows || '<div class="vs-empty">برای این قطعه هنوز بازدیدی ثبت نشده. با دکمهٔ «+ بازدید تازه» شروع کنید.</div>') + '</div>'
+    + '<div class="vs-list">' + (rows || '<div class="vs-empty">' + W.empty + '</div>') + '</div>'
     + (openVisit ? visitEditorHtml(pl, openVisit) : '');
 }
 
@@ -2681,6 +2739,12 @@ function vRepeatHtml(pl, v, scope, i, row){
 
 /* ── برگهٔ کامل بازدید ── */
 function visitEditorHtml(pl, v){
+  const W = vWords(pl), gen = vIsProj(pl);
+  /* فقط در گزارش کلی: آوردن اطلاعات از بازدید یکی از قطعه‌های همین پروژه */
+  const copyBar = gen
+    ? '<div class="vs-copy"><button class="small primary" data-act="visit:copyFrom" data-id="' + pl.id + '" data-vid="' + v.id + '">📋 کپی از بازدید قطعه</button>'
+      + '<span>می‌توانید اطلاعات بازدید یکی از قطعه‌ها را در این گزارش بگذارید و بعد هر چه خواستید تغییر دهید.</span></div>'
+    : '';
   const secs = V_SCHEMA.map(s =>
     '<div class="vs-sec"><div class="vs-st">' + esc(s.title) + '</div>'
     + '<div class="vs-grid">' + s.fields.map(f => vFieldHtml(pl, v, 'f:' + f.k, f)).join('') + '</div></div>').join('');
@@ -2703,12 +2767,12 @@ function visitEditorHtml(pl, v){
         + '<div class="vs-sigmeta">کشاورز با انگشت امضا کند، بعد «ثبت امضا» را بزنید.</div>');
 
   return '<div class="vs-editor">'
-    + '<div class="vs-eh"><b>برگهٔ بازدید — ' + esc(vGet(v, 'f:date') || vToday()) + '</b><span class="sp"></span>'
+    + '<div class="vs-eh"><b>' + W.sheet + ' — ' + esc(vGet(v, 'f:date') || vToday()) + '</b><span class="sp"></span>'
     +   '<button class="small" data-act="visit:word" data-id="' + pl.id + '" data-vid="' + v.id + '">⬇ فایل ورد</button>'
-    +   '<button class="small danger" data-act="visit:del" data-id="' + pl.id + '" data-vid="' + v.id + '">حذف بازدید</button>'
+    +   '<button class="small danger" data-act="visit:del" data-id="' + pl.id + '" data-vid="' + v.id + '">' + W.del + '</button>'
     +   '<button class="small" data-act="visit:close" data-id="' + pl.id + '" data-vid="' + v.id + '">بستن</button>'
     + '</div>'
-    + '<div class="vs-eb">' + secs
+    + '<div class="vs-eb">' + copyBar + secs
     + ((v.photos||[]).length || (v.sig && !v.sig.refused) ? '<div class="vs-warn">عکس‌ها و تصویر امضا میان دستگاه‌ها منتقل نمی‌شوند؛ برای گزارش کامل، از دستگاه ثبت‌کننده خروجی ورد بگیرید.</div>' : '')
     + '<div class="vs-sec"><div class="vs-st">آفت‌ها، بیماری‌ها و علف‌های هرز</div>' + pests
     +   '<button class="small" data-act="visit:addRow" data-id="' + pl.id + '" data-vid="' + v.id + '" data-list="p">+ افزودن ردیف</button></div>'
@@ -2716,7 +2780,7 @@ function visitEditorHtml(pl, v){
     +   '<button class="small" data-act="visit:addRow" data-id="' + pl.id + '" data-vid="' + v.id + '" data-list="s">+ افزودن نمونه</button></div>'
     + '<div class="vs-sec"><div class="vs-st">توصیه‌های ابلاغی</div>' + (recs || '')
     +   '<button class="small" data-act="visit:addRow" data-id="' + pl.id + '" data-vid="' + v.id + '" data-list="r">+ افزودن توصیه</button></div>'
-    + '<div class="vs-sec"><div class="vs-st">عکس‌های بازدید (' + vFa((v.photos || []).length) + ' از ' + vFa(V_MAX_PHOTOS) + ')</div>'
+    + '<div class="vs-sec"><div class="vs-st">' + W.photos + ' (' + vFa((v.photos || []).length) + ' از ' + vFa(V_MAX_PHOTOS) + ')</div>'
     +   '<div class="vs-foot">'
     +     '<button class="small primary" data-act="visit:photo" data-id="' + pl.id + '" data-vid="' + v.id + '" data-src="cam">📷 گرفتن عکس</button>'
     +     '<button class="small" data-act="visit:photo" data-id="' + pl.id + '" data-vid="' + v.id + '" data-src="gal">🖼 از گالری / فایل</button>'
@@ -2738,6 +2802,7 @@ function visitAdd(plotId){
   const v = vNew(plotId); if (!v) return;
   V_OPEN = v.id;
   render();
+  if (vIsProj(vPlot(plotId))) { setTimeout(vScrollToGenSheet, 60); return; }   /* گزارش کلی: بالای برگه دیده شود */
   setTimeout(() => { const el = document.querySelector('[data-sigcv]'); if (el) el.scrollIntoView({ block:'center', behavior:'smooth' }); }, 60);
 }
 function visitOpen(plotId, vid){
@@ -2747,7 +2812,9 @@ function visitOpen(plotId, vid){
 function visitClose(){ V_OPEN = null; render(); }
 async function visitDel(plotId, vid){
   const pl = vPlot(plotId); if (!pl) return;
-  if (!(await uiConfirm('این بازدید و عکس‌هایش حذف شود؟', { danger:true, ok:'حذف کن', title:'حذف بازدید' }))) return;
+  const gen = vIsProj(pl);
+  if (!(await uiConfirm(gen ? 'این گزارش کلی و عکس‌هایش حذف شود؟' : 'این بازدید و عکس‌هایش حذف شود؟',
+      { danger:true, ok:'حذف کن', title: gen ? 'حذف گزارش کلی' : 'حذف بازدید' }))) return;
   const v = vFind(plotId, vid);
   if(v){ pl.visitGrave = (pl.visitGrave || []).filter(g=>g.id!==vid); pl.visitGrave.push({id:vid, rev:vRevision(v), anc:(v._anc||[]).slice()}); }
   for (const p of (v && v.photos) || []) { try{ await vIdbDel('photos', vPhotoKey(plotId, vid, p.id)); }catch(e){} }
@@ -2790,6 +2857,212 @@ async function visitSignRefuse(plotId, vid){
   if (witness === null) return;
   vMark(v); v.sig = { refused: true, witness: String(witness || '').trim(), at: vToday(), name: 'کشاورز (امتناع)' };
   v.touch = Date.now(); save(); render();
+}
+
+/* ═══════════ گزارش کلی پروژه: کپی از بازدید قطعه ═══════════
+   گزارش کلی را می‌شود دستی پر کرد، یا اطلاعات بازدید یکی از قطعه‌های همین پروژه را در آن گذاشت.
+   قاعده‌ها: چیزی از بازدید قطعه کم یا عوض نمی‌شود؛ امضا هرگز کپی نمی‌شود؛ عکس فقط اضافه می‌شود. */
+function vScrollToGenSheet(){
+  const el = document.querySelector('#genCard .vs-editor'); if (!el) return;
+  const head = document.querySelector('header.top');
+  const off = (head ? head.getBoundingClientRect().height : 0) + 12;
+  try { window.scrollBy({ top: el.getBoundingClientRect().top - off, behavior: 'smooth' }); } catch(e) {}
+}
+/* ردیف خالی (فقط مقدار پیش‌فرض دارد) */
+function vRowBlank(list, row){
+  if (!row) return true;
+  const skip = list === 'p' ? ['kind'] : (list === 'r' ? ['cat', 'done'] : []);
+  return V_LISTS[list].defs.every(d => skip.includes(d.k) || !String(row[d.k] == null ? '' : row[d.k]).trim());
+}
+/* گزارشی که هنوز چیزی در آن نوشته نشده (تاریخ، ساعت و نوع خودکار پر می‌شوند) */
+function vReportBlank(v){
+  const f = v.f || {};
+  if (Object.keys(f).some(k => !['date', 'time', 'type'].includes(k) && String(f[k] == null ? '' : f[k]).trim())) return false;
+  for (const key of Object.keys(V_LISTS)) {
+    if ((v[V_LISTS[key].rows] || []).some(r => !vRowBlank(key, r))) return false;
+  }
+  return !((v.photos || []).length) && !v.sig;
+}
+/* همهٔ بازدیدهای قطعه‌های یک پروژه، برای انتخاب */
+function vCopySources(p){
+  const out = [];
+  (p.plots || []).forEach((pl, i) => {
+    (Array.isArray(pl.visits) ? pl.visits : []).forEach((v, j) => {
+      if (!v || !v.id) return;
+      out.push({ pl, v, label: 'قطعه ' + vFa(i + 1) + ': ' + (pl.name || 'بدون نام') + ' — ' + (vGet(v, 'f:date') || 'بدون تاریخ')
+        + (vGet(v, 'f:time') ? ' ساعت ' + vGet(v, 'f:time') : '') + ' (بازدید ' + vFa(j + 1) + ')' });
+    });
+  });
+  return out;
+}
+/* پنجرهٔ انتخاب: کدام بازدید، چطور، با عکس یا بی‌عکس. نتیجه: {index, mode, photos} یا null */
+function vCopyDialog(sources, defMode){
+  return new Promise(resolve => {
+    let closed = false;
+    const wrap = document.createElement('div');
+    wrap.className = 'dlg-wrap';
+    wrap.innerHTML =
+      '<div class="dlg vc-dlg" role="dialog" aria-modal="true">'
+      + '<div class="dlg-h"><span class="ic">i</span><span class="ttl">کپی از بازدید قطعه</span></div>'
+      + '<div class="dlg-b">'
+      +   '<label class="vc-l" for="vcSrc">اطلاعات کدام بازدید در این گزارش کلی گذاشته شود؟</label>'
+      +   '<select id="vcSrc"></select>'
+      +   '<div class="vc-sum" id="vcSum"></div>'
+      +   '<label class="vc-opt"><input type="radio" name="vcMode" value="fill"><span><b>فقط جاهای خالی را پر کن</b>'
+      +     '<small>نوشته‌های خودتان در این گزارش دست نمی‌خورد؛ ردیف‌های آفت، نمونه و توصیه اضافه می‌شوند.</small></span></label>'
+      +   '<label class="vc-opt"><input type="radio" name="vcMode" value="replace"><span><b>همه را جایگزین کن</b>'
+      +     '<small>هر چه در بازدید قطعه پر شده، روی این گزارش نوشته می‌شود؛ حتی اگر این‌جا چیز دیگری نوشته باشید.</small></span></label>'
+      +   '<label class="vc-opt" id="vcPhotoRow"><input type="checkbox" id="vcPhotos"><span><b id="vcPhotoTxt">عکس‌ها هم کپی شوند</b>'
+      +     '<small>عکس فقط اضافه می‌شود و هیچ عکسی از این گزارش پاک نمی‌شود.</small></span></label>'
+      +   '<div class="vc-note">بازدید قطعه هیچ تغییری نمی‌کند. امضا کپی نمی‌شود؛ گزارش کلی را جدا امضا کنید.</div>'
+      + '</div>'
+      + '<div class="dlg-f"><button class="primary ok">کپی کن</button><button class="cancel">انصراف</button></div>'
+      + '</div>';
+    const sel = wrap.querySelector('#vcSrc'), sum = wrap.querySelector('#vcSum');
+    const ph = wrap.querySelector('#vcPhotos'), phRow = wrap.querySelector('#vcPhotoRow'), phTxt = wrap.querySelector('#vcPhotoTxt');
+    sources.forEach((src, i) => {
+      const o = document.createElement('option');
+      o.value = String(i); o.textContent = src.label;
+      sel.appendChild(o);
+    });
+    sel.value = String(sources.length - 1);                 /* پیش‌فرض: تازه‌ترین بازدیدِ آخرین قطعه */
+    wrap.querySelector('input[name="vcMode"][value="' + (defMode === 'replace' ? 'replace' : 'fill') + '"]').checked = true;
+    let lastN = -1;
+    function refresh(){
+      const src = sources[+sel.value] || sources[0];
+      const n = (src.v.photos || []).length;
+      /* تاریخ و ساعت زیر فهرست هم می‌آید؛ روی گوشی متن فهرست کوتاه دیده می‌شود */
+      const when = [vGet(src.v, 'f:date'), vGet(src.v, 'f:time') ? 'ساعت ' + vGet(src.v, 'f:time') : ''].filter(Boolean).join(' · ');
+      sum.textContent = (when ? when + ' · ' : '') + vRowSummary(src.v);
+      phTxt.textContent = n ? 'عکس‌ها هم کپی شوند (' + vFa(n) + ' عکس)' : 'این بازدید عکس ندارد';
+      ph.disabled = !n;
+      phRow.classList.toggle('off', !n);
+      if (!n) ph.checked = false;
+      else if (lastN <= 0) ph.checked = true;               /* وقتی عکس دارد، پیش‌فرض: کپی شود */
+      lastN = n;
+    }
+    sel.addEventListener('change', refresh);
+    refresh();
+    function done(value){
+      if (closed) return;
+      closed = true;
+      document.removeEventListener('keydown', onKey, true);
+      wrap.remove();
+      resolve(value);
+    }
+    function onKey(e){ if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); done(null); } }
+    wrap.querySelector('.ok').addEventListener('click', () => {
+      const m = wrap.querySelector('input[name="vcMode"]:checked');
+      done({ index: +sel.value, mode: m ? m.value : 'fill', photos: !!ph.checked && !ph.disabled });
+    });
+    wrap.querySelector('.cancel').addEventListener('click', () => done(null));
+    wrap.addEventListener('mousedown', e => { if (e.target === wrap) done(null); });
+    document.addEventListener('keydown', onKey, true);
+    document.body.appendChild(wrap);
+    setTimeout(() => { try { sel.focus(); } catch(e) {} }, 30);
+  });
+}
+let V_COPY_BUSY = false;
+async function visitCopyFrom(holderId, vid){
+  if (V_COPY_BUSY) return;
+  const TITLE = { title: 'کپی از بازدید قطعه' };
+  const p = vPlot(holderId), v = vFind(holderId, vid);
+  if (!vIsProj(p) || !v) return;
+  const sources = vCopySources(p);
+  if (!sources.length) return uiAlert('هنوز برای هیچ قطعه‌ای از این پروژه بازدیدی ثبت نشده است.\nاول در کارت یک قطعه «+ بازدید تازه» را بزنید، یا همین گزارش را خودتان پر کنید.', TITLE);
+  V_COPY_BUSY = true;
+  const written = [];                                       /* کلید عکس‌هایی که در این کار نوشته شد */
+  try {
+    const pick = await vCopyDialog(sources, vReportBlank(v) ? 'replace' : 'fill');
+    if (!pick) return;
+    const src = sources[pick.index]; if (!src) return;
+    const s = src.v, replace = pick.mode === 'replace';
+    const same = () => vPlot(holderId) === p && vFind(holderId, vid) === v
+      && (p.plots || []).includes(src.pl) && (src.pl.visits || []).includes(s);
+    if (!same()) return uiAlert('اطلاعات هنگام انتخاب تغییر کرد؛ دوباره «کپی از بازدید قطعه» را بزنید.', TITLE);
+
+    /* ۱) عکس‌ها اول آماده می‌شوند (کار کُند)؛ چیزی در گزارش عوض نمی‌شود تا همه‌چیز آماده شود */
+    const newPhotos = []; let missing = 0, noRoom = 0;
+    if (pick.photos) {
+      const have = (v.photos || []);
+      let room = V_MAX_PHOTOS - have.length;
+      for (const ph of (s.photos || [])) {
+        if (!ph || !ph.id) continue;
+        const tag = s.id + '|' + ph.id;
+        if (have.some(x => x && x.from === tag)) continue;  /* این عکس قبلاً کپی شده است */
+        if (room <= 0) { noRoom++; continue; }
+        let blob = null;
+        try { blob = await vIdbGet('photos', vPhotoKey(src.pl.id, s.id, ph.id)); } catch(e) {}
+        if (!(blob instanceof Blob)) { missing++; continue; }
+        const pid = uid(), key = vPhotoKey(holderId, vid, pid);
+        try { await vIdbPut('photos', key, blob); } catch(e) { missing++; continue; }
+        written.push(key);
+        newPhotos.push({ id: pid, cap: ph.cap || '', kb: ph.kb || Math.round(blob.size / 1024), from: tag });
+        room--;
+      }
+    }
+    if (!same()) {
+      for (const key of written) { try { await vIdbDel('photos', key); } catch(e) {} }
+      written.length = 0;
+      return uiAlert('اطلاعات هنگام کپی تغییر کرد؛ چیزی کپی نشد. دوباره تلاش کنید.', TITLE);
+    }
+
+    /* ۲) از این‌جا همه‌چیز یک‌جا و بدون وقفه نوشته می‌شود */
+    const sf = s.f || {}, tf = Object.assign({}, v.f || {});
+    let nFields = 0, nRows = 0;
+    V_SCHEMA.forEach(sec => sec.fields.forEach(fd => {
+      const val = String(sf[fd.k] == null ? '' : sf[fd.k]);
+      if (!val.trim()) return;                              /* در بازدید قطعه خالی است */
+      const cur = String(tf[fd.k] == null ? '' : tf[fd.k]);
+      if (cur === val) return;
+      if (replace || !cur.trim()) { tf[fd.k] = val; nFields++; }
+    }));
+    const lists = {};
+    Object.keys(V_LISTS).forEach(key => {
+      const rk = V_LISTS[key].rows;
+      const from = (s[rk] || []).filter(r => !vRowBlank(key, r)).map(r => JSON.parse(JSON.stringify(r)));
+      if (!from.length) return;                             /* ردیفی برای کپی نیست */
+      const cur = Array.isArray(v[rk]) ? v[rk] : [];
+      const sig = r => JSON.stringify(vCanonical(r));
+      if (replace) {
+        if (JSON.stringify(cur.map(sig)) !== JSON.stringify(from.map(sig))) { lists[rk] = from; nRows += from.length; }
+        return;
+      }
+      const kept = cur.filter(r => !vRowBlank(key, r));
+      const seen = new Set(kept.map(sig));
+      const add = from.filter(r => !seen.has(sig(r)));
+      if (add.length) { lists[rk] = kept.concat(add); nRows += add.length; }
+    });
+    if (!nFields && !nRows && !newPhotos.length) {
+      let why = 'چیز تازه‌ای برای کپی نبود؛ این گزارش همین اطلاعات را دارد.';
+      if (missing) why += '\n' + vFa(missing) + ' عکسِ آن بازدید روی این دستگاه نیست و کپی نشد.';
+      if (noRoom) why += '\n' + vFa(noRoom) + ' عکس کپی نشد؛ هر گزارش حداکثر ' + vFa(V_MAX_PHOTOS) + ' عکس دارد.';
+      return uiAlert(why, TITLE);
+    }
+    vMark(v);
+    v.f = tf;
+    Object.keys(lists).forEach(rk => { v[rk] = lists[rk]; });
+    if (newPhotos.length) { v.photos = (Array.isArray(v.photos) ? v.photos : []).concat(newPhotos); written.length = 0; }
+    v.touch = Date.now();
+    save(); render();
+
+    const parts = [];
+    if (nFields) parts.push(vFa(nFields) + ' فیلد');
+    if (nRows) parts.push(vFa(nRows) + ' ردیف');
+    if (newPhotos.length) parts.push(vFa(newPhotos.length) + ' عکس');
+    const msg = 'کپی شد: ' + parts.join('، ');
+    if (missing || noRoom) {
+      let more = msg + '.';
+      if (missing) more += '\n' + vFa(missing) + ' عکسِ آن بازدید روی این دستگاه نیست و کپی نشد.';
+      if (noRoom) more += '\n' + vFa(noRoom) + ' عکس کپی نشد؛ هر گزارش حداکثر ' + vFa(V_MAX_PHOTOS) + ' عکس دارد.';
+      await uiAlert(more, TITLE);
+    } else {
+      vToast(msg);
+    }
+  } catch(e) {
+    for (const key of written) { try { await vIdbDel('photos', key); } catch(err) {} }
+    await uiAlert('کپی انجام نشد: ' + ((e && e.message) || 'خطای ناشناخته'), TITLE);
+  } finally { V_COPY_BUSY = false; }
 }
 
 /* ── امضا: خواندن بوم و ذخیره ── */
@@ -3182,11 +3455,34 @@ async function visitWord(plotId, vid){
   const blocks = [];
 
   blocks.push(vP('شرکت زرین دانه کشتزار', { align:'center', size:20, color:'555F5A', after:20 }));
-  blocks.push(vP('گزارش بازدید مزرعهٔ تولید بذر', { align:'center', size:34, b:true, color:'1F6F43', after:60 }));
+  const gen = vIsProj(pl);                                /* گزارش کلی پروژه یا بازدید یک قطعه */
+  blocks.push(vP(gen ? 'گزارش کلی بازدید مزرعهٔ تولید بذر' : 'گزارش بازدید مزرعهٔ تولید بذر', { align:'center', size:34, b:true, color:'1F6F43', after:60 }));
   blocks.push(vP(String(pr.name || '') + ' · ' + String(pr.crop || '') + ' · ' + String(pr.region || pr.province || ''),
     { align:'center', size:22, after:120 }));
 
   /* ۱ — شناسنامه */
+  if (gen) {
+    /* گزارش کلی: مشخصات پروژه و فهرست قطعه‌ها به‌جای مشخصات یک قطعه */
+    const gPlots = pr.plots || [];
+    const gHa = gPlots.reduce((a, x) => a + netAreaM2(x), 0) / 10000;
+    blocks.push(vP('۱ — شناسنامهٔ پروژه و بازدید', { heading:true, size:24, b:true, color:'1F6F43', after:60 }));
+    blocks.push(vTbl([
+      ['کشاورز (بهره‌بردار)', pr.farmerName || '—', 'تاریخ بازدید', vGet(v, 'f:date') || '—'],
+      ['محصول', pr.crop || '—', 'ساعت بازدید', vGet(v, 'f:time') || '—'],
+      ['سال زراعی', pr.year || '—', 'نوع بازدید', vGet(v, 'f:type') || '—'],
+      ['تعداد قطعات', vFa2(gPlots.length), 'مرحلهٔ رشد', vGet(v, 'f:stage') || '—'],
+      ['مساحت کل پروژه', faFixed(gHa, 2) + ' هکتار', 'وضعیت هوا', vGet(v, 'f:weather') || '—'],
+      ['شهرستان / منطقه', pr.region || pr.province || '—', 'بازدیدکننده', vGet(v, 'f:inspector') || '—'],
+      ['نوع قرارداد', pr.contractType || '—', 'ثبت در سامانه نظارت', vOfisCell(pr.ofisStatus)],
+    ], [3.6, 5.2, 3.4, 5.6], { labelCols:[0,2] }));
+    if (gPlots.length) {
+      blocks.push(vP('قطعات پروژه:', { size:20, b:true, after:40 }));
+      blocks.push(vTbl([['#', 'نام قطعه', 'کد', 'رقم', 'طبقهٔ بذری', 'تاریخ کشت', 'مساحت (هکتار)'],
+        ...gPlots.map((x, i) => [vFa2(i + 1), x.name || '—', x.code || '—', x.variety || '—', x.seedClass || '—', x.plantDate || '—',
+          netAreaM2(x) > 0 ? faFixed(netAreaM2(x) / 10000, 2) : '—'])],
+        [1.0, 4.2, 1.8, 3.2, 3.0, 2.4, 2.2], { head:true }));
+    }
+  } else {
   blocks.push(vP('۱ — شناسنامهٔ قطعه و بازدید', { heading:true, size:24, b:true, color:'1F6F43', after:60 }));
   const area = (typeof netAreaM2 === 'function') ? (netAreaM2(pl) / 10000) : 0;
   const kv = [
@@ -3199,6 +3495,7 @@ async function visitWord(plotId, vid){
     ['نوع قرارداد', pr.contractType || '—', 'ثبت در سامانه نظارت', vOfisCell(pr.ofisStatus)],
   ];
   blocks.push(vTbl(kv, [3.6, 5.2, 3.4, 5.6], { labelCols:[0,2] }));
+  }
 
   /* یک بخش از نقشه را با شماره می‌نویسد */
   const secBlock = (id, num, title, keys) => {
@@ -3318,7 +3615,9 @@ async function visitWord(plotId, vid){
     ...media.map(m => ({ name: 'word/media/' + m.name, data: m.bytes })),
   ];
   const blob = vZip(files);
-  const fname = 'بازدید_' + sanitize(vGet(v, 'f:date') || stamp()) + '_قطعه_' + sanitize(pl.code || String(pl.id).slice(0, 4))
+  const fname = gen
+    ? 'گزارش-کلی_' + sanitize(vGet(v, 'f:date') || stamp()) + '_' + sanitize(pr.crop || '') + '_' + sanitize(pr.farmerName || pr.name || '') + '.docx'
+    : 'بازدید_' + sanitize(vGet(v, 'f:date') || stamp()) + '_قطعه_' + sanitize(pl.code || String(pl.id).slice(0, 4))
     + '_' + sanitize(pr.crop || '') + '_' + sanitize(pr.farmerName || pr.name || '') + '.docx';
   vDownloadBlob(fname, blob);
   vToast('فایل ورد ساخته شد (' + (Math.round(blob.size / 1024)) .toLocaleString('fa-IR') + ' کیلوبایت)');
@@ -3327,14 +3626,15 @@ async function visitWord(plotId, vid){
 /* ── کارنامهٔ همهٔ بازدیدهای یک قطعه ── */
 async function visitWordAll(plotId){
   const pl = vPlot(plotId); if (!pl) return;
+  const gen = vIsProj(pl);                                /* کارنامهٔ گزارش‌های کلی پروژه */
   const list = vList(pl);
-  if (!list.length) return uiAlert('این قطعه هنوز بازدیدی ندارد.');
+  if (!list.length) return uiAlert(gen ? 'این پروژه هنوز گزارش کلی ندارد.' : 'این قطعه هنوز بازدیدی ندارد.');
   const pr = activeProject() || {};
   vToast('در حال ساخت کارنامه…');
   const blocks = [];
   blocks.push(vP('شرکت زرین دانه کشتزار', { align:'center', size:20, color:'555F5A', after:20 }));
-  blocks.push(vP('کارنامهٔ بازدیدهای قطعه', { align:'center', size:34, b:true, color:'1F6F43', after:60 }));
-  blocks.push(vP(String(pr.name || '') + ' · ' + String(pr.crop || '') + ' · قطعه ' + String(pl.code || '—')
+  blocks.push(vP(gen ? 'کارنامهٔ گزارش‌های کلی پروژه' : 'کارنامهٔ بازدیدهای قطعه', { align:'center', size:34, b:true, color:'1F6F43', after:60 }));
+  blocks.push(vP(String(pr.name || '') + ' · ' + String(pr.crop || '') + (gen ? '' : ' · قطعه ' + String(pl.code || '—'))
     + ' · ' + (pr.farmerName || '—'), { align:'center', size:22, after:120 }));
   blocks.push(vP('اطلاعات پروژه', { heading:true, size:24, b:true, color:'1F6F43', after:60 }));
   blocks.push(vTbl([['نوع قرارداد', pr.contractType || '—', 'ثبت در سامانه نظارت', vOfisCell(pr.ofisStatus)]],
@@ -3347,7 +3647,7 @@ async function visitWordAll(plotId){
     rows.push([vFa2(i + 1), vGet(v, 'f:date') || '—', vGet(v, 'f:stage') || '—',
       pests || '—', recs || '—', vGet(v, 'f:verdict') || '—', vGet(v, 'f:prev') || '—']);
   });
-  blocks.push(vP('بازدیدهای قطعه', { heading:true, size:24, b:true, color:'1F6F43', after:60 }));
+  blocks.push(vP(gen ? 'گزارش‌های کلی پروژه' : 'بازدیدهای قطعه', { heading:true, size:24, b:true, color:'1F6F43', after:60 }));
   blocks.push(vTbl(rows, [1.0, 2.4, 2.4, 4.2, 4.6, 2.0, 3.0], { head:true }));
   const open = list.flatMap(v => (v.recs || []).filter(r => r && r.text && r.done !== 'انجام شد').map(r => r.text));
   blocks.push(vP('کارهای باز (توصیه‌هایی که هنوز انجام‌نشده‌اند):', { heading:true, size:22, b:true, after:40 }));
@@ -3363,7 +3663,9 @@ async function visitWordAll(plotId){
     { name: 'word/_rels/document.xml.rels',
       data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + V_STYLES_REL + V_OFIS_REL + '</Relationships>' },
   ]);
-  vDownloadBlob('کارنامه_' + sanitize(pl.code || String(pl.id).slice(0,4)) + '_' + sanitize(pr.crop || '') + '_' + sanitize(pr.farmerName || pr.name || '') + '.docx', blob);
+  vDownloadBlob(gen
+    ? 'کارنامه-کلی_' + sanitize(pr.crop || '') + '_' + sanitize(pr.farmerName || pr.name || '') + '.docx'
+    : 'کارنامه_' + sanitize(pl.code || String(pl.id).slice(0,4)) + '_' + sanitize(pr.crop || '') + '_' + sanitize(pr.farmerName || pr.name || '') + '.docx', blob);
   vToast('کارنامه ساخته شد');
 }
 
@@ -3605,9 +3907,27 @@ function mergeVisits(local, incoming){
   });
   return before!==JSON.stringify([local.visits,local.visitGrave]);
 }
+/* گزارش‌های کلی پروژه در خودِ پروژه (p.visits / p.visitGrave) نگه‌داری می‌شوند. */
+function vHasGen(p){ return !!p && ((Array.isArray(p.visits) && p.visits.length>0) || (Array.isArray(p.visitGrave) && p.visitGrave.length>0)); }
+/* آیا این دستگاه گزارش کلی‌ای دارد که در نسخهٔ سرور نیست یا در سرور قدیمی‌تر است؟
+   (دستگاهی که هنوز نسخهٔ قدیمی برنامه را دارد، گزارش‌های کلی را در نسخهٔ سرور نگه نمی‌دارد.) */
+function vGenAhead(remote){
+  const rps=(remote && Array.isArray(remote.projects)) ? remote.projects : [];
+  for(const lp of state.projects||[]){
+    const lv=Array.isArray(lp.visits)?lp.visits:[]; if(!lv.length) continue;
+    const rp=rps.find(p=>p && p.id===lp.id); if(!rp) continue;
+    const rv=Array.isArray(rp.visits)?rp.visits:[];
+    for(const v of lv){
+      const x=rv.find(y=>y && y.id===v.id);
+      if(!x || vRevision(x)!==vRevision(v)) return true;
+    }
+  }
+  return false;
+}
 function vStateConflict(incoming){
   for(const ip of incoming.projects||[]){
     const lp=(state.projects||[]).find(p=>p.id===ip.id); if(!lp) continue;
+    if(vVisitConflict(lp,ip)) return 'gen';                /* گزارش‌های کلی پروژه */
     for(const ipl of ip.plots||[]){
       const lpl=(lp.plots||[]).find(pl=>pl.id===ipl.id);
       if(lpl && vVisitConflict(lpl,ipl)) return true;
@@ -3621,7 +3941,8 @@ function syncApply(data, source){
   else if(data && data.projects && Array.isArray(data.projects)) incoming = data;     // پشتیبان نسخه‌های قبلی
   if(!incoming){ return uiAlert('این فایل، فایل همگام‌سازی یا پشتیبان دفترچه نیست.\n(برای GeoJSON از دکمهٔ «بازیابی GeoJSON/JSON» استفاده کنید)'); }
 
-  if(vStateConflict(incoming)){ uiAlert('بازدیدی در دو دستگاه به شکل متفاوت تغییر کرده است. برای جلوگیری از پاک‌شدن اطلاعات، ادغام متوقف شد. از هر دو دستگاه پشتیبان بگیرید.'); return false; }
+  const vConf = vStateConflict(incoming);
+  if(vConf){ uiAlert((vConf === 'gen' ? 'یک گزارش کلی' : 'بازدیدی') + ' در دو دستگاه به شکل متفاوت تغییر کرده است. برای جلوگیری از پاک‌شدن اطلاعات، ادغام متوقف شد. از هر دو دستگاه پشتیبان بگیرید.'); return false; }
 
   try{ abNow('پیش از ادغام'); }catch(e){}
 
@@ -3651,6 +3972,7 @@ function syncApply(data, source){
     }
     // پروژهٔ موجود
     const st_l = ip.updatedAt || 0, st_m = lp.updatedAt || 0;
+    let projTouched = false;
     if(ip.name || ip.crop || ip.year || ip.owner || ip.province || ip.notes){
       if(st_l > st_m){
         // فقط فیلدهای حاضر در دستگاه مقابل کپی شوند؛ نسخه‌های قدیمی فیلد تازه ندارند.
@@ -3658,10 +3980,13 @@ function syncApply(data, source){
           if(Object.prototype.hasOwnProperty.call(ip,k)) lp[k]=ip[k];
         });
         lp.updatedAt = st_l;
-        st.updProjects++;
+        st.updProjects++; projTouched = true;
       } else if(st_m > st_l){ /* نسخهٔ محلی تازه‌تر است */ }
       else if(sigProject(lp) !== sigProject(ip)){ st.conflicts++; }
     }
+    /* گزارش‌های کلی پروژه مثل بازدیدهای قطعه ادغام می‌شوند: فقط اضافه یا تازه‌تر؛ هیچ‌چیز بی‌علامتِ حذف پاک نمی‌شود.
+       اگر هیچ‌کدام گزارش کلی نداشته باشند، کلیدی به پروژه اضافه نمی‌شود. */
+    if(vHasGen(lp) || vHasGen(ip)){ if(mergeVisits(lp, ip) && !projTouched) st.updProjects++; }
     (ip.plots||[]).forEach(ipl=>{
       if(inGraveL[ipl.id]) return;
       if(myGraveL[ipl.id] && myGraveL[ipl.id] > (ipl.updatedAt||0)){ st.removed++; return; }
@@ -3966,12 +4291,14 @@ async function gsRestoreVisit(){
     let candidate=null;
     for(const rp of data.state.projects){
       const lp=(state.projects||[]).find(p=>p.id===rp.id); if(!lp) continue;
-      for(const rpl of rp.plots||[]){
-        const lpl=(lp.plots||[]).find(p=>p.id===rpl.id); if(!lpl) continue;
+      /* نگه‌دارنده‌ها: خودِ پروژه (گزارش کلی، plotid=null) و بعد قطعه‌ها */
+      const holders=[{lpl:lp, rpl:rp, plotid:null}].concat((rp.plots||[]).map(rpl=>({lpl:(lp.plots||[]).find(p=>p.id===rpl.id), rpl, plotid:rpl.id})));
+      for(const {lpl,rpl,plotid} of holders){
+        if(!lpl) continue;
         for(const v of rpl.visits||[]){
           if(!v || !v.id || (lpl.visits||[]).some(x=>x.id===v.id)) continue;
           const graves=(lpl.visitGrave||[]).filter(g=>g.id===v.id);
-          if(graves.length && !graves.some(g=>vDeletedMatches(g,v))){ candidate={lp,lpl,v,pid:rp.id,plotid:rpl.id}; break; }
+          if(graves.length && !graves.some(g=>vDeletedMatches(g,v))){ candidate={lp,lpl,v,pid:rp.id,plotid}; break; }
         }
         if(candidate) break;
       }
@@ -3980,18 +4307,18 @@ async function gsRestoreVisit(){
     if(!candidate) return uiAlert('بازدید حذف‌شدهٔ محلی که با نسخهٔ سرور اختلاف داشته باشد پیدا نشد. در صورت ادامهٔ خطا، از هر دو دستگاه پشتیبان بگیرید.');
     const {lp,lpl,v,pid,plotid}=candidate;
     const f=v.f||{};
-    const details='پروژه: '+(lp.name||'—')+'\nقطعه: '+(lpl.name||'—')+'\nتاریخ: '+(f.date||'—')+' · ساعت: '+(f.time||'—')+
+    const details='پروژه: '+(lp.name||'—')+'\n'+(plotid ? 'قطعه: '+(lpl.name||'—') : 'گزارش کلی پروژه')+'\nتاریخ: '+(f.date||'—')+' · ساعت: '+(f.time||'—')+
       '\nنوع: '+(f.type||'—')+'\nعکس: '+(v.photos||[]).length+' · امضا: '+(v.sig?'ثبت شده':'ثبت نشده')+
-      '\n\nاین بازدید روی این دستگاه علامت حذف دارد ولی در سرور هست. آیا نسخهٔ سرور به همین دستگاه برگردد؟'+
+      '\n\nاین '+(plotid ? 'بازدید' : 'گزارش کلی')+' روی این دستگاه علامت حذف دارد ولی در سرور هست. آیا نسخهٔ سرور به همین دستگاه برگردد؟'+
       '\nهیچ بازدیدی از سرور حذف نمی‌شود. فایل عکس و تصویر امضا نیز با سرور منتقل نمی‌شوند.';
     if(!(await uiConfirm(details,{title:'بازگرداندن بازدید',ok:'بازگردانی بازدید'}))) return;
     // پس از تأیید، همان بازدید را دوباره از سرور بخوان؛ اگر عوض شده حدس نزن.
     const latest=await cloudPull();
     const currentP=((latest&&latest.state&&latest.state.projects)||[]).find(p=>p.id===pid);
-    const currentPl=(currentP&&currentP.plots||[]).find(p=>p.id===plotid);
+    const currentPl=plotid ? (currentP&&currentP.plots||[]).find(p=>p.id===plotid) : currentP;
     const current=(currentPl&&currentPl.visits||[]).find(x=>x.id===v.id);
     const localP=(state.projects||[]).find(p=>p.id===pid);
-    const localPl=(localP&&localP.plots||[]).find(p=>p.id===plotid);
+    const localPl=plotid ? (localP&&localP.plots||[]).find(p=>p.id===plotid) : localP;
     if(!current || !localPl || vRevision(current)!==vRevision(v)) return uiAlert('بازدید سرور تغییر کرد؛ هیچ اقدامی نشد. دوباره بررسی کنید.');
     if((localPl.visits||[]).some(x=>x.id===v.id)) return uiAlert('این بازدید از قبل روی دستگاه موجود است؛ تغییری انجام نشد.');
     if(!(localPl.visitGrave||[]).some(g=>g.id===v.id)) return uiAlert('وضعیت حذف روی دستگاه عوض شده است؛ تغییری انجام نشد.');
@@ -3999,8 +4326,8 @@ async function gsRestoreVisit(){
     localPl.visits=localPl.visits||[];
     localPl.visits.push(JSON.parse(JSON.stringify(current)));
     save(true); render();
-    gsRender('بازدید روی این دستگاه بازگردانده شد؛ برای همگام‌سازی، پس از بررسی بازدید «ارسال به سرور» را بزنید.');
-    uiAlert('بازدید به این دستگاه بازگردانده شد. سرور تغییری نکرده است.');
+    gsRender((plotid ? 'بازدید' : 'گزارش کلی')+' روی این دستگاه بازگردانده شد؛ برای همگام‌سازی، پس از بررسی «ارسال به سرور» را بزنید.');
+    uiAlert((plotid ? 'بازدید' : 'گزارش کلی')+' به این دستگاه بازگردانده شد. سرور تغییری نکرده است.');
   }catch(e){ gsRender('⚠ بررسی ناموفق: '+escSync(gsHumanErr(e))); uiAlert('بازگردانی انجام نشد؛ اتصال و وضعیت سرور را بررسی کنید.'); }
   finally{ GS.pulling=false; }
 }
@@ -4021,6 +4348,9 @@ async function gsPull(manual){
       if(syncApply({ app:'seedcoord-sync', device: d.device || 'سرور', state: d.state }, (PROVIDERS[GS.prov]||{}).name || 'سرور') === false) throw new Error('اختلاف بازدید؛ دریافت متوقف شد.');
       gsRender('دریافت شد (از ' + (d.device || 'دستگاه دیگر') + ' · ' + faDate(d.updatedAt || d.exportedAt) + ')؛ پروژه: ' +
         faSync(before) + ' → ' + faSync(state.projects.length));
+      /* اگر نسخهٔ سرور گزارش کلیِ این دستگاه را ندارد (مثلاً دستگاهی با نسخهٔ قدیمی آن را ننوشته)،
+         در حالت خودکار دوباره فرستاده می‌شود؛ ارسال همیشه اول با سرور ادغام می‌کند. */
+      try{ if(GS.auto && vGenAhead(d.state)) gsQueue(); }catch(e){}
     }
   }catch(e){ GS.ready = false; gsRender('⚠ دریافت ناموفق: ' + escSync(gsHumanErr(e))); }
   finally{ GS.pulling = false; }
@@ -4982,21 +5312,27 @@ function fbIndex(s){
     if(assets.has(tag)) fbFail('شناسهٔ تصویر تکراری است.');
     assets.set(tag,{kind,key});
   }
+  /* بازدیدهای یک نگه‌دارنده: قطعه، یا خودِ پروژه (گزارش کلی؛ pl=null) */
+  function scan(p,pl,holder){
+    for(const v of holder.visits||[]){
+      if(!v || !fbId(v.id) || visits.has(v.id) || (v.photos!=null && !Array.isArray(v.photos))) fbFail('شناسهٔ بازدید یا فهرست عکس‌ها معتبر نیست.');
+      visits.set(v.id,{project:p,plot:pl,visit:v});
+      for(const ph of v.photos||[]){
+        if(!ph || !fbId(ph.id)) fbFail('شناسهٔ عکس معتبر نیست.');
+        add('photos',vPhotoKey(holder.id,v.id,ph.id));
+      }
+      if(v.sig && !v.sig.refused) add('sigs',v.id);
+    }
+  }
   for(const p of s.projects){
     if(!p || !fbId(p.id) || projects.has(p.id) || !Array.isArray(p.plots)) fbFail('شناسهٔ پروژه یا فهرست قطعات معتبر نیست.');
+    if(p.visits!=null && !Array.isArray(p.visits)) fbFail('فهرست گزارش‌های کلی پروژه معتبر نیست.');
     projects.set(p.id,p);
+    scan(p,null,p);
     for(const pl of p.plots){
       if(!pl || !fbId(pl.id) || plots.has(pl.id) || (pl.visits!=null && !Array.isArray(pl.visits))) fbFail('شناسهٔ قطعه یا فهرست بازدیدها معتبر نیست.');
       plots.set(pl.id,{project:p,plot:pl});
-      for(const v of pl.visits||[]){
-        if(!v || !fbId(v.id) || visits.has(v.id) || (v.photos!=null && !Array.isArray(v.photos))) fbFail('شناسهٔ بازدید یا فهرست عکس‌ها معتبر نیست.');
-        visits.set(v.id,{project:p,plot:pl,visit:v});
-        for(const ph of v.photos||[]){
-          if(!ph || !fbId(ph.id)) fbFail('شناسهٔ عکس معتبر نیست.');
-          add('photos',vPhotoKey(pl.id,v.id,ph.id));
-        }
-        if(v.sig && !v.sig.refused) add('sigs',v.id);
-      }
+      scan(p,pl,pl);
     }
   }
   if(assets.size>FB_MAX_ASSETS) fbFail('تعداد عکس‌ها و امضاها بیش از حد مجاز است.');
@@ -5059,18 +5395,36 @@ function fbPlan(local,incoming){
     for(const v of plot.visits||[]) if(bg.has(v.id)) fbFail('یک بازدید در سابقهٔ حذف پشتیبان وجود دارد؛ ادغام متوقف شد.');
     for(const id of bg) if(li.visits.has(id)) fbFail('پشتیبان و دستگاه دربارهٔ حذف یک بازدید اختلاف دارند؛ ادغام متوقف شد.');
   }
-  let addedProjects=0,addedPlots=0,addedVisits=0;
+  /* گزارش‌های کلی پروژه: همان قاعده‌های بازدید قطعه */
+  for(const ip of ii.projects.values()){
+    const bg=fbGraveIds(ip.visitGrave);
+    for(const v of ip.visits||[]) if(bg.has(v.id)) fbFail('یک گزارش کلی در سابقهٔ حذف پشتیبان وجود دارد؛ ادغام متوقف شد.');
+    for(const id of bg) if(li.visits.has(id)) fbFail('پشتیبان و دستگاه دربارهٔ حذف یک گزارش کلی اختلاف دارند؛ ادغام متوقف شد.');
+  }
+  let addedProjects=0,addedPlots=0,addedVisits=0,addedReports=0;
   for(const ip of incoming.projects){
     let mp=mi.projects.get(ip.id);
     if(!mp){
       mp=fbClone(ip);
       // حذف‌های تاریخی پشتیبان به سرور یا دستگاه دیگر تحمیل نمی‌شوند.
       for(const pl of mp.plots||[]) pl.visitGrave=[];
+      if(Array.isArray(mp.visitGrave)) mp.visitGrave=[];
       merged.projects.push(mp);addedProjects++;addedPlots+=(mp.plots||[]).length;
       addedVisits+=(mp.plots||[]).reduce((n,pl)=>n+(pl.visits||[]).length,0);
+      addedReports+=(mp.visits||[]).length;
       continue;
     }
-    if(!fbSame(fbWithout(mp,['plots','updatedAt']),fbWithout(ip,['plots','updatedAt']))) fbFail('اطلاعات یک پروژه در پشتیبان و دستگاه متفاوت است. برای جلوگیری از جایگزینی، ادغام متوقف شد.');
+    if(!fbSame(fbWithout(mp,['plots','updatedAt','visits','visitGrave']),fbWithout(ip,['plots','updatedAt','visits','visitGrave']))) fbFail('اطلاعات یک پروژه در پشتیبان و دستگاه متفاوت است. برای جلوگیری از جایگزینی، ادغام متوقف شد.');
+    {
+      const mg=fbGraveIds(mp.visitGrave), bg=fbGraveIds(ip.visitGrave);
+      for(const iv of ip.visits||[]) if(mg.has(iv.id) || bg.has(iv.id)) fbFail('یک گزارش کلی در سابقهٔ حذف وجود دارد؛ ادغام متوقف شد.');
+      for(const lv of mp.visits||[]) if(bg.has(lv.id)) fbFail('پشتیبان و دستگاه دربارهٔ حذف یک گزارش کلی اختلاف دارند؛ ادغام متوقف شد.');
+      for(const iv of ip.visits||[]){
+        const lv=(mp.visits||[]).find(v=>v.id===iv.id);
+        if(!lv){ if(!Array.isArray(mp.visits)) mp.visits=[]; mp.visits.push(fbClone(iv)); addedReports++; }
+        else if(vRevision(lv)!==vRevision(iv)) fbFail('یک گزارش کلی در پشتیبان و دستگاه متفاوت است. برای جلوگیری از جایگزینی، ادغام متوقف شد.');
+      }
+    }
     for(const ipl of ip.plots){
       const entry=mi.plots.get(ipl.id);
       if(!entry){ const copy=fbClone(ipl);copy.visitGrave=[];mp.plots.push(copy);addedPlots++;addedVisits+=(copy.visits||[]).length;continue; }
@@ -5091,7 +5445,7 @@ function fbPlan(local,incoming){
   if(!merged.activeId || !merged.projects.some(p=>p.id===merged.activeId)) merged.activeId=merged.projects[0]?.id||null;
   // بررسی دوبارهٔ یکتایی شناسه‌ها، از جمله برخورد شناسه بین پروژه‌ها.
   fbIndex(merged);
-  return {merged,addedProjects,addedPlots,addedVisits};
+  return {merged,addedProjects,addedPlots,addedVisits,addedReports};
 }
 async function fbSameBlob(a,b){
   if(a.size!==b.size) return false;
@@ -5137,7 +5491,7 @@ async function fbImport(input){
       if(!old) additions.push(x);
     }
     if(JSON.stringify(state)!==before || localStorage.getItem(STORE_KEY)!==beforeStored) fbFail('اطلاعات هنگام بررسی تغییر کرد؛ لطفاً دوباره فایل را انتخاب کنید.');
-    const consent=await uiConfirm('فایل بررسی شد.\nپروژهٔ تازه: '+vFa(plan.addedProjects)+'\nقطعهٔ تازه: '+vFa(plan.addedPlots)+'\nبازدید تازه: '+vFa(plan.addedVisits)+'\nعکس و تصویر امضای تازه: '+vFa(additions.length)+'\n\nهیچ مورد موجودی جایگزین یا حذف نمی‌شود. حذف‌های تاریخی فایل وارد نمی‌شوند. فایل به سرور ارسال نمی‌شود. ادامه دهید؟',{title:'ادغام پشتیبان کامل',ok:'ادغام کن'});
+    const consent=await uiConfirm('فایل بررسی شد.\nپروژهٔ تازه: '+vFa(plan.addedProjects)+'\nقطعهٔ تازه: '+vFa(plan.addedPlots)+'\nبازدید تازه: '+vFa(plan.addedVisits)+'\nگزارش کلی تازه: '+vFa(plan.addedReports)+'\nعکس و تصویر امضای تازه: '+vFa(additions.length)+'\n\nهیچ مورد موجودی جایگزین یا حذف نمی‌شود. حذف‌های تاریخی فایل وارد نمی‌شوند. فایل به سرور ارسال نمی‌شود. ادامه دهید؟',{title:'ادغام پشتیبان کامل',ok:'ادغام کن'});
     if(!consent) return;
     if(JSON.stringify(state)!==before || localStorage.getItem(STORE_KEY)!==beforeStored) fbFail('اطلاعات هنگام تأیید تغییر کرد؛ لطفاً دوباره تلاش کنید.');
     await fbAddAssets(additions);
@@ -5147,7 +5501,7 @@ async function fbImport(input){
     try{localStorage.setItem(STORE_KEY,JSON.stringify(plan.merged));}
     catch(e){fbFail('حافظه برای ذخیرهٔ اطلاعات کافی نیست؛ ادغام اطلاعات انجام نشد. تصویرهای تازه ممکن است در حافظه مانده باشند؛ دوباره تلاش کنید.');}
     state=plan.merged; initHash(); render();
-    await uiAlert('ادغام کامل شد.\nپروژهٔ تازه: '+vFa(plan.addedProjects)+' · قطعهٔ تازه: '+vFa(plan.addedPlots)+'\nبازدید تازه: '+vFa(plan.addedVisits)+' · عکس و تصویر امضای تازه: '+vFa(additions.length)+'\n\nبرای دیدن تصویرها، بازدید را باز کنید. این کار به سرور ارسال نشد.',{title:'ادغام کامل'});
+    await uiAlert('ادغام کامل شد.\nپروژهٔ تازه: '+vFa(plan.addedProjects)+' · قطعهٔ تازه: '+vFa(plan.addedPlots)+'\nبازدید تازه: '+vFa(plan.addedVisits)+' · گزارش کلی تازه: '+vFa(plan.addedReports)+'\nعکس و تصویر امضای تازه: '+vFa(additions.length)+'\n\nبرای دیدن تصویرها، بازدید را باز کنید. این کار به سرور ارسال نشد.',{title:'ادغام کامل'});
   }catch(e){ await uiAlert(e.message||'ادغام انجام نشد.',{title:'پشتیبان کامل'}); }
   finally{FB_BUSY=false;}
 }
@@ -7265,6 +7619,7 @@ render();
     'visit:signRefuse': el => visitSignRefuse(el.dataset.id, el.dataset.vid),
     'visit:word': el => visitWord(el.dataset.id, el.dataset.vid),
     'visit:wordAll': el => visitWordAll(el.dataset.id),
+    'visit:copyFrom': el => visitCopyFrom(el.dataset.id, el.dataset.vid),
 
     /* ── نقشهٔ آفلاین ── */
     'om:copyCmd': el => copyCmd(),
