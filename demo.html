@@ -572,6 +572,10 @@
   .u-hidden{display:none !important}
   .u-block{display:block !important}
   .warn-box{margin-top:10px; background:var(--warn-2-50,#fff8e8); color:#6b4a0d; border-radius:8px; padding:7px 11px; font-size:12px}
+  #syncWarn{display:flex; align-items:center; gap:8px; flex-wrap:wrap; line-height:1.8}
+  #syncWarn > span{flex:1 1 220px}
+  #syncWarn > button{flex:none}
+  body.map-mode #syncWarn{display:none !important}
 
   /* ── چیدمان ── */
   .u-flex1{flex:1 !important}
@@ -686,6 +690,7 @@
 
   .dlg-f{display:flex; align-items:center; gap:8px; padding:0 16px 14px}
   .dlg-f .sp{flex:1}
+  .dlg.dlg-3 .dlg-f{flex-wrap:wrap}
   .dlg-f button{min-height:34px}
 
   /* کادر متنِ قابل کپی */
@@ -817,6 +822,10 @@
   <p>ثبت، ذخیره و خروجی گرفتن مختصات هر پروژه / قطعه — خروجی استاندارد <b>GeoJSON (WGS84 / RFC 7946)</b> — بدون نیاز به اینترنت و بدون حساب کاربری</p>
   <div id="storageWarn" class="warn-box u-hidden">
     ⚠ در این حالت پیش‌نمایش، ذخیره‌سازی مرورگر غیرفعال است. فایل را دانلود کنید و در مرورگر خودتان باز کنید تا اطلاعات ذخیره شود. تا آن موقع، از دکمهٔ «پشتیبان JSON» استفاده کنید.
+  </div>
+  <div id="syncWarn" class="warn-box u-hidden" role="status">
+    <span id="syncWarnTxt"></span>
+    <button class="small" id="syncWarnBtn" data-act="gs:resolve">انتخاب نسخه</button>
   </div>
   <div class="tabs">
     <button class="tab active" id="tabDoc" data-act="view:doc">📓 دفترچه</button>
@@ -1162,7 +1171,7 @@
 <script>
 /* ---------- ذخیره‌سازی ---------- */
 const STORE_KEY = 'seed_coord_notebook_demo_v1';
-const APP_VERSION = '2.6.0';   // build-app.py این عدد را با VERSION هم‌تراز می‌کند
+const APP_VERSION = '2.6.1';   // build-app.py این عدد را با VERSION هم‌تراز می‌کند
 let state = { projects: [], activeId: null };
 
 let storageOK = true;
@@ -2381,7 +2390,7 @@ document.addEventListener('dblclick', function(e){
 
 /* ── گزینه‌ها ── */
 const V_TYPE    = ['دوره‌ای', 'پیگیری توصیه', 'ارزیابی نهایی'];
-const V_STAGE   = ['برگی', 'ساقه', 'گلدهی', 'پر شدن دانه', 'رسیدگی'];
+const V_STAGE   = ['جوانه‌زنی', 'برگی', 'ساقه', 'گلدهی', 'پر شدن دانه', 'رسیدگی'];
 const V_WEATHER = ['آفتابی', 'ابری', 'بارانی', 'باد شدید'];
 const V_PREV    = ['بازدید اول است', 'همه انجام شد', 'بخشی انجام شد', 'انجام نشد'];
 const V_TREND   = ['بهتر از قبل', 'مثل قبل', 'بدتر از قبل'];
@@ -2537,9 +2546,126 @@ function vRevision(v){
   for(let i=0; i<s.length; i++){ a=Math.imul(a ^ s.charCodeAt(i),16777619); b=Math.imul(b ^ s.charCodeAt(i),3266489917); }
   return (a>>>0).toString(16) + ':' + (b>>>0).toString(16) + ':' + s.length;
 }
+/* ═══════════ دفترچهٔ همگام‌سازی بازدیدها (فقط روی همین دستگاه) ═══════════
+   هر بازدید فهرستی از «نسخه‌های قبلیِ خودش» دارد (_anc) تا هنگام همگام‌سازی معلوم شود کدام نسخه تازه‌تر است.
+   این فهرست بی‌نهایت بزرگ نمی‌شود و وسطش بریده می‌شود. تا نسخهٔ ۲٫۶٫۰ اگر میان دو ارسالِ موفق بیش از ۶۴ بار
+   چیزی نوشته می‌شد، نسخه‌ای که روی سرور بود از فهرست می‌افتاد و برنامه به‌اشتباه می‌گفت «دو نسخهٔ متفاوت».
+   حالا همین دستگاه یادداشت می‌کند کدام نسخه‌ها از آن بیرون رفته یا به آن رسیده‌اند:
+     p = نسخه‌هایی که نباید از فهرست بریده شوند (برای هر بازدید، ۳۲ تای آخر)
+     b = آخرین نسخهٔ سرور که این دستگاه آن را دیده و به حساب آورده است («آخرین نسخهٔ مشترک»)
+     t = زمانِ آخرین تغییرِ همان نسخه
+     h = همان، ولی بازسازی‌شده از تاریخچهٔ سرور (برای گزارش‌هایی که در نسخهٔ قبلیِ برنامه گیر کرده بودند)
+     u = نسخه‌هایی که بعد از b فرستاده شده‌اند ولی معلوم نیست به سرور رسیده باشند (مثلاً اینترنت وسط ارسال قطع شد)
+     k = کاربر خودش گفته است نسخهٔ این دستگاه جای این نسخهٔ سرور بماند
+     own = ۱ یعنی «زمان آخرین ارسالِ موفق» (که از نسخهٔ قبلی برنامه مانده) مالِ همین سرور و همین کد است
+   این یادداشت‌ها بیرون از بازدید نگه‌داری می‌شوند؛ شکل داده و «شمارهٔ نسخهٔ بازدید» دست نمی‌خورد،
+   پس دستگاهی که هنوز نسخهٔ قبلیِ برنامه را دارد با همان ردیف سرور کار می‌کند. */
+const VS_KEY = 'seed_vsync_demo_v1';
+const VB_KEY = 'seed_vbin_demo_v1';
+const VS_SETTLE_MS = 300000;      /* ۵ دقیقه: بیشترین زمانی که یک ارسال به سرور ممکن است طول بکشد */
+const VS = { ok:false, srv:'', own:0, p:{}, b:{}, t:{}, h:{}, u:{}, k:{}, hAt:0 };
+function vsRead(){
+  let o = null;
+  try{ o = JSON.parse(localStorage.getItem(VS_KEY) || 'null'); }catch(e){}
+  const obj = x => (x && typeof x === 'object' && !Array.isArray(x)) ? x : {};
+  o = obj(o);
+  VS.srv = typeof o.srv === 'string' ? o.srv : ''; VS.own = o.own ? 1 : 0;
+  VS.p = obj(o.p); VS.b = obj(o.b); VS.t = obj(o.t); VS.h = obj(o.h); VS.u = obj(o.u); VS.k = obj(o.k); VS.hAt = +o.hAt || 0;
+  VS.ok = true;
+}
+function vsWrite(){
+  try{ localStorage.setItem(VS_KEY, JSON.stringify({ srv:VS.srv, own:VS.own, p:VS.p, b:VS.b, t:VS.t, h:VS.h, u:VS.u, k:VS.k, hAt:VS.hAt })); }catch(e){}
+}
+function vsHash(s){
+  s = String(s); let a = 2166136261, b = 2246822519;
+  for(let i=0; i<s.length; i++){ a=Math.imul(a ^ s.charCodeAt(i),16777619); b=Math.imul(b ^ s.charCodeAt(i),3266489917); }
+  return (a>>>0).toString(16) + ':' + (b>>>0).toString(16) + ':' + s.length;
+}
+/* پیش از هر گفت‌وگو با سرور: یادداشت‌ها تازه خوانده می‌شوند. اگر سرور یا کدِ همگام‌سازی عوض شده باشد،
+   «آخرین نسخهٔ مشترک» دیگر معنا ندارد و کنار گذاشته می‌شود. */
+function vsBegin(){
+  vsRead();
+  const id = vsHash(gsNormUrl(GS.url) + '|' + GS.key);
+  if(VS.srv === id) return;
+  /* بار اول پس از به‌روزرسانی برنامه: تنظیم‌های همگام‌سازی همان قبلی‌هاست. اگر بعداً سرور یا کد عوض شود، دیگر نه. */
+  VS.own = VS.srv === '' ? 1 : 0;
+  VS.srv = id; VS.b = {}; VS.t = {}; VS.h = {}; VS.u = {}; VS.k = {}; VS.hAt = 0; vsWrite();
+}
+/* همهٔ بازدیدهای قطعه‌ها و گزارش‌های کلیِ یک وضعیت */
+function vsEach(st, fn){
+  ((st && Array.isArray(st.projects)) ? st.projects : []).forEach(p=>{
+    if(!p) return;
+    (Array.isArray(p.visits) ? p.visits : []).forEach(v=>{ if(v && v.id) fn(v, p, p); });
+    (Array.isArray(p.plots) ? p.plots : []).forEach(pl=>{
+      if(pl) (Array.isArray(pl.visits) ? pl.visits : []).forEach(v=>{ if(v && v.id) fn(v, pl, p); });
+    });
+  });
+}
+function vsPin(id, rev){
+  let a = VS.p[id]; if(!Array.isArray(a)) a = VS.p[id] = [];
+  const i = a.lastIndexOf(rev);
+  if(i >= 0 && i === a.length-1) return;
+  if(i >= 0) a.splice(i, 1);
+  a.push(rev); if(a.length > 32) a.splice(0, a.length-32);
+}
+function vsBase(id){
+  if(!VS.ok) vsRead();
+  if(typeof VS.b[id] === 'string') return { rev: VS.b[id], live: true, t: +VS.t[id] || 0 };
+  if(typeof VS.h[id] === 'string') return { rev: VS.h[id], live: false, t: 0 };
+  return null;
+}
+/* نسخهٔ فعلیِ همهٔ بازدیدها همین حالا از دستگاه بیرون می‌رود (ارسال به سرور یا فایل همگام‌سازی).
+   تا وقتی سرور رسیدنش را تأیید نکرده، در u می‌ماند. old=۱ یعنی این حالت قبلاً هم در همین بازدید بوده است
+   (چیزی نوشته و دوباره پاک شده)؛ چنین حالتی در گذشتهٔ نسخهٔ دیگران هم پیدا می‌شود و نشانهٔ رسیدن نیست. */
+function vsNoteOut(){
+  if(!VS.ok) vsRead();
+  const revs = { r:{}, t:{} };
+  vsEach(state, v=>{
+    const r = vRevision(v); revs.r[v.id] = r; revs.t[v.id] = +v.touch || 0; vsPin(v.id, r);
+    if(VS.b[v.id] === r) return;
+    let a = VS.u[v.id]; if(!Array.isArray(a)) a = VS.u[v.id] = [];
+    if(a.some(e=>e && e.r === r)) return;
+    a.push({ r, old: (Array.isArray(v._anc) && v._anc.includes(r)) ? 1 : 0 });
+    if(a.length > 32) a.splice(0, a.length-32);
+  });
+  vsWrite();
+  return revs;
+}
+/* این نسخه‌ها از بیرون (فایل یا متن همگام‌سازی) به این دستگاه رسیده‌اند و الان روی همین دستگاه هستند */
+function vsNoteIn(incoming){
+  vsRead();
+  const here = {}; vsEach(state, v=>{ here[v.id] = vRevision(v); });
+  vsEach(incoming, v=>{ const r = vRevision(v); if(here[v.id] === r) vsPin(v.id, r); });
+  vsWrite();
+}
+/* این نسخه‌ها الان روی سرور هستند و این دستگاه یا همان‌ها را دارد یا تازه‌ترشان را.
+   revs = { r: شمارهٔ نسخهٔ هر بازدید ، t: زمان آخرین تغییرِ همان نسخه } */
+function vsNoteSynced(revs){
+  if(!VS.ok) vsRead();
+  Object.keys(revs.r).forEach(id=>{ VS.b[id] = revs.r[id]; VS.t[id] = +revs.t[id] || 0; delete VS.h[id]; delete VS.u[id]; delete VS.k[id]; vsPin(id, revs.r[id]); });
+  const live = {}; vsEach(state, v=>{ live[v.id] = 1; });
+  ['p','b','t','h','u','k'].forEach(k=>{ Object.keys(VS[k]).forEach(id=>{ if(!live[id]) delete VS[k][id]; }); });
+  vsWrite();
+}
+/* نخستین ارسالِ موفق با این نسخهٔ برنامه انجام شد: حالا هر بازدیدِ این دستگاه «آخرین نسخهٔ مشترک» دارد.
+   نشانه‌های کمکیِ «بار اول پس از به‌روزرسانی» (زمانِ آخرین ارسالِ نسخهٔ قبلی و تاریخچهٔ سرور) دیگر به کار نمی‌آیند؛
+   اگر روشن بمانند، ممکن است بعدها دربارهٔ بازدیدی که با فایل یا پشتیبان به این دستگاه رسیده اشتباه نتیجه بگیرند. */
+function vsSettled(){
+  if(!VS.ok) vsRead();
+  if(!VS.own) return;
+  VS.own = 0; vsWrite();
+}
+/* کوتاه‌کردن فهرست نسخه‌های قبلی: ۶۴ تای اول، ۶۴ تای آخر، و هر نسخه‌ای که به سرور رفته یا از آن آمده است */
+function vAncTrim(a, id){
+  if(a.length <= 128) return a;
+  if(!VS.ok) vsRead();
+  const pins = Array.isArray(VS.p[id]) ? VS.p[id] : [], base = VS.b[id], n = a.length;
+  if(!base && !pins.length) return a.slice(0,64).concat(a.slice(-64));
+  return a.filter((r,i)=> i < 64 || i >= n-64 || r === base || pins.includes(r));
+}
 function vMark(v){
   const rev=vRevision(v); const a=Array.isArray(v._anc)?v._anc:[];
-  if(!a.includes(rev)) a.push(rev); v._anc=a.length > 128 ? a.slice(0,64).concat(a.slice(-64)) : a;
+  if(!a.includes(rev)) a.push(rev); v._anc=vAncTrim(a, v.id);
 }
 function vNew(plotId){
   const pl = vPlot(plotId); if (!pl) return null;
@@ -3814,6 +3940,7 @@ function syncDeviceName(){
   }catch(e){ return 'دستگاه'; }
 }
 function syncPayload(){
+  try{ vsRead(); vsNoteOut(); }catch(e){}
   return { app:'seedcoord-sync', v:2, device: syncDeviceName(), exportedAt: Date.now(),
            exportedAtFa: faDate(Date.now()), state: state };
 }
@@ -3878,32 +4005,162 @@ function syncImport(input){
 /* --- مغز ادغام: هیچ‌چیز پاک نمی‌شود، تازه‌ترین نسخه برنده است --- */
 /* ادغام آزمایشی؛ اختلاف ویرایش/حذف بدون حدس‌زدن متوقف می‌شود. */
 function vAnc(v,rev){ return Array.isArray(v._anc) && v._anc.includes(rev); }
+/* کاربر نسخهٔ w را به جای نسخهٔ دیگری برگزیده است: w جانشینِ آن نسخه و حالت‌های قبلیِ آن هم هست؛ به فهرستش افزوده می‌شوند */
+function vAncJoin(w, more){
+  const cur = Array.isArray(w._anc) ? w._anc : [], have = new Set(cur), add = [];
+  (Array.isArray(more) ? more : []).forEach(q => { if(typeof q === 'string' && !have.has(q)){ have.add(q); add.push(q); } });
+  if(!add.length) return;
+  /* ۶۴ حالتِ آخرِ خودِ این نسخه در انتهای فهرست می‌ماند (تازه‌ترین گذشتهٔ خودش)؛ بقیه پیش از آن می‌آید */
+  const cut = Math.max(0, cur.length - 64);
+  const all = cur.slice(0, cut).concat(add, cur.slice(cut)), n = all.length;
+  if(n <= 256){ w._anc = all; return; }
+  /* خیلی بلند شد: ۶۴ تای اول، ۱۹۲ تای آخر (تازه‌ترین نشانه‌ها) و هر نسخه‌ای که به سرور رفته یا از آن آمده می‌ماند */
+  if(!VS.ok) vsRead();
+  const pins = Array.isArray(VS.p[w.id]) ? VS.p[w.id] : [], base = VS.b[w.id];
+  w._anc = all.filter((r,i)=> i < 64 || i >= n-192 || r === base || pins.includes(r));
+}
+function vAncCut(v){ return Array.isArray(v._anc) && v._anc.length >= 128; }   /* فهرستی به این بلندی ممکن است بریده شده باشد */
 function vDeletedMatches(g,v){ const rev=vRevision(v); return g.rev===rev || (Array.isArray(g.anc) && g.anc.includes(rev)); }
-function vVisitConflict(local,incoming){
+/* دو نسخه از یک بازدید (x روی این دستگاه، v از بیرون): کدام بماند؟
+   'same' یکی‌اند · 'local' نسخهٔ این دستگاه تازه‌تر است · 'incoming' نسخهٔ بیرونی تازه‌تر است · 'conflict' هر دو عوض شده‌اند.
+   هر بازدید فهرستِ حالت‌هایی را دارد که «پشت سر گذاشته» است (_anc): حالت‌های قبلیِ خودش، و نسخه‌هایی که جایشان نشسته است.
+   برای فایل و متن همگام‌سازی (srv نادرست) قاعده همان قاعدهٔ نسخه‌های قبلی برنامه است.
+   برای سرور، از دفترچهٔ همین دستگاه هم کمک گرفته می‌شود تا این اشتباه‌ها پیش نیاید:
+     • فهرست بریده شده و نسخهٔ سرور در آن نیست (خطای قدیمی «دو دستگاه به شکل متفاوت…»)
+     • چیزی نوشته و دوباره پاک شده، و برنامه نوشتهٔ پاک‌شده را برمی‌گرداند
+     • ارسال انجام شده ولی پاسخ سرور نرسیده است
+     • دستگاهی با نسخهٔ قدیمیِ برنامه، کپیِ کهنهٔ خودش را دوباره روی سرور گذاشته است */
+function vDecide(x, v, srv){
+  const a = vRevision(x), b = vRevision(v);
+  if(a === b) return 'same';
+  const la = vAnc(x, b), ia = vAnc(v, a);
+  if(!srv) return ia ? 'incoming' : (la ? 'local' : 'conflict');
+  if(!VS.ok) vsRead();
+  const id = x.id;
+  /* کاربر خودش گفته است نسخهٔ این دستگاه جای همین نسخهٔ سرور بماند */
+  if(VS.k[id] === b) return 'local';
+  /* نسخه‌هایی که فرستاده شده‌اند ولی رسیدنشان تأیید نشده است */
+  const sent = Array.isArray(VS.u[id]) ? VS.u[id].filter(e => e && typeof e.r === 'string') : [];
+  /* سرور همان چیزی را دارد که همین دستگاه فرستاده بود، و این دستگاه بعد از آن جلوتر رفته است */
+  if(la && sent.some(e => e.r === b)) return 'local';
+  /* «آن یکی از حالتِ فعلیِ این یکی گذشته است» فقط وقتی نشانهٔ تازه‌تر بودن است که این حالت برای خودِ این یکی تازه باشد
+     (اگر کسی چیزی را پاک کند و به حالتِ قدیمی برگردد، آن حالتِ قدیمی در فهرستِ همه هست و نشانهٔ چیزی نیست) */
+  const pIn = ia && !vAnc(x, a);              /* نسخهٔ سرور از همین حالتِ این دستگاه گذشته و جلوتر رفته است */
+  const pLo = la && !vAnc(v, b);              /* نسخهٔ این دستگاه از همین حالتِ سرور گذشته و جلوتر رفته است */
+  const base = vsBase(id);
+  const tx = +x.touch || 0, tv = +v.touch || 0;
+  if(base && base.live){
+    const B = base.rev;                       /* آخرین نسخهٔ سرور که این دستگاه آن را دیده و به حساب آورده است */
+    /* نسخهٔ این دستگاه از روی آن ساخته نشده (از فایل یا پشتیبان آمده، یا پنجرهٔ دومِ بازمانده است) */
+    if(a !== B && !vAnc(x, B)) return (pIn && !pLo) ? 'incoming' : ((pLo && !pIn) ? 'local' : (ia ? 'incoming' : (la ? 'local' : 'conflict')));
+    /* سرور از آن موقع عوض نشده است؛ هر فرقی هست کارِ همین دستگاه است */
+    if(b === B) return 'local';
+    const sB = vAnc(v, B);                    /* نسخهٔ سرور جانشینِ همان نسخهٔ مشترک است (از روی آن ساخته شده یا آگاهانه جایش نشسته) */
+    if(a !== B){
+      /* هم این دستگاه عوض شده، هم سرور چیز دیگری دارد. دو حالت اختلاف نیست: */
+      /* ۱) دیگران روی همین نسخه‌ای ساخته‌اند که این دستگاه فرستاده بود (و پاسخ سرور نرسیده بود) */
+      const me = sent.find(e => e.r === a);
+      if(ia && me && !me.old) return 'incoming';
+      /* ۲) سرور یک کپیِ کهنه از همین بازدید را دارد (دستگاهی با نسخهٔ قدیمی برنامه آن را برگردانده) و این دستگاه جلوتر است */
+      if(pLo && !sB) return 'local';
+      return 'conflict';
+    }
+    /* این دستگاه از آن موقع (در مجموع) چیزی عوض نکرده است. */
+    /* دیگران روی چیزی ساخته‌اند که این دستگاه فرستاده و بعد خودش پس گرفته است */
+    if(sent.some(e => e.r !== a && vAnc(v, e.r))) return 'conflict';
+    if(sB) return 'incoming';
+    if(pLo) return 'local';                   /* کپیِ کهنه‌ای که دستگاهی با نسخهٔ قدیمی برنامه برگردانده است */
+    /* سرور یکی از حالت‌های قدیمیِ همین بازدید را دارد و کسی آگاهانه به آن برگشته است؛ معلوم نیست پیش از این نسخه بوده یا پس از آن */
+    if(la) return 'conflict';
+    const tB = base.t || tx;                  /* زمانِ آخرین تغییرِ نسخهٔ مشترک */
+    /* فهرستِ نسخهٔ سرور آن‌قدر بلند است که بریده شده باشد، و خودش تازه‌تر از نسخهٔ مشترک است */
+    return (vAncCut(v) && tv > tB) ? 'incoming' : 'conflict';
+  }
+  /* هنوز «آخرین نسخهٔ مشترک» را خودِ این نسخهٔ برنامه ثبت نکرده است (اولین همگام‌سازی پس از به‌روزرسانی):
+     قاعدهٔ همیشگی، و اگر جواب نداد، سه نشانهٔ کمکی برای بازدیدهایی که در نسخهٔ قبلی گیر کرده‌اند. */
+  if(pIn && !pLo) return 'incoming';
+  if(pLo && !pIn) return 'local';
+  if(ia) return (la && base && base.rev === b) ? 'local' : 'incoming';
+  if(la) return 'local';
+  const T = VS.own ? (+GS.lastPush || 0) : 0;
+  /* ۱) آخرین تغییرِ این بازدید روی این دستگاه دست‌کم ۵ دقیقه پیش از آخرین ارسالِ موفقِ همین دستگاه بوده است؛
+        پس نسخه‌اش همان است که سرور قبلاً داشته، و فهرستِ نسخهٔ سرور آن‌قدر بلند است که بریده شده باشد.
+        (چرا ۵ دقیقه: «زمانِ آخرین ارسال» لحظهٔ رسیدنِ پاسخ سرور است. با اینترنتِ کند، خودِ ارسال ممکن است طول بکشد
+         و چیزی که در همان فاصله نوشته شده در آن ارسال نبوده است؛ چنین نوشته‌ای نباید بی‌پرسش کنار برود.) */
+  if(T && tx && tx <= T - VS_SETTLE_MS && tv > tx && vAncCut(v)) return 'incoming';
+  if(!base) return 'conflict';
+  /* ۲) تاریخچهٔ سرور می‌گوید این دستگاه از آخرین ارسالش چیزی در این بازدید عوض نکرده است */
+  if(base.rev === a && vAncCut(v) && tv > tx) return 'incoming';
+  /* ۳) تاریخچهٔ سرور می‌گوید سرور هنوز همان نسخه‌ای را دارد که همین دستگاه آخرین بار فرستاده بود، و فهرستِ این دستگاه بریده شده است */
+  if(base.rev === b && vAncCut(x) && tx > tv) return 'local';
+  return 'conflict';
+}
+/* یک طرف بازدید را حذف کرده (gr = علامت‌های حذفِ آن طرف) و طرف دیگر نسخهٔ v را دارد: آیا آن حذف همین نسخه را می‌پوشاند؟
+   قاعدهٔ همیشگی: نسخه باید در فهرستِ همراهِ علامتِ حذف باشد.
+   قاعدهٔ کمکی (فقط سرور، و فقط وقتی طرفِ حذف‌کننده خودش نسخهٔ زنده‌ای از این بازدید ندارد = alive نادرست):
+   اگر v دقیقاً «آخرین نسخهٔ مشترکِ این دستگاه و سرور» است، دارنده‌اش پس از آخرین همگام‌سازی چیزی در آن عوض نکرده
+   و حذف پذیرفته می‌شود. (فهرست‌هایی که نسخهٔ قبلی برنامه بریده بود، بدون این قاعده به‌اشتباه «اختلاف» می‌دادند.) */
+function vGraveCovers(gr, v, srv, alive){
+  if(gr.some(g=>vDeletedMatches(g,v))) return true;
+  if(!srv || alive) return false;
+  const base = vsBase(v.id);
+  return !!base && base.rev === vRevision(v);
+}
+/* فهرست ناسازگاری‌های یک «نگه‌دارنده» (قطعه یا پروژه) با نسخهٔ بیرونیِ همان */
+function vHolderConflicts(local, incoming, srv, out, lp, gen){
   const lv=Array.isArray(local.visits)?local.visits:[], iv=Array.isArray(incoming.visits)?incoming.visits:[];
   const lg=Array.isArray(local.visitGrave)?local.visitGrave:[], ig=Array.isArray(incoming.visitGrave)?incoming.visitGrave:[];
   for(const v of iv){
-    if(!v || !v.id) return true;
+    if(!v || !v.id){ out.push({ kind:'bad', gen, lp, holder:local }); continue; }
     const x=lv.find(y=>y.id===v.id), gr=lg.filter(g=>g.id===v.id);
-    if(gr.length && !gr.some(g=>vDeletedMatches(g,v))) return true;
-    if(x){ const a=vRevision(x), b=vRevision(v); if(a!==b && !vAnc(x,b) && !vAnc(v,a)) return true; }
+    if(gr.length && !vGraveCovers(gr, v, srv, !!x)) out.push({ kind:'delHere', gen, lp, holder:local, v });
+    else if(x && vDecide(x, v, srv) === 'conflict') out.push({ kind:'edit', gen, lp, holder:local, x, v });
   }
-  for(const v of lv){ const gr=ig.filter(g=>g.id===v.id); if(gr.length && !gr.some(g=>vDeletedMatches(g,v))) return true; }
-  return false;
+  for(const x of lv){
+    const gr=ig.filter(g=>g.id===x.id);
+    if(gr.length && !vGraveCovers(gr, x, srv, iv.some(y=>y && y.id===x.id))) out.push({ kind:'delThere', gen, lp, holder:local, x });
+  }
 }
-function mergeVisits(local, incoming){
+function vVisitConflict(local, incoming, srv){ const out = []; vHolderConflicts(local, incoming, srv, out, null, false); return out.length > 0; }
+function mergeVisits(local, incoming, srv){
   local.visits=Array.isArray(local.visits)?local.visits:[];
   local.visitGrave=Array.isArray(local.visitGrave)?local.visitGrave:[];
   const before=JSON.stringify([local.visits,local.visitGrave]);
-  (incoming.visitGrave||[]).forEach(g=>{
+  const inV=Array.isArray(incoming.visits)?incoming.visits:[], inG=Array.isArray(incoming.visitGrave)?incoming.visitGrave:[];
+  /* وضعِ این دستگاه پیش از ادغام: علامت‌های حذفِ خودش و بازدیدهایی که زنده دارد */
+  const ownG=local.visitGrave.slice(), hadHere=local.visits.map(v=>v.id);
+  inG.forEach(g=>{
     if(g && g.id && !local.visitGrave.some(x=>x.id===g.id && x.rev===g.rev)) local.visitGrave.push(JSON.parse(JSON.stringify(g)));
   });
-  local.visits=local.visits.filter(v=>!local.visitGrave.some(g=>g.id===v.id && vDeletedMatches(g,v)));
-  (incoming.visits||[]).forEach(iv=>{
+  /* حذفی که فقط با قاعدهٔ کمکی پذیرفته شد، در فهرستِ همراهِ علامتِ حذف یادداشت می‌شود تا دستگاه‌های دیگر هم آن را بپذیرند */
+  const cover=(v)=>{ const rv=vRevision(v);
+    local.visitGrave.forEach(g=>{ if(g.id===v.id && g.rev!==rv && !(Array.isArray(g.anc) && g.anc.includes(rv))) g.anc=(Array.isArray(g.anc)?g.anc:[]).concat([rv]); }); };
+  local.visits=local.visits.filter(v=>{
+    if(local.visitGrave.some(g=>g.id===v.id && vDeletedMatches(g,v))) return false;
+    const gi=inG.filter(g=>g && g.id===v.id);
+    if(gi.length && vGraveCovers(gi, v, srv, inV.some(y=>y && y.id===v.id))){ cover(v); return false; }
+    return true;
+  });
+  inV.forEach(iv=>{
     if(!iv || !iv.id || local.visitGrave.some(g=>g.id===iv.id && vDeletedMatches(g,iv))) return;
+    const lg=ownG.filter(g=>g.id===iv.id);
+    if(lg.length && vGraveCovers(lg, iv, srv, hadHere.includes(iv.id))){ cover(iv); return; }
     const i=local.visits.findIndex(x=>x.id===iv.id);
-    if(i<0) local.visits.push(JSON.parse(JSON.stringify(iv)));
-    else if(vAnc(iv,vRevision(local.visits[i]))) local.visits[i]=JSON.parse(JSON.stringify(iv));
+    if(i<0){ local.visits.push(JSON.parse(JSON.stringify(iv))); return; }
+    const x=local.visits[i], d=vDecide(x, iv, srv);
+    /* تصمیمی که نه از فهرستِ نسخه‌ها آمده و نه از «آخرین نسخهٔ مشترکِ» ثبت‌شده (فقط بار اول پس از به‌روزرسانی):
+       نسخه‌ای که کنار می‌رود در حافظهٔ همین دستگاه نگه داشته می‌شود */
+    const guess = srv && typeof VS.b[x.id] !== 'string';
+    if(d === 'incoming'){
+      /* نسخهٔ بیرونی جای نسخهٔ این دستگاه می‌آید؛ نسخهٔ قبلیِ این دستگاه در فهرستش یادداشت می‌شود */
+      const a=vRevision(x), c=JSON.parse(JSON.stringify(iv));
+      if(!vAnc(c, a)){ if(guess) vsStash(local, x, 'local'); c._anc=(Array.isArray(c._anc)?c._anc:[]).concat([a]); }
+      local.visits[i]=c;
+    } else if(d === 'local'){
+      /* نسخهٔ این دستگاه می‌ماند؛ نسخهٔ بیرونی در فهرستش یادداشت می‌شود تا دستگاه‌های دیگر هم بدانند این تازه‌تر است */
+      const b=vRevision(iv);
+      if(!vAnc(x, b)){ if(guess) vsStash(local, iv, 'server'); x._anc=(Array.isArray(x._anc)?x._anc:[]).concat([b]); }
+    }
   });
   return before!==JSON.stringify([local.visits,local.visitGrave]);
 }
@@ -3924,25 +4181,32 @@ function vGenAhead(remote){
   }
   return false;
 }
-function vStateConflict(incoming){
-  for(const ip of incoming.projects||[]){
+/* همهٔ ناسازگاری‌های بازدیدها میان این دستگاه و یک وضعیت بیرونی */
+function vConflicts(incoming, srv){
+  const out = [];
+  for(const ip of (incoming && incoming.projects) || []){
     const lp=(state.projects||[]).find(p=>p.id===ip.id); if(!lp) continue;
-    if(vVisitConflict(lp,ip)) return 'gen';                /* گزارش‌های کلی پروژه */
+    vHolderConflicts(lp, ip, srv, out, lp, true);          /* گزارش‌های کلی پروژه */
     for(const ipl of ip.plots||[]){
       const lpl=(lp.plots||[]).find(pl=>pl.id===ipl.id);
-      if(lpl && vVisitConflict(lpl,ipl)) return true;
+      if(lpl) vHolderConflicts(lpl, ipl, srv, out, lp, false);
     }
   }
-  return false;
+  return out;
 }
-function syncApply(data, source){
+function vStateConflict(incoming, srv){
+  const c = vConflicts(incoming, srv);
+  return c.length ? (c[0].gen ? 'gen' : true) : false;
+}
+function syncApply(data, source, opt){
   let incoming = null;
   if(data && data.app === 'seedcoord-sync' && data.state) incoming = data.state;
   else if(data && data.projects && Array.isArray(data.projects)) incoming = data;     // پشتیبان نسخه‌های قبلی
   if(!incoming){ return uiAlert('این فایل، فایل همگام‌سازی یا پشتیبان دفترچه نیست.\n(برای GeoJSON از دکمهٔ «بازیابی GeoJSON/JSON» استفاده کنید)'); }
 
-  const vConf = vStateConflict(incoming);
-  if(vConf){ uiAlert((vConf === 'gen' ? 'یک گزارش کلی' : 'بازدیدی') + ' در دو دستگاه به شکل متفاوت تغییر کرده است. برای جلوگیری از پاک‌شدن اطلاعات، ادغام متوقف شد. از هر دو دستگاه پشتیبان بگیرید.'); return false; }
+  const srv = !!(opt && opt.srv);
+  const vConf = vStateConflict(incoming, srv);
+  if(vConf){ if(!(opt && opt.quiet)) uiAlert((vConf === 'gen' ? 'یک گزارش کلی' : 'بازدیدی') + ' در دو دستگاه به شکل متفاوت تغییر کرده است. برای جلوگیری از پاک‌شدن اطلاعات، ادغام متوقف شد. از هر دو دستگاه پشتیبان بگیرید.'); return false; }
 
   try{ abNow('پیش از ادغام'); }catch(e){}
 
@@ -3986,7 +4250,7 @@ function syncApply(data, source){
     }
     /* گزارش‌های کلی پروژه مثل بازدیدهای قطعه ادغام می‌شوند: فقط اضافه یا تازه‌تر؛ هیچ‌چیز بی‌علامتِ حذف پاک نمی‌شود.
        اگر هیچ‌کدام گزارش کلی نداشته باشند، کلیدی به پروژه اضافه نمی‌شود. */
-    if(vHasGen(lp) || vHasGen(ip)){ if(mergeVisits(lp, ip) && !projTouched) st.updProjects++; }
+    if(vHasGen(lp) || vHasGen(ip)){ if(mergeVisits(lp, ip, srv) && !projTouched) st.updProjects++; }
     (ip.plots||[]).forEach(ipl=>{
       if(inGraveL[ipl.id]) return;
       if(myGraveL[ipl.id] && myGraveL[ipl.id] > (ipl.updatedAt||0)){ st.removed++; return; }
@@ -4002,7 +4266,7 @@ function syncApply(data, source){
       const baseLocal = Object.assign({}, lpl, {visits: []});
       const baseIncoming = Object.assign({}, ipl, {visits: []});
       const plotSame = sigPlot(baseLocal) === sigPlot(baseIncoming);
-      const mergedVisits = mergeVisits(lpl, ipl);
+      const mergedVisits = mergeVisits(lpl, ipl, srv);
       if(plotSame){ if(mergedVisits) st.updPlots++; else st.same++; return; }
       if(a > b){
         Object.keys(ipl).forEach(k=>{ if(k !== 'visits' && k !== 'visitGrave') lpl[k] = ipl[k]; });
@@ -4051,6 +4315,8 @@ function syncApply(data, source){
       faSync(state.projects.reduce((a,p)=>a+(p.plots||[]).length,0)) + '</b> قطعه.';
   syncLog(msg);
   renderAutoCard();
+  /* نسخه‌هایی که با فایل یا متن همگام‌سازی رسیده‌اند یادداشت می‌شوند (برای سرور، خودِ دریافت این کار را می‌کند) */
+  try{ if(!srv) vsNoteIn(incoming); }catch(e){}
   return true;
 }
 
@@ -4332,12 +4598,219 @@ async function gsRestoreVisit(){
   finally{ GS.pulling=false; }
 }
 
+/* ---------- وقتی از یک بازدید دو نسخه هست ----------
+   همگام‌سازی خودکار هیچ پنجره‌ای باز نمی‌کند (وسط نوشتن مزاحم نمی‌شود)؛ فقط یک نوار بالای صفحه می‌آید.
+   وقتی کاربر خودش دکمه را بزند، برنامه می‌پرسد کدام نسخه بماند. تا آن‌وقت هیچ‌چیز جایگزین نمی‌شود. */
+function vsWhere(c){
+  const v = c.x || c.v || {}, f = v.f || {};
+  const when = (f.date ? ' — تاریخ ' + f.date : '') + (f.time ? '، ساعت ' + f.time : '');
+  return (c.gen ? 'گزارش کلی پروژهٔ «' + ((c.lp && c.lp.name) || '—') + '»'
+                : 'بازدید قطعهٔ «' + ((c.holder && c.holder.name) || '—') + '» از پروژهٔ «' + ((c.lp && c.lp.name) || '—') + '»') + when;
+}
+function vsConfLine(c){
+  if(c.kind === 'edit') return 'از ' + vsWhere(c) + ' دو نسخه هست: یکی روی این دستگاه، یکی روی سرور.';
+  if(c.kind === 'delHere') return vsWhere(c) + ' روی این دستگاه حذف شده، ولی روی سرور نسخهٔ دیگری از آن هست.';
+  if(c.kind === 'delThere') return vsWhere(c) + ' در دستگاه دیگر حذف شده، ولی روی این دستگاه تغییر کرده است.';
+  return 'یکی از بازدیدهای روی سرور ناقص است.';
+}
+function vsFacts(v){
+  const n = (v.photos || []).length;
+  return 'آخرین تغییر ' + (v.touch ? faDate(v.touch) : 'نامعلوم') + ' · ' + (n ? vFa(n) + ' عکس' : 'بدون عکس') + (v.sig ? ' · امضا دارد' : '');
+}
+function vsDiff(x, v){
+  const out = [], fx = x.f || {}, fv = v.f || {};
+  V_SCHEMA.forEach(sec => sec.fields.forEach(f => { if((fx[f.k] || '') !== (fv[f.k] || '')) out.push(f.l); }));
+  const same = (p, q) => JSON.stringify(p || []) === JSON.stringify(q || []);
+  if(!same(x.pests, v.pests)) out.push('آفت‌ها، بیماری‌ها و علف‌های هرز');
+  if(!same(x.samples, v.samples)) out.push('نمونهٔ ارسالی');
+  if(!same(x.recs, v.recs)) out.push('توصیه‌ها');
+  if(!same(x.photos, v.photos)) out.push('عکس‌ها');
+  if(JSON.stringify(x.sig || null) !== JSON.stringify(v.sig || null)) out.push('امضا');
+  return out;
+}
+function gsConfSet(conf){
+  GS.conf = (conf && conf.length) ? { at: Date.now(), n: conf.length, kind: conf[0].kind, line: vsConfLine(conf[0]) } : null;
+  gsConfRender();
+}
+function gsConfRender(){
+  const box = document.getElementById('syncWarn'); if(!box) return;
+  const c = GS.conf;
+  setShown(box, !!c);
+  if(!c) return;
+  /* سرصفحه همیشه بالای صفحه می‌ماند؛ برای اینکه هنگام نوشتن روی گوشی جا نگیرد، نوار کوتاه است.
+     جزئیات در خط وضعیتِ کارت همگام‌سازی و در پنجره‌ای که با دکمه باز می‌شود می‌آید. */
+  const t = document.getElementById('syncWarnTxt');
+  if(t) t.textContent = '⚠ همگام‌سازی صبر کرده است؛ چیزی پاک نشده است.';
+  box.title = c.line;
+  const b = document.getElementById('syncWarnBtn');
+  if(b) b.textContent = c.kind === 'edit' ? 'انتخاب نسخه' : 'چه کنم؟';
+}
+function gsConfMsg(){
+  const c = GS.conf; if(!c) return '⚠ همگام‌سازی صبر کرده است.';
+  return '⚠ همگام‌سازی صبر کرده است. ' + escSync(c.line) + ' چیزی پاک نشده است. ' +
+    (c.kind === 'edit' ? 'برای انتخاب نسخه، دکمهٔ «ارسال به سرور» را بزنید.' : 'برای راهنمایی، دکمهٔ «ارسال به سرور» را بزنید.');
+}
+/* نسخه‌ای که کاربر کنار گذاشت، در حافظهٔ همین دستگاه نگه داشته می‌شود (۲۰ تای آخر) */
+function vsBinPut(c, x, side){
+  try{
+    let a = []; try{ a = JSON.parse(localStorage.getItem(VB_KEY) || '[]'); }catch(e){}
+    if(!Array.isArray(a)) a = [];
+    a.push({ at: Date.now(), side, project: c.lp && c.lp.id, projectName: c.lp && c.lp.name, holder: c.holder && c.holder.id, gen: !!c.gen,
+             visit: JSON.parse(JSON.stringify(x)) });
+    if(a.length > 20) a = a.slice(-20);
+    localStorage.setItem(VB_KEY, JSON.stringify(a));
+    return true;
+  }catch(e){ return false; }
+}
+/* holder = قطعه یا پروژه‌ای که این بازدید/گزارش کلی در آن است */
+function vsStash(holder, visit, side){
+  const gen = !!holder && Array.isArray(holder.plots);
+  let lp = gen ? holder : null;
+  if(!lp) try{ lp = (state.projects || []).find(p => (p.plots || []).includes(holder)) || null; }catch(e){}
+  return vsBinPut({ lp, holder, gen }, visit, side + '-auto');
+}
+/* گزارش‌هایی که در نسخهٔ قبلی برنامه گیر کرده‌اند: از خودِ سرور می‌پرسیم «آخرین چیزی که همین دستگاه فرستاد چه بود؟»
+   اگر نسخهٔ سرور هنوز همان است، تغییرهای این دستگاه روی همان نوشته شده و چیزی با هم نمی‌جنگد.
+   فقط خواندن است؛ چیزی روی سرور نوشته نمی‌شود. true یعنی چیز تازه‌ای فهمیده شد. */
+function vsBootMine(pay){
+  /* آیا این بسته واقعاً از همین دستگاه رفته است؟ (نام دستگاه یکتا نیست: دو گوشی اندرویدی هر دو «اندروید» هستند.)
+     هر بازدیدی که فهرستش بریده نشده باید نسخهٔ داخلِ بسته را در گذشتهٔ خودش داشته باشد؛ وگرنه بسته مالِ این دستگاه نیست. */
+  const there = {}; vsEach(pay.state, v=>{ there[v.id] = vRevision(v); });
+  let ok = true;
+  vsEach(state, x=>{
+    const r = there[x.id]; if(!ok || typeof r !== 'string') return;
+    if(vRevision(x) === r || vAnc(x, r) || vAncCut(x)) return;
+    ok = false;
+  });
+  return ok;
+}
+async function vsBoot(cur){
+  const T = VS.own ? (+GS.lastPush || 0) : 0;
+  if(!T || VS.hAt === T) return false;
+  const me = syncDeviceName(), from = T - VS_SETTLE_MS;
+  /* زمانِ داخل بسته پیش از ارسال گذاشته می‌شود و «آخرین ارسال» پس از پاسخ سرور؛ هر دو با ساعتِ همین دستگاه */
+  const mine = d => !!d && !!d.state && Array.isArray(d.state.projects) && d.device === me &&
+    +d.exportedAt >= from && +d.exportedAt <= T;
+  let pay = mine(cur) ? cur : null, asked = true;
+  if(!pay){
+    const url = sbBase() + '/rest/v1/' + SB_TABLE + '_history?key=eq.' + encodeURIComponent(GS.key);
+    const tail = '&select=id,data&order=id.desc&limit=';
+    try{
+      let r = await fetch(url + '&' + encodeURIComponent('data->>device') + '=eq.' + encodeURIComponent(me) +
+        '&' + encodeURIComponent('data->exportedAt') + '=gte.' + from +
+        '&' + encodeURIComponent('data->exportedAt') + '=lte.' + T + tail + '1', { headers: sbHeaders() });
+      /* اگر سرور این شکلِ پرسش را نپذیرفت، چند ردیف آخر تاریخچه خوانده می‌شود */
+      if(r.status === 400) r = await fetch(url + tail + '8', { headers: sbHeaders() });
+      if(r.ok){
+        const rows = await r.json();
+        pay = ((Array.isArray(rows) ? rows : []).find(x => x && mine(x.data)) || {}).data || null;
+      } else if(r.status >= 500) asked = false;
+    }catch(e){ asked = false; }
+  }
+  if(!asked) return false;                    /* اینترنت قطع بود؛ دفعهٔ بعد دوباره پرسیده می‌شود */
+  VS.hAt = T;
+  let n = 0;
+  if(pay && vsBootMine(pay)) vsEach(pay.state, v=>{ if(typeof VS.b[v.id] !== 'string'){ VS.h[v.id] = vRevision(v); n++; } });
+  vsWrite();
+  return n > 0;
+}
+/* کاربر خودش دکمه را زده است: برای هر بازدیدی که دو نسخه دارد پرسیده می‌شود کدام بماند.
+   true یعنی دست‌کم یکی حل شد. */
+async function vsAsk(conf){
+  let changed = false;
+  for(const c of conf){
+    if(c.kind !== 'edit'){
+      await uiAlert(vsWhere(c) + '\n' + (c.kind === 'delHere'
+        ? 'روی این دستگاه حذف شده، ولی روی سرور نسخهٔ دیگری از آن هست. برای همین همگام‌سازی صبر کرده است. چیزی پاک نشده است.\n\nبرای برگرداندن نسخهٔ سرور به این دستگاه، دکمهٔ «رفع اختلاف: بازگرداندن بازدید» را بزنید.'
+        : c.kind === 'delThere'
+        ? 'در دستگاه دیگر حذف شده، ولی روی این دستگاه تغییرهایی دارد که آن دستگاه ندیده است. برای همین همگام‌سازی صبر کرده است. چیزی پاک نشده است.\n\nاگر این مورد دیگر لازم نیست، آن را روی همین دستگاه هم حذف کنید. اگر لازم است، اول «پشتیبان کامل (با عکس و امضا)» بگیرید.'
+        : 'دادهٔ سرور برای این مورد ناقص است. از هر دو دستگاه پشتیبان بگیرید.'),
+        { title:'همگام‌سازی صبر کرده است', kind:'warn' });
+      return changed;
+    }
+    const x = c.x, v = c.v, a = vRevision(x), b = vRevision(v);
+    const diff = vsDiff(x, v);
+    const tx = +x.touch || 0, tv = +v.touch || 0;
+    const newer = (tx && tv && tx !== tv) ? (tx > tv ? 'local' : 'server') : '';
+    const pick = await uiModal({ title:'دو نسخه از یک گزارش', kind:'warn',
+      ok:'نسخهٔ این دستگاه', alt:'نسخهٔ سرور', cancelText:'فعلاً هیچ‌کدام',
+      body: vsWhere(c) + '\nروی این دستگاه و روی سرور دو جور است و برنامه نمی‌داند کدام درست است. چیزی پاک نشده است.\n\n' +
+        '• این دستگاه: ' + vsFacts(x) + (newer === 'local' ? ' (تازه‌تر)' : '') +
+        '\n• سرور: ' + vsFacts(v) + (newer === 'server' ? ' (تازه‌تر)' : '') +
+        (diff.length ? '\n• فرق در: ' + diff.slice(0, 6).join('، ') + (diff.length > 6 ? ' و ' + vFa(diff.length - 6) + ' مورد دیگر' : '') : '') +
+        '\n\nکدام بماند؟ (نسخهٔ دیگر کنار گذاشته می‌شود.)' });
+    if(pick !== true && pick !== 'alt') return changed;
+    const keep = pick === true;
+    const older = !!newer && ((keep && newer === 'server') || (!keep && newer === 'local'));
+    if(!(await uiConfirm((older ? 'توجه: نسخه‌ای که انتخاب کردید قدیمی‌تر است.\n\n' : '') + (keep
+        ? 'نسخهٔ این دستگاه به سرور می‌رود و جای نسخهٔ سرور را می‌گیرد.\nادامه بدهم؟'
+        : 'نسخهٔ سرور جای نسخهٔ این دستگاه را می‌گیرد.\nچیزهایی که فقط روی این دستگاه در این گزارش نوشته شده کنار گذاشته می‌شود.\nادامه بدهم؟'),
+        { title: keep ? 'نسخهٔ این دستگاه بماند' : 'نسخهٔ سرور بیاید', ok: keep ? 'بله، نسخهٔ این دستگاه' : 'بله، نسخهٔ سرور', danger: !keep || older }))) return changed;
+    /* در این فاصله چیزی عوض نشده باشد */
+    const list = Array.isArray(c.holder.visits) ? c.holder.visits : [];
+    const i = list.indexOf(x);
+    const still = i >= 0 && (state.projects || []).some(p => p === c.holder || (p.plots || []).includes(c.holder));
+    if(!still || vRevision(x) !== a){
+      await uiAlert('در همین فاصله این گزارش عوض شد؛ کاری انجام نشد. دوباره «ارسال به سرور» را بزنید.');
+      return changed;
+    }
+    /* نسخه‌ای که کنار می‌رود، در حافظهٔ همین دستگاه نگه داشته می‌شود */
+    if(!vsBinPut(c, keep ? v : x, keep ? 'server' : 'local')){
+      await uiAlert('جا برای نگه‌داشتن کپیِ نسخهٔ کنارگذاشته نبود؛ کاری انجام نشد. اول «پشتیبان کامل (با عکس و امضا)» بگیرید.');
+      return changed;
+    }
+    /* نسخه‌ای که می‌ماند «جانشینِ» نسخهٔ کنارگذاشته و همهٔ حالت‌های قبلیِ آن است؛ این در فهرستش نوشته می‌شود
+       تا دستگاه‌های دیگر (که هنوز یکی از آن حالت‌ها را دارند) بی‌پرسش همین را بپذیرند */
+    const heir = (w, lose, r) => vAncJoin(w, (Array.isArray(lose._anc) ? lose._anc : []).concat([r]));
+    if(keep){
+      heir(x, v, b);
+      vsPin(x.id, b); VS.k[x.id] = b; vsWrite();
+      GS.keptLocal = true;
+    } else {
+      const copy = JSON.parse(JSON.stringify(v));
+      heir(copy, x, a);
+      list[i] = copy;
+    }
+    save(true); render();
+    changed = true;
+  }
+  return changed;
+}
+/* پس از ادغامِ موفق با سرور: برای هر بازدیدی که هر دو طرف دارند، نسخهٔ سرور «آخرین نسخهٔ مشترک» است */
+function vsAfterMerge(incoming){
+  const here = {}; vsEach(state, v=>{ here[v.id] = 1; });
+  const revs = { r:{}, t:{} };
+  vsEach(incoming, v=>{ if(here[v.id]){ revs.r[v.id] = vRevision(v); revs.t[v.id] = +v.touch || 0; } });
+  vsNoteSynced(revs);
+}
+/* ادغام نسخهٔ سرور در این دستگاه. true = ادغام شد؛ false = از یک بازدید دو نسخه هست و ادغام صبر کرد.
+   manual=false یعنی همگام‌سازی خودکار: هیچ پنجره‌ای باز نمی‌شود. */
+async function gsMergeServer(d, source, manual){
+  const data = { app:'seedcoord-sync', device: d.device || 'سرور', state: d.state };
+  let conf = vConflicts(d.state, true);
+  /* شاید این مورد در نسخهٔ قبلیِ برنامه گیر کرده باشد: یک‌بار از تاریخچهٔ سرور پرسیده می‌شود */
+  const noBase = c => (c.kind === 'edit' && typeof VS.b[c.x.id] !== 'string') || (c.kind === 'delHere' && typeof VS.b[c.v.id] !== 'string');
+  if(conf.some(noBase) && await vsBoot(d)) conf = vConflicts(d.state, true);
+  if(conf.length && manual && await vsAsk(conf)) conf = vConflicts(d.state, true);
+  if(!conf.length && syncApply(data, source, { srv:true, quiet:true }) === true){
+    vsAfterMerge(d.state);
+    gsConfSet(null);
+    return true;
+  }
+  if(!conf.length) conf = vConflicts(d.state, true);
+  gsConfSet(conf.length ? conf : [{ kind:'bad' }]);
+  return false;
+}
+
 async function gsPull(manual){
   if(!gsReady()){ if(manual) uiAlert('اول آدرس سرویس و کدِ همگام‌سازی را وارد کنید.'); return; }
   if(GS.pulling) return;
+  if(GS.busy){ if(manual) gsRender('ارسال در حال انجام است؛ چند لحظهٔ دیگر دوباره بزنید.'); return; }
   GS.pulling = true;
   if(manual) gsRender('در حال دریافت…');
+  let waiting = false;
   try{
+    vsBegin();
     const d = await cloudPull();
     GS.ready = true;
     if(!d || !d.state){
@@ -4345,43 +4818,55 @@ async function gsPull(manual){
     } else {
       GS.lastPull = Date.now(); gsPersist();
       const before = state.projects.length;
-      if(syncApply({ app:'seedcoord-sync', device: d.device || 'سرور', state: d.state }, (PROVIDERS[GS.prov]||{}).name || 'سرور') === false) throw new Error('اختلاف بازدید؛ دریافت متوقف شد.');
+      if(!(await gsMergeServer(d, (PROVIDERS[GS.prov]||{}).name || 'سرور', manual))){ waiting = true; throw new Error('اختلاف بازدید؛ دریافت متوقف شد.'); }
       gsRender('دریافت شد (از ' + (d.device || 'دستگاه دیگر') + ' · ' + faDate(d.updatedAt || d.exportedAt) + ')؛ پروژه: ' +
         faSync(before) + ' → ' + faSync(state.projects.length));
       /* اگر نسخهٔ سرور گزارش کلیِ این دستگاه را ندارد (مثلاً دستگاهی با نسخهٔ قدیمی آن را ننوشته)،
          در حالت خودکار دوباره فرستاده می‌شود؛ ارسال همیشه اول با سرور ادغام می‌کند. */
       try{ if(GS.auto && vGenAhead(d.state)) gsQueue(); }catch(e){}
     }
-  }catch(e){ GS.ready = false; gsRender('⚠ دریافت ناموفق: ' + escSync(gsHumanErr(e))); }
-  finally{ GS.pulling = false; }
+  }catch(e){
+    if(waiting) gsRender(gsConfMsg());
+    else { GS.ready = false; gsRender('⚠ دریافت ناموفق: ' + escSync(gsHumanErr(e))); }
+  }
+  finally{
+    GS.pulling = false;
+    /* کاربر گفت «نسخهٔ این دستگاه بماند»: همان نسخه بی‌درنگ به سرور فرستاده می‌شود */
+    if(GS.keptLocal){ GS.keptLocal = false; setTimeout(()=>gsPush(false), 0); }
+  }
 }
 
 async function gsPush(manual){
   if(!gsReady()){ if(manual) uiAlert('اول آدرس سرویس و کدِ همگام‌سازی را وارد کنید.'); return; }
   if(GS.busy) return;
+  if(GS.pulling){ if(manual) gsRender('دریافت در حال انجام است؛ چند لحظهٔ دیگر دوباره بزنید.'); else gsQueue(); return; }
   GS.busy = true;
-  let editedWhileSending = false;
+  let editedWhileSending = false, waiting = false;
   try{
+    vsBegin();
     let sent = false;
     for(let attempt=0; attempt<4 && !sent; attempt++){
       const prior = await sbPullRow();
       if(prior && prior.data && prior.data.state){
-        if(syncApply(prior.data, 'سرور پیش از ارسال') === false) throw new Error('اختلاف بازدید؛ ارسال متوقف شد.');
+        if(!(await gsMergeServer(prior.data, 'سرور پیش از ارسال', manual))){ waiting = true; throw new Error('اختلاف بازدید؛ ارسال متوقف شد.'); }
       } else if(prior && (!prior.data || !prior.data.state)){
         throw new Error('دادهٔ سرور معتبر نیست؛ ارسال برای جلوگیری از بازنویسی متوقف شد.');
       }
       const payload = cloudPayload();
       const snapshot = JSON.stringify(payload.state);
+      const revs = vsNoteOut();                 /* این نسخه‌ها دارند از دستگاه بیرون می‌روند */
       sent = await sbPushConditional(payload, prior);
-      if(sent) editedWhileSending = snapshot !== JSON.stringify(state);
+      if(sent){ vsNoteSynced(revs); editedWhileSending = snapshot !== JSON.stringify(state); }
     }
     if(!sent) throw new Error('سرور هم‌زمان تغییر کرد؛ ارسال انجام نشد، دوباره تلاش کنید.');
-    GS.lastPush = Date.now(); GS.pending = editedWhileSending; GS.ready = true; gsPersist();
+    GS.lastPush = Date.now(); GS.pending = editedWhileSending; GS.ready = true; GS.keptLocal = false; gsPersist();
+    vsSettled();
     gsRender('ارسال شد ✅ (' + faSync(state.projects.length) + ' پروژه · ' +
       faSync(state.projects.reduce((a,p)=>a+(p.plots||[]).length,0)) + ' قطعه)');
   }catch(e){
     GS.pending = true;
-    gsRender('⚠ ارسال ناموفق: ' + escSync(gsHumanErr(e)) + ' — وقتی اتصال برقرار شد دوباره فرستاده می‌شود.');
+    if(waiting) gsRender(gsConfMsg());
+    else gsRender('⚠ ارسال ناموفق: ' + escSync(gsHumanErr(e)) + ' — وقتی اتصال برقرار شد دوباره فرستاده می‌شود.');
   }
   finally{ GS.busy = false; if(editedWhileSending && GS.auto) gsQueue(); }
 }
@@ -4518,7 +5003,9 @@ function gsQueue(){
   if(!GS.auto || !gsReady()) return;
   GS.pending = true;
   clearTimeout(GS.timer);
-  GS.timer = setTimeout(()=>gsPush(false), 5000);
+  /* وقتی همگام‌سازی منتظر انتخاب کاربر است، تلاش خودکار هر دو دقیقه یک‌بار کافی است */
+  const wait = GS.conf ? Math.max(5000, 120000 - (Date.now() - (GS.conf.at || 0))) : 5000;
+  GS.timer = setTimeout(()=>gsPush(false), wait);
 }
 window.addEventListener('online', ()=>{ if(GS.auto && gsReady() && GS.pending) setTimeout(()=>gsPush(false), 1500); });
 // هر بار باز شدن برنامه: یک دریافت خودکار
@@ -7541,6 +8028,7 @@ render();
     'gs:test': el => gsTest(),
     'gs:diag': el => gsDiag(),
     'gs:push': el => gsPush(true),
+    'gs:resolve': el => gsPush(true),
     'gs:pull': el => gsPull(true),
     'gs:restoreVisit': el => gsRestoreVisit(),
     'gs:heartbeat': el => gsHeartbeat(true),
@@ -7729,6 +8217,7 @@ function uiModal(opt){
         '</div>' +
         '<div class="dlg-f">' +
           '<button class="primary ok"></button>' +
+          (opt.alt ? '<button class="alt"></button>' : '') +
           (hasCancel ? '<button class="cancel">انصراف</button>' : '') +
           (opt.text ? '<span class="sp"></span><button class="copy">کپی</button>' : '') +
         '</div>' +
@@ -7741,6 +8230,9 @@ function uiModal(opt){
     okBtn.textContent = opt.ok || 'باشه';
     if (kind === 'danger') okBtn.className = 'danger ok';
     const cancelBtn = box.querySelector('.cancel');
+    if (cancelBtn && opt.cancelText) cancelBtn.textContent = opt.cancelText;
+    const altBtn = box.querySelector('.alt');
+    if (altBtn) { altBtn.textContent = opt.alt; box.classList.add('dlg-3'); }
     const field = box.querySelector('input, textarea.code');
     if (field){
       if (hasInput) field.value = opt.value || '';
@@ -7766,6 +8258,7 @@ function uiModal(opt){
     }
 
     okBtn.addEventListener('click', () => done(okValue()));
+    if (altBtn) altBtn.addEventListener('click', () => done('alt'));
     if (cancelBtn) cancelBtn.addEventListener('click', () => done(hasInput ? null : false));
     const copyBtn = box.querySelector('.copy');
     if (copyBtn) copyBtn.addEventListener('click', () => {
