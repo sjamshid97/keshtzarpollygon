@@ -896,7 +896,7 @@
         <div class="hint u-lh185">
           یکی را انتخاب کنید، یک‌بار آدرس و کلیدها را بگذارید؛ از آن به بعد هر تغییر خودکار روی سرور
           نوشته می‌شود و دستگاه دیگر با باز کردن برنامه همان را می‌گیرد.
-          راهنما: <b>راهنمای-سرور-رایگان.md</b>
+          راهنما: فایل <b>راهنمای-سرور-رایگان.md</b> در پوشهٔ پروژه روی کامپیوتر (روی سایت نیست).
         </div>
         <div class="fld u-block u-mt8">
           <select class="u-w100 u-fs125" id="gsProv" data-change="gs:saveCfg">
@@ -943,7 +943,7 @@
           <div class="hint u-mt6 u-fs105">
             Supabase پروژهٔ رایگان را بعد از ۷ روز بی‌فعالیتی pause می‌کند و شرطش «چند درخواست
             در روز» است، نه یک درخواست هر چند روز. پس زمان‌بند را روی <b>روزی یک‌بار</b> بگذارید:
-            cron-job.org یا UptimeRobot (رایگان، بدون کد). راهنما: <b>راهنمای-ضربان-سرور.md</b>
+            cron-job.org یا UptimeRobot (رایگان، بدون کد). راهنما: فایل <b>راهنمای-ضربان-سرور.md</b> در پوشهٔ پروژه روی کامپیوتر (روی سایت نیست).
           </div>
         </div>
         <div class="hint u-mt8 u-fs11">
@@ -1168,17 +1168,26 @@
 <script>
 /* ---------- ذخیره‌سازی ---------- */
 const STORE_KEY = 'seed_coord_notebook_v1';
-const APP_VERSION = '2.6.1';   // build-app.py این عدد را با VERSION هم‌تراز می‌کند
+const APP_VERSION = '2.6.2';   // tools/release.py این عدد را در همهٔ جاهای لازم یکسان می‌کند
 let state = { projects: [], activeId: null };
 
 let storageOK = true;
+let storageWhy = '';        /* چرا ذخیره نمی‌شود: 'none' مرورگر اجازه نمی‌دهد · 'corrupt' دادهٔ قبلی خوانده نشد */
+let storageFull = false;    /* آخرین ذخیره در حافظه جا نشد؛ با تغییر بعدی دوباره تلاش می‌شود */
 function load(){
-  try{
-    const raw = localStorage.getItem(STORE_KEY);
-    if(raw) state = JSON.parse(raw);
-  }catch(e){ storageOK = false; }
+  let raw = null;
+  try{ raw = localStorage.getItem(STORE_KEY); }
+  catch(e){ storageOK = false; storageWhy = 'none'; }
+  if(raw){
+    try{
+      const s = JSON.parse(raw);
+      if(!s || typeof s !== 'object' || Array.isArray(s) || (s.projects != null && !Array.isArray(s.projects))) throw new Error('شکل داده درست نیست');
+      state = s;
+    }catch(e){ storageOK = false; storageWhy = 'corrupt'; }   /* روی دادهٔ خوانده‌نشده چیزی نوشته نمی‌شود تا از بین نرود */
+  }
   if(!state.projects) state.projects = [];
   if(!state.grave) state.grave = { projects:[], plots:[] };
+  try{ graveTidy(); }catch(e){}
   initHash();
 }
 
@@ -1223,8 +1232,14 @@ function save(suppressCloud){
   try{
     try{ stampUpdated(); }catch(e){}
     localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    if(storageFull){ storageFull = false; showStorageWarning(); }
   }
-  catch(e){ storageOK = false; showStorageWarning(); }
+  catch(e){
+    const full = !!e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e.code === 22 || e.code === 1014);
+    if(full) storageFull = true;                              /* ذخیرهٔ بعدی دوباره تلاش می‌کند */
+    else { storageOK = false; storageWhy = 'none'; }          /* مرورگر اجازهٔ ذخیره نمی‌دهد (حالت پیش‌نمایش) */
+    showStorageWarning();
+  }
 }
 /* ================= کار آفلاین + ذخیرهٔ خودکار روی فایل سیستم ================= */
 const AB_KEY = 'seed_autosave_v1';
@@ -1451,8 +1466,34 @@ window.addEventListener('pagehide', ()=>{ if(AB.on) abNow('بستن صفحه'); 
 document.addEventListener('visibilitychange', ()=>{ if(AB.on && document.visibilityState === 'hidden') abNow('خروج از برنامه'); });
 
 function showStorageWarning(){
-  const el = document.getElementById('storageWarn');
-  setShown(el, true);
+  const el = document.getElementById('storageWarn'); if(!el) return;
+  if(!el.dataset.base) el.dataset.base = el.textContent.trim();          /* متن همیشگیِ «حالت پیش‌نمایش» */
+  let msg = '', btn = '';
+  if(!storageOK && storageWhy === 'corrupt'){
+    msg = '⚠ دادهٔ ذخیره‌شده روی این دستگاه خوانده نشد. برای این‌که همان داده از بین نرود، برنامه فعلاً چیزی ذخیره نمی‌کند. ' +
+          'اگر با بستن و باز کردن برنامه هم این پیام ماند، دکمهٔ روبه‌رو را بزنید؛ دادهٔ خوانده‌نشده به شکل فایل دانلود می‌شود و برنامه از نو باز می‌شود. ';
+    btn = '<button class="small" data-act="store:reset">دانلود دادهٔ خوانده‌نشده و شروع از نو</button>';
+  } else if(!storageOK){
+    msg = el.dataset.base;
+  } else if(storageFull){
+    msg = '⚠ حافظهٔ مرورگر پر است و آخرین تغییرها روی این دستگاه ذخیره نشد. تا صفحه باز است اطلاعات از بین نمی‌رود: ' +
+          'همین حالا «پشتیبان JSON» بگیرید. بعد از خالی‌شدن حافظه (مثلاً پاک‌کردن کاشی‌های نقشه)، ذخیره خودش دوباره انجام می‌شود.';
+  }
+  el.textContent = msg;
+  if(btn) el.insertAdjacentHTML('beforeend', btn);
+  setShown(el, !!msg);
+}
+/* دادهٔ خوانده‌نشده کنار گذاشته می‌شود (دانلود + یک رونوشت در حافظه) و برنامه از نو باز می‌شود */
+async function storeReset(){
+  if(storageOK || storageWhy !== 'corrupt') return;
+  let raw = ''; try{ raw = localStorage.getItem(STORE_KEY) || ''; }catch(e){}
+  if(!(await uiConfirm('دادهٔ خوانده‌نشده به شکل یک فایل دانلود می‌شود و بعد برنامه با حافظهٔ خالی دوباره باز می‌شود.\n' +
+      'آن فایل را نگه دارید؛ شاید بشود اطلاعاتش را برگرداند.\n\nادامه می‌دهید؟',
+      { danger:true, ok:'بله، دانلود کن و از نو شروع کن', title:'دادهٔ خوانده‌نشده' }))) return;
+  download('داده-خوانده-نشده_' + stamp() + '.txt', raw, 'text/plain;charset=utf-8');
+  try{ localStorage.setItem(STORE_KEY + '_unreadable', raw); }catch(e){}
+  try{ localStorage.removeItem(STORE_KEY); }catch(e){}
+  setTimeout(()=>{ try{ location.reload(); }catch(e){} }, 1500);
 }
 function uid(){ return Math.random().toString(36).slice(2,9); }
 /* پنهان/پیدا کردن یک عنصر — به‌جای دست‌زدن به style.display */
@@ -1568,19 +1609,55 @@ function dmsLineToPair(line){
   if(found[0].hemi === 'E' || found[0].hemi === 'W') return [found[1].v, found[0].v];
   return [found[0].v, found[1].v];
 }
+/* عددهای فارسی و عربی و جداکننده‌های فارسی، به شکلی که برنامه می‌خواند (فقط برای خواندن مختصات) */
+function coordLatin(s){
+  return String(s == null ? '' : s)
+    .replace(/[\u06F0-\u06F9]/g, d=>String(d.charCodeAt(0) - 0x06F0))
+    .replace(/[\u0660-\u0669]/g, d=>String(d.charCodeAt(0) - 0x0660))
+    .replace(/\u066B/g, '.')        /* ممیز فارسی ٫ */
+    .replace(/\u066C/g, '')         /* جداکنندهٔ هزارگان ٬ */
+    .replace(/\u060C/g, ',')        /* ویرگول فارسی ، */
+    .replace(/\u2212/g, '-');       /* منفی ریاضی − */
+}
+/* یک عدد از یک تکه متن. «35/12» (ممیزِ فارسی با خط کج) همان 35.12 است. */
+function coordNum(s){
+  s = String(s);
+  if(s.indexOf('.') < 0 && /^[^\d]*\d+\/\d+[^\d]*$/.test(s)) s = s.replace('/', '.');
+  return parseFloat(s.replace(/[^\d.\-+eE]/g,''));
+}
+function coordNums(line){ return String(line).split(/[\s,;\t|]+/).map(coordNum).filter(n=>!isNaN(n)); }
+function coordIsDms(t){ return /[°′″]|["']/.test(t) && /[°]/.test(t); }
+/* اگر همهٔ خط‌ها با شمارهٔ ردیفِ پشت‌سرهم (۱، ۲، ۳ …) شروع شوند و بعدش دو عدد دیگر باشد، آن ستون جزو مختصات نیست */
+function coordRowNumbered(text){
+  let prev = null, n = 0;
+  for(const raw of String(text||'').split(/\r?\n/)){
+    const t = coordLatin(raw).trim();
+    if(!t) continue;
+    if(coordIsDms(t)) return false;
+    const r = coordNums(t);
+    if(r.length < 3 || !Number.isInteger(r[0])) return false;
+    if(prev !== null && r[0] !== prev + 1) return false;
+    prev = r[0]; n++;
+  }
+  return n >= 2;
+}
 function parseCoords(text, mode, zone, north){
   const out = [], bad = [];
-  const lines = String(text||'').split(/\r?\n/);
+  const lines = String(text||'').split(/\r?\n/).map(coordLatin);
+  const skipFirst = coordRowNumbered(text);
   lines.forEach((line, idx)=>{
     const t = line.trim();
     if(!t) return;
-    if(/[°′″]|["']/.test(t) && /[°]/.test(t)){
+    if(coordIsDms(t)){
       const pair = dmsLineToPair(t);
       if(pair && Math.abs(pair[0]) <= 90 && Math.abs(pair[1]) <= 180){ out.push(pair); return; }
     }
-    const nums = t.split(/[\s,;\t|]+/).map(s=>parseFloat(s.replace(/[^\d.\-+eE]/g,''))).filter(n=>!isNaN(n));
+    let nums = coordNums(t);
+    if(skipFirst) nums = nums.slice(1);
     if(nums.length < 2){ bad.push(idx+1); return; }
     if(mode === 'utm'){
+      /* در UTM شمالی همیشه از یک میلیون بزرگ‌تر و شرقی از آن کوچک‌تر است؛ اگر برعکس نوشته شده، درست خوانده شود */
+      if(nums[0] > 1000000 && nums[1] < 1000000){ const tmp = nums[0]; nums[0] = nums[1]; nums[1] = tmp; }
       const [lat, lon] = utmToLatLon(nums[0], nums[1], zone, north);
       out.push([lat, lon]);
     } else {
@@ -1804,6 +1881,7 @@ function projCardHtml(p, totalHa, completePlots){
           <button class="small u-w100 u-mb6" data-act="exp:projCsv">خروجی CSV (اکسل)</button>
           <button class="small u-w100 u-mb6" data-act="exp:projZip">⬇ GeoJSON تک‌تک قطعات</button>
           <button class="small u-w100 u-mb6" data-act="exp:projJson">پشتیبان JSON این پروژه</button>
+          <button class="small u-w100 u-mb6" data-act="fullBackup:exportProject">پشتیبان کامل این پروژه (با عکس و امضا)</button>
           <button class="small u-w100 u-mb6" data-act="exp:projPrint">چاپ / PDF</button>
           <button class="small danger u-w100" data-act="proj:delete">حذف پروژه</button>
         </div>
@@ -2475,7 +2553,7 @@ const V_MAX_PHOTOS = 10;
 
 /* ── پیام کوتاه (توستِ برنامه داخل بلوک MP است و از این‌جا دیده نمی‌شود) ── */
 let V_TOAST_TIMER = null;
-function vToast(msg){
+function vToast(msg, ms){
   let el = document.getElementById('vToast');
   if (!el) {
     el = document.createElement('div');
@@ -2486,7 +2564,7 @@ function vToast(msg){
   el.textContent = msg;
   el.classList.add('on');
   clearTimeout(V_TOAST_TIMER);
-  V_TOAST_TIMER = setTimeout(() => el.classList.remove('on'), 2200);
+  V_TOAST_TIMER = setTimeout(() => el.classList.remove('on'), ms || 2200);
 }
 
 /* ── دسترسی به داده ──
@@ -2962,22 +3040,40 @@ function visitAddRow(plotId, vid, list){
   if (list === 'p') { row.kind = V_PKIND[0]; }
   vMark(v); v[L.rows].push(row); v.touch = Date.now(); save(); render();
 }
-function visitDelRow(plotId, vid, list, i){
-  const v = vFind(plotId, vid); if (!v) return;
+/* هر حذفی که چیزی را از بین می‌برد اول می‌پرسد. بعد از پرسش، بازدید دوباره پیدا می‌شود
+   (شاید در همان چند ثانیه همگام‌سازی نسخهٔ تازه‌ترش را آورده باشد). */
+async function visitDelRow(plotId, vid, list, i){
+  const v0 = vFind(plotId, vid); if (!v0) return;
   const L = V_LISTS[list]; if (!L) return;
-  vMark(v); (v[L.rows] || []).splice(i, 1); v.touch = Date.now(); save(); render();
+  const row = (v0[L.rows] || [])[i], was = JSON.stringify(row === undefined ? null : row);
+  if (row && !vRowBlank(list, row) &&
+      !(await uiConfirm('این ردیف و نوشته‌هایش حذف شود؟', { danger:true, ok:'حذف کن', title:'حذف ردیف' }))) return;
+  const v = vFind(plotId, vid); if (!v) return;
+  const rows = v[L.rows] || [];
+  if (JSON.stringify(rows[i] === undefined ? null : rows[i]) !== was) return;      /* در این فاصله عوض شده است */
+  vMark(v); rows.splice(i, 1); v.touch = Date.now(); save(); render();
 }
-function visitSignClear(plotId, vid){
+async function visitSignClear(plotId, vid){
+  const v0 = vFind(plotId, vid); if (!v0) return;
+  if (v0.sig && !(await uiConfirm(v0.sig.refused ? 'ثبتِ «امتناع از امضا» پاک شود؟' : 'امضای ثبت‌شده پاک شود؟',
+      { danger:true, ok:'پاک کن', title:'پاک‌کردن امضا' }))) return;
   const v = vFind(plotId, vid); if (!v) return;
   vMark(v); v.sig = null; v.touch = Date.now(); save();
   vIdbDel('sigs', vid).catch(() => {});
   render();
 }
 async function visitSignRefuse(plotId, vid){
-  const v = vFind(plotId, vid); if (!v) return;
-  if (v.sig && v.sig.refused) { vMark(v); v.sig = null; v.touch=Date.now(); save(); render(); return; }
+  let v = vFind(plotId, vid); if (!v) return;
+  if (v.sig && v.sig.refused) {
+    if (!(await uiConfirm('ثبتِ «امتناع از امضا» پاک شود؟', { danger:true, ok:'پاک کن', title:'امتناع از امضا' }))) return;
+    v = vFind(plotId, vid); if (!v) return;
+    vMark(v); v.sig = null; v.touch=Date.now(); save(); render(); return;
+  }
+  if (v.sig && !(await uiConfirm('برای این بازدید امضا ثبت شده است. با ثبت «امتناع»، آن امضا پاک می‌شود. ادامه می‌دهید؟',
+      { danger:true, ok:'بله، امتناع ثبت شود', title:'امتناع از امضا' }))) return;
   const witness = await uiPrompt('اگر کسی شاهد بود، نامش را بنویسید (اختیاری):', '', { title:'امتناع از امضا', ok:'ثبت کن' });
   if (witness === null) return;
+  v = vFind(plotId, vid); if (!v) return;
   vMark(v); v.sig = { refused: true, witness: String(witness || '').trim(), at: vToday(), name: 'کشاورز (امتناع)' };
   v.touch = Date.now(); save(); render();
 }
@@ -3196,8 +3292,9 @@ async function visitSign(plotId, vid){
   const blob = await new Promise(res => cv.toBlob(res, 'image/png'));
   if (!blob) return uiAlert('ثبت امضا انجام نشد.');
   await vIdbPut('sigs', vid, blob);
-  const v = vFind(plotId, vid); if (!v) return;
+  if (!vFind(plotId, vid)) return;
   const who = await uiPrompt('نام امضاکننده:', '', { title:'ثبت امضا', ok:'ثبت' });
+  const v = vFind(plotId, vid); if (!v) return;
   vMark(v); v.sig = { name: String(who || 'کشاورز').trim() || 'کشاورز', at: vToday(), refused: false };
   v.touch = Date.now(); save(); render();
   vToast('امضا ثبت شد');
@@ -3260,8 +3357,10 @@ async function visitPhotoAdd(input){
   if (added) { v.touch = Date.now(); save(); render(); vToast(vFa(added) + ' عکس اضافه شد'); }
 }
 async function visitPhotoDel(plotId, vid, pid){
-  const v = vFind(plotId, vid); if (!v) return;
+  if (!vFind(plotId, vid)) return;
+  if (!(await uiConfirm('این عکس حذف شود؟', { danger:true, ok:'حذف کن', title:'حذف عکس' }))) return;
   try { await vIdbDel('photos', vPhotoKey(plotId, vid, pid)); } catch(e) {}
+  const v = vFind(plotId, vid); if (!v) return;
   vMark(v); v.photos = (v.photos || []).filter(p => p.id !== pid);
   v.touch = Date.now(); save(); render();
 }
@@ -3393,7 +3492,14 @@ function vZip(files){
 }
 
 /* ── تکه‌های XML ── */
-function vX(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c])); }
+/* نویسه‌هایی که در XML مجاز نیستند (نویسه‌های کنترلیِ نادیدنی که گاهی با کپی از جای دیگر می‌آیند) حذف می‌شوند؛
+   وگرنه Word و Google Earth کل فایل را باز نمی‌کنند. دادهٔ ذخیره‌شده دست نمی‌خورد. */
+function xmlClean(s){
+  return String(s == null ? '' : s)
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g, '')
+    .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDFFF]/g, m => m.length === 2 ? m : '');
+}
+function vX(s){ return xmlClean(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c])); }
 
 /* در فایل ورد تنها علامت اضافهٔ بالای «ه» حذف می‌شود؛ دادهٔ ذخیره‌شده دست‌نخورده است. */
 function vWordText(text){
@@ -3924,7 +4030,7 @@ python3 offline_pack.py --lat ${c[0]} --lon ${c[1]} \\
     <div class="hint u-mt6">
       نقشه در تب «نقشهٔ تعاملی» همین فایل است؛ دادهٔ قطعات را مستقیم از همین دفترچه می‌خواند و رأس‌ها را می‌توانید روی تصویر ماهواره بکشید.
       کاشی‌های دیده‌شده خودکار ذخیره می‌شوند. برای نقشهٔ پایهٔ کل ایران: <span dir="ltr">offline-map/iran-basemap.py</span>
-      (راهنما: <span dir="ltr">راهنمای-کل-ایران.md</span>).
+      (راهنما: <span dir="ltr">راهنمای-کل-ایران.md</span>). این دو فایل در پوشهٔ پروژه روی کامپیوتر هستند، نه روی سایت.
     </div>`;
 }
 
@@ -3961,7 +4067,9 @@ function escSync(x){ return String(x==null?'':x).replace(/[&<>"]/g, c=>({'&':'&a
 function syncLog(html){
   const el = document.getElementById('syncLog');
   if(el) el.innerHTML = html;
-  try{ cloudToast('همگام‌سازی: ' + String(html).replace(/<[^>]+>/g,'').slice(0,70), 4000); }catch(e){}
+  /* این پیام با هر همگام‌سازیِ خودکار هم می‌آید؛ مثل قبل فقط روی نقشه به شکل پیام کوتاه دیده می‌شود
+     تا هنگام نوشتنِ بازدید در دفترچه مزاحم نباشد (متن کاملش در کارت همگام‌سازی هست). */
+  try{ if(document.body.classList.contains('map-mode') && typeof MP !== 'undefined' && MP && MP.toast) MP.toast('همگام‌سازی: ' + String(html).replace(/<[^>]+>/g,'').slice(0,70), 4000); }catch(e){}
 }
 function syncCopy(){
   const txt = JSON.stringify(syncPayload());
@@ -3997,6 +4105,33 @@ function syncImport(input){
     syncApply(data, file.name);
   };
   r.readAsText(file);
+}
+
+/* نشانِ حذف برای چیزی که همین‌جا زنده است معنا ندارد
+   (بعد از بازیابی از پشتیبان، یا وقتی یکی از دو نسخهٔ تکراریِ یک پروژه حذف شده باشد). */
+function graveTidy(){
+  const g = state.grave; if(!g) return;
+  const liveP = new Set(), liveL = new Set();
+  (state.projects||[]).forEach(p=>{ if(!p) return; liveP.add(p.id); (p.plots||[]).forEach(pl=>{ if(pl) liveL.add(pl.id); }); });
+  g.projects = (Array.isArray(g.projects) ? g.projects : []).filter(x=>x && x.id && !liveP.has(x.id));
+  g.plots = (Array.isArray(g.plots) ? g.plots : []).filter(x=>x && x.id && !liveL.has(x.id));
+}
+/* آیا قطعه‌ای با همین شناسه در پروژهٔ دیگری هم هست؟ (پروژه‌ای که با نسخه‌های قبلی برنامه دوتا شده است)
+   در آن صورت حذفِ این یکی نباید «نشانِ حذف» بگذارد، وگرنه همگام‌سازی آن یکی را هم پاک می‌کند. */
+function plotIdElsewhere(plotId, proj){
+  return (state.projects||[]).some(p=>p !== proj && (p.plots||[]).some(pl=>pl && pl.id === plotId));
+}
+/* آنچه با حذفِ قطعه یا پروژه از بین می‌رود، برای پیامِ تأیید */
+function delLossText(plots, proj){
+  let visits = 0, reports = 0, photos = 0;
+  const cnt = list=>{ list.forEach(v=>{ if(v && Array.isArray(v.photos)) photos += v.photos.length; }); return list.length; };
+  (plots||[]).forEach(pl=>{ if(pl && Array.isArray(pl.visits)) visits += cnt(pl.visits); });
+  if(proj && Array.isArray(proj.visits)) reports = cnt(proj.visits);
+  const parts = [];
+  if(visits) parts.push(faSync(visits) + ' بازدید');
+  if(reports) parts.push(faSync(reports) + ' گزارش کلی');
+  if(photos) parts.push(faSync(photos) + ' عکس');
+  return parts.length ? '\n\nبا این حذف، ' + parts.join(' و ') + ' هم پاک می‌شود.' : '';
 }
 
 /* --- مغز ادغام: هیچ‌چیز پاک نمی‌شود، تازه‌ترین نسخه برنده است --- */
@@ -4209,24 +4344,31 @@ function syncApply(data, source, opt){
 
   const st = { newProjects:0, newPlots:0, updPlots:0, updProjects:0, same:0, conflicts:0, removed:0, geo:0 };
   if(!state.grave) state.grave = { projects:[], plots:[] };
-  const inGraveP = {}; ((incoming.grave||{}).projects||[]).forEach(g=>inGraveP[g.id]=g.t);
-  const inGraveL = {}; ((incoming.grave||{}).plots||[]).forEach(g=>inGraveL[g.id]=g.t);
+  /* «نشانِ حذف» فقط وقتی اثر دارد که از آخرین تغییرِ همان پروژه یا قطعه تازه‌تر باشد:
+       • چیزی که بعد از حذف دوباره بازیابی یا ویرایش شده زنده می‌ماند و نشانِ کهنه‌اش کنار می‌رود؛
+       • نشانِ حذفِ چیزی که خودِ فرستنده هنوز آن را دارد، مالِ یک نسخهٔ تکراری بوده است و نادیده گرفته می‌شود
+         (وگرنه حذفِ پروژهٔ تکراری، قطعه‌های پروژهٔ اصلی را هم پاک می‌کرد). */
+  graveTidy();
+  const inGraveP = {}; ((incoming.grave||{}).projects||[]).forEach(g=>{ if(g && g.id) inGraveP[g.id]=g.t; });
+  const inGraveL = {}; ((incoming.grave||{}).plots||[]).forEach(g=>{ if(g && g.id) inGraveL[g.id]=g.t; });
+  (incoming.projects||[]).forEach(ip=>{ if(!ip) return; delete inGraveP[ip.id]; (ip.plots||[]).forEach(pl=>{ if(pl) delete inGraveL[pl.id]; }); });
   const myGraveP = {}; (state.grave.projects||[]).forEach(g=>myGraveP[g.id]=g.t);
   const myGraveL = {}; (state.grave.plots||[]).forEach(g=>myGraveL[g.id]=g.t);
+  const graveDrop = (kind, id) => { state.grave[kind] = (state.grave[kind]||[]).filter(g=>g.id!==id); };
 
   const findProj = id => (state.projects||[]).find(p=>p.id===id);
 
   (incoming.projects||[]).forEach(ip=>{
-    // حذف‌شده در دستگاه مقابل؟
-    if(inGraveP[ip.id]){ return; }
-    // حذف‌شده در همین دستگاه؟ اگر تازه‌تر است، عنوان نکن
+    // حذف‌شده در همین دستگاه؟ اگر حذف تازه‌تر است، برنمی‌گردد
     if(myGraveP[ip.id] && myGraveP[ip.id] > (ip.updatedAt||0)){ st.removed++; return; }
+    if(myGraveP[ip.id]){ graveDrop('projects', ip.id); delete myGraveP[ip.id]; }
 
     let lp = findProj(ip.id);
     if(!lp){
-      // پروژهٔ تازه: کپی کامل
+      // پروژهٔ تازه: کپی کامل (بدون قطعه‌هایی که این‌جا حذف شده‌اند و حذفشان تازه‌تر است)
       const copy = JSON.parse(JSON.stringify(ip));
-      copy.plots = (copy.plots||[]).filter(pl=>!myGraveL[pl.id] && !(inGraveL[pl.id]));
+      copy.plots = (copy.plots||[]).filter(pl=>!(myGraveL[pl.id] && myGraveL[pl.id] > (pl.updatedAt||0)));
+      copy.plots.forEach(pl=>{ if(myGraveL[pl.id]){ graveDrop('plots', pl.id); delete myGraveL[pl.id]; } });
       state.projects.push(copy);
       st.newProjects++; st.newPlots += copy.plots.length;
       return;
@@ -4249,8 +4391,8 @@ function syncApply(data, source, opt){
        اگر هیچ‌کدام گزارش کلی نداشته باشند، کلیدی به پروژه اضافه نمی‌شود. */
     if(vHasGen(lp) || vHasGen(ip)){ if(mergeVisits(lp, ip, srv) && !projTouched) st.updProjects++; }
     (ip.plots||[]).forEach(ipl=>{
-      if(inGraveL[ipl.id]) return;
       if(myGraveL[ipl.id] && myGraveL[ipl.id] > (ipl.updatedAt||0)){ st.removed++; return; }
+      if(myGraveL[ipl.id]){ graveDrop('plots', ipl.id); delete myGraveL[ipl.id]; }
       let lpl = (lp.plots||[]).find(x=>x.id===ipl.id);
       if(!lpl){
         lp.plots = lp.plots || [];
@@ -4282,19 +4424,20 @@ function syncApply(data, source, opt){
   });
 
   // حذف‌هایی که در دستگاه مقابل انجام شده و تازه‌ترند
-  (incoming.grave||{projects:[]}).projects && ((incoming.grave||{}).projects||[]).forEach(g=>{
-    const p = findProj(g.id);
-    if(p && (g.t > (p.updatedAt||0))){
-      state.projects = state.projects.filter(x=>x.id!==g.id);
-      state.grave.projects.push(g); st.removed++;
+  Object.keys(inGraveP).forEach(id=>{
+    const t = inGraveP[id], p = findProj(id);
+    if(p && (t > (p.updatedAt||0))){
+      state.projects = state.projects.filter(x=>x.id!==id);
+      graveDrop('projects', id); state.grave.projects.push({ id:id, t:t }); st.removed++;
     }
   });
-  ((incoming.grave||{}).plots||[]).forEach(g=>{
+  Object.keys(inGraveL).forEach(id=>{
+    const t = inGraveL[id];
     (state.projects||[]).forEach(p=>{
-      const pl = (p.plots||[]).find(x=>x.id===g.id);
-      if(pl && g.t > (pl.updatedAt||0)){
-        p.plots = p.plots.filter(x=>x.id!==g.id);
-        state.grave.plots.push(g); st.removed++;
+      const pl = (p.plots||[]).find(x=>x.id===id);
+      if(pl && t > (pl.updatedAt||0)){
+        p.plots = p.plots.filter(x=>x.id!==id);
+        graveDrop('plots', id); state.grave.plots.push({ id:id, t:t }); st.removed++;
       }
     });
   });
@@ -4378,7 +4521,7 @@ function gsRender(msg){
     el.innerHTML = '<span class="c-danger">اتصال برقرار نیست — این‌ها خالی یا ناقص است:</span> <b>' +
       miss.join('</b> · <b>') + '</b>' +
       '<br>می‌توانید جای تایپ، «لینک راه‌اندازی» را باز کنید تا خودش پر شود.' +
-      (GS.url ? '' : '<br><span class="u-fs10 c-muted">راهنما: راهنمای-سرور-رایگان.md</span>');
+      (GS.url ? '' : '<br><span class="u-fs10 c-muted">راهنما: فایل راهنمای-سرور-رایگان.md در پوشهٔ پروژه روی کامپیوتر</span>');
     return;
   }
   try{ gsRenderBeat(); }catch(e){}
@@ -4874,7 +5017,9 @@ async function gsPush(manual){
 
 /* ---------- ضربان سرور ---------- */
 function cloudToast(msg, ms){
-  try{ if(typeof MP !== 'undefined' && MP && MP.toast){ MP.toast(msg, ms||2600); return; } }catch(e){}
+  /* پیام کوتاهِ نقشه فقط وقتی دیده می‌شود که نقشه باز باشد؛ در دفترچه از پیام کوتاهِ پایین صفحه استفاده می‌شود */
+  try{ if(document.body.classList.contains('map-mode') && typeof MP !== 'undefined' && MP && MP.toast){ MP.toast(msg, ms||2600); return; } }catch(e){}
+  try{ vToast(msg, ms||3200); return; }catch(e){}
   const el = document.getElementById('syncLog');
   if(el){ el.innerHTML = '<span class="c-accent">' + escSync(msg) + '</span>';
           setTimeout(()=>{ if(el.innerHTML.indexOf(escSync(msg))>-1) el.innerHTML=''; }, ms||4000); }
@@ -5079,7 +5224,16 @@ function updMsg(html){
   const el = document.getElementById('updState');
   if(el) el.innerHTML = html;
 }
+/* برنامه‌ای که با فایل نصب روی کامپیوتر گذاشته شده، از روی فایل باز می‌شود (file://) و نمی‌تواند
+   نسخهٔ تازه را خودش بگیرد. به‌جای پیام گمراه‌کنندهٔ «آفلاین؟» همین را روشن می‌گوییم. */
+const UPD_FROM_FILE = location.protocol === 'file:';
+const UPD_FILE_TXT = 'این برنامه از روی فایلِ نصب‌شده روی کامپیوتر باز شده و خودش به‌روز نمی‌شود؛ برای نسخهٔ تازه، فایل نصب تازه لازم است.';
+function updFromFile(tell){
+  updMsg('<span class="c-muted">' + UPD_FILE_TXT + '</span>');
+  if(tell) try{ cloudToast(UPD_FILE_TXT, 6500); }catch(e){}
+}
 async function appUpdateCheck(manual){
+  if(UPD_FROM_FILE) return updFromFile(manual);
   if(UPD.busy) return;
   UPD.busy = true;
   if(manual) updMsg('<span class="c-soft">در حال بررسی…</span>');
@@ -5123,6 +5277,7 @@ function cmpVer(a, b){
 }
 /* به‌روزرسانی کامل: پاک‌کردن کش‌ها + گرفتن Service Worker تازه + بازخوانی */
 async function appForceUpdate(){
+  if(UPD_FROM_FILE) return updFromFile(true);
   try{ cloudToast('در حال به‌روزرسانی…'); }catch(e){}
   try{
     if(window.caches){
@@ -5147,9 +5302,10 @@ async function appForceUpdate(){
   navigator.serviceWorker.register('./sw.js', { scope:'./', updateViaCache:'none' })
     .then(reg=>{
       // هر بار باز شدن برنامه، یک‌بار دنبال نسخهٔ تازه برو
-      try{ reg.update(); }catch(e){}
+      /* بدون اینترنت، این بررسی شکست می‌خورد؛ مهم نیست و نباید خطا حساب شود */
+      try{ reg.update().catch(()=>{}); }catch(e){}
       document.addEventListener('visibilitychange', ()=>{
-        if(document.visibilityState === 'visible'){ try{ reg.update(); }catch(e){} appUpdateCheck(false); }
+        if(document.visibilityState === 'visible'){ try{ reg.update().catch(()=>{}); }catch(e){} appUpdateCheck(false); }
       });
     })
     .catch(()=>{});
@@ -5190,11 +5346,11 @@ async function addProject(){
 function selectProject(id){ state.activeId = id; save(); render(); }
 async function deleteProject(){
   const p = activeProject(); if(!p) return;
-  if(!(await uiConfirm('پروژهٔ «'+p.name+'» و همهٔ قطعاتش حذف شود؟',
+  if(!(await uiConfirm('پروژهٔ «'+p.name+'» و همهٔ قطعاتش حذف شود؟' + delLossText(p.plots, p),
       { danger:true, ok:'بله، پروژه حذف شود', title:'حذف پروژه' }))) return;
   if(!state.grave) state.grave = { projects:[], plots:[] };
   state.grave.projects.push({ id:p.id, t:Date.now() });
-  (p.plots||[]).forEach(pl=>state.grave.plots.push({ id:pl.id, t:Date.now() }));
+  (p.plots||[]).forEach(pl=>{ if(!plotIdElsewhere(pl.id, p)) state.grave.plots.push({ id:pl.id, t:Date.now() }); });
   state.projects = state.projects.filter(x=>x.id!==p.id);
   state.activeId = state.projects[0] ? state.projects[0].id : null;
   save(); render();
@@ -5250,9 +5406,10 @@ async function addPlot(){
 }
 async function deletePlot(plotId){
   const p = activeProject(); if(!p) return;
-  if(!(await uiConfirm('این قطعه حذف شود؟', { danger:true, ok:'بله، قطعه حذف شود', title:'حذف قطعه' }))) return;
+  if(!(await uiConfirm('این قطعه حذف شود؟' + delLossText((p.plots||[]).filter(pl=>pl.id===plotId)),
+      { danger:true, ok:'بله، قطعه حذف شود', title:'حذف قطعه' }))) return;
   if(!state.grave) state.grave = { projects:[], plots:[] };
-  state.grave.plots.push({ id:plotId, t:Date.now() });
+  if(!plotIdElsewhere(plotId, p)) state.grave.plots.push({ id:plotId, t:Date.now() });
   p.plots = p.plots.filter(pl=>pl.id!==plotId);
   save(); render();
 }
@@ -5262,8 +5419,18 @@ async function renamePlot(plotId){
   if(v === null) return;
   pl.name = v; save(); render();
 }
-function setPlotMode(plotId, mode){
-  const pl = activeProject().plots.find(x=>x.id===plotId); if(!pl) return;
+async function setPlotMode(plotId, mode){
+  const pr = activeProject(); if(!pr) return;
+  let pl = pr.plots.find(x=>x.id===plotId); if(!pl) return;
+  if((pl.mode === 'utm' ? 'utm' : 'geo') === (mode === 'utm' ? 'utm' : 'geo')) return;
+  const nPts = (pl.points||[]).length, nHoles = plotHoles(pl).filter(h=>h && h.length).length;
+  if(nPts || nHoles || String(pl.raw||'').trim()){
+    const ok = await uiConfirm('با عوض‌کردن نوع مختصات، نقطه‌های این قطعه پاک می‌شود' +
+      ' (' + faSync(nPts) + ' رأس' + (nHoles ? ' و ' + faSync(nHoles) + ' حفره' : '') + ') و باید دوباره وارد شود.\n\nادامه می‌دهید؟',
+      { danger:true, ok:'بله، پاک شود', title:'تغییر نوع مختصات' });
+    if(!ok){ render(); return; }                    /* فهرستِ انتخاب به حالت قبلی برگردد */
+    const p2 = activeProject(); pl = p2 && p2.plots.find(x=>x.id===plotId); if(!pl) return;
+  }
   pl.mode = mode; pl.points = []; pl.warnings = []; pl.raw = ''; pl.holes = []; pl.holeRaw = {}; delete DRAW[plotId];
   save(); render();
 }
@@ -5279,10 +5446,37 @@ function statsHtml(pl){
     ${holes.filter(h=>h&&h.length).length ? `<span>حفره: <b>${holes.filter(h=>h&&h.length).length}</b> (${Math.round(gh).toLocaleString('fa-IR')} م²)</span>` : ''}
     ${pl.locked ? '<span class="tag">🔒 قفل</span>' : ''}`;
 }
+/* نکته‌هایی دربارهٔ مختصاتِ نوشته‌شده که فقط هنگام نمایش حساب می‌شوند (در داده ذخیره نمی‌شوند) */
+function coordNotes(pl){
+  const o = { rowNum:false, swap:false };
+  try{
+    if(pl.raw) o.rowNum = coordRowNumbered(pl.raw);
+    const pts = pl.points || [];
+    /* جای عرض و طولِ نقطه‌های ایران اگر عوض شود، عرض ۴۴ تا ۶۴ و طول ۲۴ تا ۴۰ می‌شود */
+    if(pl.mode !== 'utm' && pts.length && pts.every(pt=>pt[0] >= 43.5 && pt[0] <= 64 && pt[1] >= 24 && pt[1] <= 41)) o.swap = true;
+  }catch(e){}
+  return o;
+}
+/* جابه‌جا کردن عرض و طولِ همهٔ نقطه‌های یک قطعه (با دکمهٔ «بازگردانی» برمی‌گردد) */
+function swapLatLon(plotId){
+  const pl = currentPlot(plotId); if(!pl) return;
+  if(pl.locked) return uiAlert('رأس‌های این قطعه قفل است؛ اول قفل را بردارید.');
+  snapshotPoints(pl);
+  pl.points = (pl.points||[]).map(pt=>[pt[1], pt[0]]);
+  pl.holes = plotHoles(pl).map(h=>(h||[]).map(pt=>[pt[1], pt[0]]));
+  pl.warnings = [];
+  afterGraphicEdit(pl);
+}
 function warnHtml(pl){
   let out = '';
   if(pl.warnings && pl.warnings.length)
     out += '<div class="warn u-mt8">خط(های) نامعتبر نادیده گرفته شد: '+pl.warnings.join('، ')+'</div>';
+  const notes = coordNotes(pl);
+  if(notes.rowNum)
+    out += '<div class="hint u-mt8">ستون اولِ هر خط «شمارهٔ ردیف» حساب شد و نادیده گرفته شد.</div>';
+  if(notes.swap)
+    out += '<div class="warn u-mt8">به نظر می‌رسد اول «طول» و بعد «عرض» نوشته شده است. با این ترتیب، زمین بیرون از ایران می‌افتد و مساحتش هم غلط حساب می‌شود. ' +
+      (pl.locked ? '' : '<button class="small" data-act="plot:swapLL" data-id="'+escAttr(pl.id)+'">جابه‌جا کردن عرض و طول</button>') + '</div>';
   const outside = holesOutside(pl);
   if(outside.length)
     out += '<div class="warn u-mt8">حفرهٔ '+outside.join('، ')+' کامل داخل قطعه نیست؛ در استاندارد GeoJSON حلقهٔ داخلی باید داخل حلقهٔ بیرونی باشد وگرنه QGIS/سامانه ممکن است خطا بدهد.</div>';
@@ -5538,7 +5732,7 @@ function csvFor(projects){
     return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
   }).join(',')).join('\r\n');
 }
-function xml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function xml(s){ return xmlClean(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function stamp(){ const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function baseName(p){ return sanitize(p.name)+'_'+stamp(); }
@@ -5596,7 +5790,7 @@ function exportProjectPlotsZip(){
   const ok = (p.plots||[]).filter(pl=>(pl.points||[]).length >= 3);
   if(!ok.length) return uiAlert('این پروژه قطعهٔ کامل (۳ نقطه یا بیشتر) ندارد.');
   ok.forEach((pl, i)=>setTimeout(()=>{ try{ exportPlotGeoJson(pl.id); }catch(e){} }, i*400));
-  setTimeout(()=>toast('GeoJSON هر قطعه جداگانه دانلود شد (' + ok.length + ' فایل)'), ok.length*400 + 300);
+  setTimeout(()=>cloudToast('GeoJSON هر قطعه جداگانه دانلود شد (' + faSync(ok.length) + ' فایل)', 4000), ok.length*400 + 300);
 }
 
 async function exportAllGeoJson(){
@@ -5638,6 +5832,7 @@ function importBackup(input){
     let data;
     try{ data = JSON.parse(e.target.result); }
     catch(err){ return uiAlert('فایل JSON معتبر نیست: ' + err.message); }
+    if(!data || typeof data !== 'object') return uiAlert('ساختار فایل شناخته نشد. (FeatureCollection یا پشتیبان دفترچه لازم است)');
 
     // حالت ۱: GeoJSON (FeatureCollection یا Feature تکی)
     if(data.type === 'FeatureCollection' || data.type === 'Feature'){
@@ -5645,28 +5840,119 @@ function importBackup(input){
     }
     // حالت ۲: پشتیبان کامل دفترچه
     if(data.projects && Array.isArray(data.projects)){
-      if(await uiConfirm('همهٔ پروژه‌های فعلی با فایل پشتیبان جایگزین شوند؟\n«جایگزینی کن» = پاک‌کردن و گذاشتن فایل\n«افزودن» = پروژه‌های فایل به لیست اضافه شود',
-        { ok:'جایگزینی کن', cancel:true, title:'بازیابی پشتیبان' })){
-        state = data;
-      } else {
-        data.projects.forEach(p=>{ p.id = uid(); state.projects.push(p); });
-      }
-      state.activeId = state.projects[0] ? state.projects[0].id : null;
-      save(); render();
-      return;
+      return restoreBackupAsk(data, file.name);
     }
-    // حالت ۳: یک پروژهٔ تنها
+    // حالت ۳: یک پروژهٔ تنها («پشتیبان JSON این پروژه»)
     if(data.id && data.plots){
-      data.id = uid();
-      state.projects.push(data);
-      state.activeId = data.id;
-      save(); render();
-      return;
+      return restoreAdd([data], data.id);
     }
+    // فایل‌های دیگرِ همین برنامه دکمهٔ خودشان را دارند
+    if(data.app === 'seedcoord-sync' && data.state)
+      return uiAlert('این فایلِ همگام‌سازی است.\nبرای آوردنش دکمهٔ «۲) آوردن فایل از دستگاه دیگر» را بزنید.');
+    if(data.format === FB_FORMAT)
+      return uiAlert('این فایلِ «پشتیبان کامل» (با عکس و امضا) است.\nبرای آوردنش دکمهٔ «ادغام پشتیبان کامل» را بزنید.');
     uiAlert('ساختار فایل شناخته نشد. (FeatureCollection یا پشتیبان دفترچه لازم است)');
   };
   reader.readAsText(file);
   input.value = '';
+}
+
+/* ---------- بازیابی از پشتیبان JSON ----------
+   قاعده‌ها: «انصراف» واقعاً هیچ کاری نمی‌کند؛ هیچ پروژه، قطعه یا بازدیدی دوتا نمی‌شود؛
+   «افزودن» فقط چیزهایی را می‌آورد که در برنامه نیست و به آنچه هست دست نمی‌زند. */
+async function restoreBackupAsk(data, fileName){
+  const list = data.projects.filter(p=>p && typeof p === 'object');
+  const nPlots = list.reduce((a,p)=>a + (Array.isArray(p.plots) ? p.plots.length : 0), 0);
+  const ans = await uiModal({ title:'بازیابی پشتیبان', kind:'warn',
+    body: 'این فایل پشتیبان دفترچه است: ' + faSync(list.length) + ' پروژه و ' + faSync(nPlots) + ' قطعه.\n\n' +
+          '«افزودن» = هر چه در فایل هست و در برنامه نیست اضافه می‌شود. چیزی پاک نمی‌شود و هیچ پروژه‌ای دوتا نمی‌شود.\n\n' +
+          '«جایگزینی کن» = همهٔ پروژه‌های فعلی پاک می‌شود و فایل جای آن‌ها می‌نشیند.',
+    ok:'افزودن', alt:'جایگزینی کن', cancel:true });
+  if(ans === true) return restoreAdd(list);
+  if(ans !== 'alt') return;                       /* انصراف، Esc یا کلیک بیرون از پنجره: هیچ تغییری */
+  const had = (state.projects||[]).length;
+  if(had && !(await uiConfirm('همهٔ ' + faSync(had) + ' پروژهٔ فعلی از این دستگاه پاک می‌شود و فایل پشتیبان جای آن‌ها می‌نشیند.\n' +
+      'پیش از این کار، یک فایل پشتیبان از وضعیت فعلی دانلود می‌شود.\n\nمطمئن هستید؟',
+      { danger:true, ok:'بله، جایگزین کن', title:'جایگزینی با پشتیبان' }))) return;
+  if(had){ try{ exportBackup(); }catch(e){} }
+  state = data;
+  if(!state.grave) state.grave = { projects:[], plots:[] };
+  try{ graveTidy(); }catch(e){}
+  state.activeId = state.projects[0] ? state.projects[0].id : null;
+  save(); render();
+}
+/* list = پروژه‌های داخل فایل ؛ focusId = پروژه‌ای که بعد از کار نشان داده شود (اختیاری) */
+function restoreAdd(list, focusId){
+  const st = { projects:0, plots:0, visits:0, reports:0, had:0, lost:0 };
+  if(!state.grave) state.grave = { projects:[], plots:[] };
+  if(!Array.isArray(state.projects)) state.projects = [];
+  const now = Date.now();
+  const owner = {};                                 /* شناسهٔ قطعه → پروژه‌ای که همین حالا آن را دارد */
+  state.projects.forEach(p=>(p.plots||[]).forEach(pl=>{ if(pl && !owner[pl.id]) owner[pl.id] = p; }));
+  /* چیزی که از پشتیبان برمی‌گردد دیگر «حذف‌شده» نیست */
+  const unmark = (kind, id)=>{ state.grave[kind] = (state.grave[kind]||[]).filter(g=>g && g.id !== id); };
+  const nVisits = h=>(Array.isArray(h.visits) ? h.visits.length : 0);
+  /* فقط بازدیدهایی که این‌جا نیستند اضافه می‌شوند؛ بازدیدی که قبلاً عمداً حذف شده برنمی‌گردد */
+  const addVisits = (local, from)=>{
+    const have = new Set((Array.isArray(local.visits) ? local.visits : []).map(v=>v && v.id));
+    const fresh = (Array.isArray(from.visits) ? from.visits : []).filter(v=>v && v.id && !have.has(v.id));
+    if(!fresh.length) return 0;
+    const before = nVisits(local);
+    mergeVisits(local, { visits: fresh, visitGrave: [] }, false);
+    const added = nVisits(local) - before;
+    st.lost += fresh.length - added;
+    return added;
+  };
+  (Array.isArray(list) ? list : []).forEach(src=>{
+    if(!src || typeof src !== 'object') return;
+    const fp = JSON.parse(JSON.stringify(src));
+    if(!fp.id) fp.id = uid();
+    fp.plots = (Array.isArray(fp.plots) ? fp.plots : []).filter(pl=>pl && typeof pl === 'object');
+    fp.plots.forEach(pl=>{ if(!pl.id) pl.id = uid(); });
+    const lp = state.projects.find(p=>p.id === fp.id);
+    if(!lp){
+      const all = fp.plots.length;
+      fp.plots = fp.plots.filter(pl=>!owner[pl.id]);        /* قطعه‌ای که در پروژهٔ دیگری هست دوباره ساخته نمی‌شود */
+      if(all && !fp.plots.length){ st.had++; return; }        /* همین پروژه با شناسهٔ دیگری در برنامه هست */
+      unmark('projects', fp.id); fp.updatedAt = now;
+      fp.plots.forEach(pl=>{ unmark('plots', pl.id); pl.updatedAt = now; owner[pl.id] = fp; st.visits += nVisits(pl); });
+      state.projects.push(fp);
+      st.projects++; st.plots += fp.plots.length; st.reports += nVisits(fp);
+      return;
+    }
+    let added = 0;
+    fp.plots.forEach(fpl=>{
+      const op = owner[fpl.id];
+      if(!op){
+        unmark('plots', fpl.id); fpl.updatedAt = now;
+        if(!Array.isArray(lp.plots)) lp.plots = [];
+        lp.plots.push(fpl); owner[fpl.id] = lp;
+        st.plots++; st.visits += nVisits(fpl); added++;
+        return;
+      }
+      const lpl = (op.plots||[]).find(x=>x && x.id === fpl.id);
+      const n = lpl ? addVisits(lpl, fpl) : 0;
+      st.visits += n; added += n;
+    });
+    const r = addVisits(lp, fp); st.reports += r; added += r;
+    if(!added) st.had++;
+  });
+  if(focusId && state.projects.some(p=>p.id === focusId)) state.activeId = focusId;
+  if(!state.activeId || !state.projects.some(p=>p.id === state.activeId)) state.activeId = state.projects[0] ? state.projects[0].id : null;
+  initHash();
+  save(); render();
+  try{ vsNoteIn({ projects: list }); }catch(e){}
+  const parts = [];
+  if(st.projects) parts.push('پروژهٔ تازه: ' + faSync(st.projects));
+  if(st.plots) parts.push('قطعهٔ تازه: ' + faSync(st.plots));
+  if(st.visits) parts.push('بازدید تازه: ' + faSync(st.visits));
+  if(st.reports) parts.push('گزارش کلی تازه: ' + faSync(st.reports));
+  let msg = parts.length ? 'بازیابی انجام شد.\n• ' + parts.join('\n• ')
+                         : 'هر چه در این فایل بود از قبل در برنامه هست؛ چیزی اضافه نشد و پروژه‌ای دوتا نشد.';
+  if(parts.length && st.had) msg += '\n\n' + faSync(st.had) + ' پروژهٔ دیگرِ این فایل از قبل در برنامه بود و دست نخورد.';
+  if(st.lost) msg += '\n\n' + faSync(st.lost) + ' بازدید که قبلاً در برنامه حذف شده بود برنگشت.';
+  uiAlert(msg, { title:'بازیابی پشتیبان' });
+  return st;
 }
 
 /* ورود GeoJSON: هر feature به یک قطعه، گروه‌بندی بر اساس properties.project */
@@ -5678,7 +5964,9 @@ function importGeoJson(data, fallbackName){
 
   features.forEach(f=>{
     const pr = f.properties || {};
-    const pName = pr.project || pr['پروژه'] || (data.name && data.name !== 'seed-production-plots' ? data.name : '') || fallbackName || 'پروژهٔ بازیابی‌شده';
+    /* نام‌های کلی که برنامه‌های دیگر خودکار در فایل می‌گذارند نام پروژه حساب نمی‌شوند؛ نام خودِ فایل بهتر است */
+    const layerName = (typeof data.name === 'string' && !/^(seed-production-plots|exported|export|untitled|layer|features|OGRGeoJSON)$/i.test(data.name.trim())) ? data.name.trim() : '';
+    const pName = pr.project || pr['پروژه'] || layerName || fallbackName || 'پروژهٔ بازیابی‌شده';
     if(!groups[pName]){
       groups[pName] = { id:uid(), name:pName, crop:pr.crop||'', year:pr.crop_year||pr.year||'', owner:pr.producer||pr.owner||pr['تولیدکننده']||'',
         province:pr.province||'', notes:'', createdAt: Date.now(), plots:[] };
@@ -5710,7 +5998,7 @@ function importGeoJson(data, fallbackName){
 
     groups[pName].plots.push({
       id: uid(),
-      name: pr.plot || f.id || ('قطعه ' + (groups[pName].plots.length+1)),
+      name: String(pr.plot || pr['قطعه'] || pr.Name || pr.name || pr.title || pr['نام'] || f.id || ('قطعه ' + (groups[pName].plots.length+1))),
       code: pr.plot_code || pr.code || '',
       variety: pr.variety || '',
       seedClass: pr.seed_class || pr.seedClass || '',
@@ -5734,6 +6022,7 @@ function printProject(){
 
   const p = activeProject(); if(!p) return;
   const win = window.open('', '_blank');
+  if(!win){ uiAlert('مرورگر جلوی باز شدن پنجرهٔ چاپ را گرفت.\nدر نوار آدرس، اجازهٔ «پنجرهٔ بازشو» (Pop-up) را برای این برنامه بدهید و دوباره دکمهٔ چاپ را بزنید.', { title:'چاپ' }); return; }
   const rows = p.plots.map((pl,i)=>{
     const pts = pl.points||[];
     const ha = (netAreaM2(pl)/10000).toFixed(3);
@@ -5825,19 +6114,28 @@ function fbIndex(s){
 function fbDataUrl(blob){ return new Promise((resolve,reject)=>{
   const r=new FileReader();r.onload=()=>resolve(String(r.result));r.onerror=()=>reject(r.error||new Error('خواندن تصویر انجام نشد.'));r.readAsDataURL(blob);
 }); }
-async function fbExport(){
+/* onlyActive = فقط پروژه‌ای که الان باز است (برای وقتی که عکس‌های همهٔ پروژه‌ها در یک فایل جا نمی‌شود).
+   فایلِ یک پروژه هم با همان دکمهٔ «ادغام پشتیبان کامل» برمی‌گردد. */
+async function fbExport(onlyActive){
   if(FB_BUSY) return;
   FB_BUSY=true;
   try{
     if(!storageOK) fbFail('ذخیره‌سازی این دستگاه در دسترس نیست؛ ابتدا مشکل حافظه را رفع کنید.');
-    const snapshot=JSON.stringify(state), data=JSON.parse(snapshot), refs=fbIndex(data).assets;
+    const snapshot=JSON.stringify(state); let data=JSON.parse(snapshot), one=null;
+    if(onlyActive){
+      one=(data.projects||[]).find(p=>p && p.id===data.activeId);
+      if(!one) fbFail('اول یک پروژه را انتخاب کنید.');
+      data={ projects:[one], activeId:one.id, grave:{ projects:[], plots:[] } };
+    }
+    const refs=fbIndex(data).assets;
     const media=[]; let bytes=0, missingPhotos=0, missingSigs=0;
     vToast('در حال آماده‌سازی پشتیبان کامل…');
     for(const {kind,key} of refs.values()){
       const blob=await vIdbGet(kind,key);
       if(!(blob instanceof Blob)) { if(kind==='photos') missingPhotos++; else missingSigs++; continue; }
       bytes+=blob.size;
-      if(bytes>FB_MAX_BYTES*0.70) fbFail('حجم عکس‌ها و امضاها برای پشتیبان یک‌فایلی بیش از حد مجاز است.');
+      if(bytes>FB_MAX_BYTES*0.70) fbFail('حجم عکس‌ها و امضاها برای پشتیبان یک‌فایلی بیش از حد مجاز است.' +
+        (onlyActive ? '' : '\n\nبرای هر پروژه جداگانه پشتیبان بگیرید: پروژه را باز کنید و دکمهٔ «پشتیبان کامل این پروژه» را بزنید.'));
       const raw=new Uint8Array(await blob.arrayBuffer());
       const url=await fbDataUrl(blob), pos=url.indexOf(',');
       if(pos<0) fbFail('خواندن یکی از تصویرها انجام نشد.');
@@ -5847,8 +6145,11 @@ async function fbExport(){
     if(JSON.stringify(state)!==snapshot) fbFail('اطلاعات هنگام ساخت پشتیبان تغییر کرد. لطفاً دوباره دکمهٔ پشتیبان کامل را بزنید.');
     const content=JSON.stringify({format:FB_FORMAT,appVersion:APP_VERSION,created:new Date().toISOString(),state:data,media});
     if(new Blob([content]).size>FB_MAX_BYTES) fbFail('حجم پشتیبان از حد مجاز ۸۰ مگابایت بیشتر است.');
-    download('پشتیبان-کامل-مختصات_'+stamp()+'.json',content,'application/json;charset=utf-8');
+    download(one ? 'پشتیبان-کامل-'+sanitize(one.name)+'_'+stamp()+'.json' : 'پشتیبان-کامل-مختصات_'+stamp()+'.json',content,'application/json;charset=utf-8');
     vToast('پشتیبان کامل آماده شد. فایل را در جای امن نگه دارید.');
+    const used=bytes/(FB_MAX_BYTES*0.70);
+    if(!one && used>=0.6) await uiAlert('پشتیبان کامل ساخته شد.\n\nحجم عکس‌ها و امضاها به '+faSync(Math.round(used*100))+'٪ ظرفیتِ پشتیبانِ یک‌فایلی رسیده است. ' +
+      'وقتی پر شود، برای هر پروژه جداگانه پشتیبان بگیرید: پروژه را باز کنید و دکمهٔ «پشتیبان کامل این پروژه» را بزنید.',{title:'پشتیبان کامل'});
   }catch(e){ await uiAlert(e.message||'ساخت پشتیبان انجام نشد.',{title:'پشتیبان کامل'}); }
   finally{ FB_BUSY=false; }
 }
@@ -6020,8 +6321,11 @@ function numFa(n, d){
   return Number(x).toLocaleString('fa-IR', (typeof d === 'number') ? {minimumFractionDigits:d, maximumFractionDigits:d} : undefined);
 }
 function gDateKey(s){
-  const k = (typeof latinDigits === 'function' ? latinDigits(String(s||'')) : String(s||'')).replace(/[^0-9]/g, '');
-  return k;
+  const t = (typeof latinDigits === 'function' ? latinDigits(String(s||'')) : String(s||''));
+  /* «سال/ماه/روز» به کلیدِ هشت‌رقمی، تا ۱۴۰۵/۱۰/۳ بعد از ۱۴۰۵/۹/۲۸ حساب شود (پیش‌تر ماه‌های دورقمی عقب می‌افتادند) */
+  const m = t.match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);
+  if(m) return m[1] + ('0' + m[2]).slice(-2) + ('0' + m[3]).slice(-2);
+  return t.replace(/[^0-9]/g, '');
 }
 function plotSeed(pl){
   const raw = (typeof latinDigits === 'function' ? latinDigits(String(pl.seedRate||'')) : String(pl.seedRate||''));
@@ -6057,11 +6361,16 @@ function renderKPIs(){
     const v = (pl.lastVisit||'').trim(), vk = gDateKey(v);
     if(v && vk > lastKey){ lastKey = vk; last = v; }
   }));
+  /* بازدیدها و گزارش‌های کلیِ ثبت‌شده هم حساب می‌شوند، نه فقط خانهٔ دستیِ «آخرین بازدید» */
+  try{ vsEach({ projects: ps }, v => {
+    const d = String((v.f && v.f.date) || '').trim(), dk = gDateKey(d);
+    if(d && dk > lastKey){ lastKey = dk; last = d; }
+  }); }catch(e){}
   const put = (id, html) => { const el = document.getElementById(id); if(el) el.innerHTML = html; };
   put('kpiProj',  numFa(ps.length));
   put('kpiPlots', numFa(plots));
   put('kpiArea',  numFa(m2/10000, 2) + ' <small>هکتار</small>');
-  put('kpiVisit', last ? last : '—');
+  put('kpiVisit', last ? esc(last) : '—');
 }
 
 /* ---------- گزارش لیست پروژه‌ها ---------- */
@@ -6153,7 +6462,7 @@ function projectReportCsv(){
   });
   const name = 'گزارش-پروژه‌ها_' + ((typeof stamp === 'function') ? stamp() : Date.now()) + '.csv';
   download(name, '\ufeff' + lines.join('\r\n'), 'text/csv;charset=utf-8');
-  if(typeof toast === 'function') toast('گزارش CSV ذخیره شد');
+  cloudToast('گزارش CSV ذخیره شد');
 }
 function projectReportPrint(){
   const rows = reportData();
@@ -6172,7 +6481,7 @@ function projectReportPrint(){
       '<td>' + esc(lat(st.last||'-')) + '</td></tr>';
   }).join('');
   const win = window.open('', '_blank');
-  if(!win){ if(typeof toast === 'function') toast('مرورگر پنجرهٔ چاپ را بست'); return; }
+  if(!win){ uiAlert('مرورگر جلوی باز شدن پنجرهٔ چاپ را گرفت.\nدر نوار آدرس، اجازهٔ «پنجرهٔ بازشو» (Pop-up) را برای این برنامه بدهید و دوباره دکمهٔ چاپ را بزنید.', { title:'چاپ' }); return; }
   win.document.write('<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>گزارش پروژه‌ها</title>' +
     '<style>body{font-family:Tahoma,sans-serif;font-size:11.5px;padding:16px;line-height:1.8}' +
     'h1{font-size:15px;border-bottom:2px solid #16603a;padding-bottom:6px;margin:0 0 4px}' +
@@ -7985,6 +8294,7 @@ render();
     'plot:kml': el => exportPlotKml(el.dataset.id),
     'plot:csv': el => exportPlotCsv(el.dataset.id),
     'plot:undo': el => undoPoints(el.dataset.id),
+    'plot:swapLL': el => swapLatLon(el.dataset.id),
 
     /* ── رأس ── */
     'vert:lock': el => toggleLock(el.dataset.id),
@@ -8003,8 +8313,10 @@ render();
 
     /* ── پشتیبان ── */
     'fullBackup:export': el => fbExport(),
+    'fullBackup:exportProject': el => fbExport(true),
     'fullBackup:choose': el => document.getElementById('fullBackupFile').click(),
     'backup:export': el => exportBackup(),
+    'store:reset': el => storeReset(),
     'backup:importFile': el => document.getElementById('importFile').click(),
 
     /* ── گزارش پروژه‌ها ── */

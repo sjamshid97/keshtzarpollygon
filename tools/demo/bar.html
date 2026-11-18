@@ -1,0 +1,27 @@
+
+<style>
+#demoBar{position:fixed;bottom:0;right:0;left:0;z-index:99999;background:#1a4f8a;color:#fff;
+ font:13px/1.9 Tahoma,sans-serif;padding:6px 14px;text-align:center;box-shadow:0 -2px 8px rgba(0,0,0,.25)}
+#demoBar b{color:#ffe08a}
+#demoBar a{color:#fff;text-decoration:underline;margin-right:10px}
+body{padding-bottom:44px}
+</style>
+
+<div id="demoBar" role="note">
+<b>نسخهٔ نمایشی</b> — داده‌های داخل برنامه <b>ساختگی</b> است و هیچ ارتباطی با سرور ندارد.
+</div>
+
+<script>/* همگام‌سازی و پشتیبان‌گیری ابری در نسخهٔ نمایشی خاموش است */
+document.addEventListener('DOMContentLoaded', function(){
+  try{
+    var c = document.getElementById('syncCard'); if(c) c.style.display='none';
+    var b = document.getElementById('syncPushBtn');
+    if(b){ var card = b.closest('.card') || b.parentElement.parentElement;
+      if(card){ var n=document.createElement('div'); n.className='hint';
+        n.innerHTML='در نسخهٔ نمایشی، همگام‌سازی با سرور خاموش است.';
+        card.parentElement.insertBefore(n, card); card.style.display='none'; } }
+    window.gsTest = window.gsPush = window.gsPull = function(){};
+    if(typeof syncTest === 'function'){ window.syncTest=window.syncPush=window.syncPull=function(){}; }
+  }catch(e){}
+});
+</script>
