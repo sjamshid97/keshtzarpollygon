@@ -74,6 +74,24 @@ function Get-PreviousLauncher {
   return $null
 }
 
+# آیا این میان‌بر مالِ همین برنامهٔ نصب‌شده است؟ (یعنی به پوشهٔ SeedCoordinates روی همین کامپیوتر اشاره می‌کند)
+# میان‌برهای دیگری که شاید همین نام را داشته باشند — مثلاً میان‌برِ سایتِ برنامه که داده‌های کاربر پشتِ آن است —
+# هرگز پاک یا جایگزین نمی‌شوند. اگر میان‌بر خوانده نشود، «مالِ ما نیست» حساب می‌شود (دست نمی‌خورد).
+function Test-OwnShortcut($path) {
+  $copy = $null
+  try {
+    $copy = Join-Path $env:TEMP ('SeedCoordinates-chk-' + [Guid]::NewGuid().ToString('N').Substring(0, 8) + '.lnk')
+    Copy-Item -LiteralPath $path -Destination $copy -Force
+    $old = (New-Object -ComObject WScript.Shell).CreateShortcut($copy)
+    $text = ([string]$old.TargetPath) + ' ' + ([string]$old.Arguments)
+    return ($text -match 'SeedCoordinates')
+  } catch {
+    return $false
+  } finally {
+    if ($copy) { try { Remove-Item -LiteralPath $copy -Force } catch { } }
+  }
+}
+
 # میان‌بر اول با یک نام سادهٔ انگلیسی ساخته می‌شود و بعد نامش فارسی می‌شود.
 # دلیل: ابزار میان‌برسازِ ویندوز (WScript.Shell) هنگام «ذخیره» نام فارسی را نمی‌پذیرد
 # (نصبِ نسخهٔ ۲٫۵٫۱ همین‌جا متوقف شد)، ولی تغییر نامِ فایلِ ساخته‌شده مشکلی ندارد.
@@ -97,10 +115,16 @@ function New-AppShortcut($folder, $name, $fallbackName, $target, $argLine, $icon
     Log ('shortcut: create failed in [' + $folder + ']: ' + $_.Exception.Message)
     return $null
   }
-  foreach ($n in @($name, $fallbackName)) {
+  foreach ($n in @($name, $fallbackName, ($fallbackName + ' (installed)'))) {
     $final = Join-Path $folder ($n + '.lnk')
     try {
-      if (Test-Path -LiteralPath $final) { Remove-Item -LiteralPath $final -Force }
+      if (Test-Path -LiteralPath $final) {
+        if (-not (Test-OwnShortcut $final)) {
+          Log ('shortcut: [' + $final + '] belongs to something else; left untouched')
+          continue
+        }
+        Remove-Item -LiteralPath $final -Force
+      }
       [System.IO.File]::Move($temp, $final)
       $made = $final
       Log ('shortcut: ok [' + $final + ']')
@@ -135,10 +159,14 @@ if ($Uninstall) {
       (Join-Path $desktop "حذف-$shortName.lnk"),
       (Join-Path $startMenu "$shortName.lnk"),
       (Join-Path $startMenu "$plainName.lnk"),
+      (Join-Path $desktop "$plainName (installed).lnk"),
+      (Join-Path $startMenu "$plainName (installed).lnk"),
       (Join-Path $startMenu "حذف $shortName.lnk"),
-      (Join-Path $startMenu "Uninstall $plainName.lnk")
+      (Join-Path $startMenu "Uninstall $plainName.lnk"),
+      (Join-Path $startMenu "Uninstall $plainName (installed).lnk")
     )) {
-    try { if (Test-Path -LiteralPath $p) { Remove-Item -LiteralPath $p -Force } } catch { $left = $left + 1 }
+    # میان‌برِ هم‌نامی که مالِ این برنامه نیست (مثلاً میان‌برِ سایت) پاک نمی‌شود
+    try { if ((Test-Path -LiteralPath $p) -and (Test-OwnShortcut $p)) { Remove-Item -LiteralPath $p -Force } } catch { $left = $left + 1 }
   }
   try { if (Test-Path -LiteralPath $dest) { Remove-Item -LiteralPath $dest -Recurse -Force } } catch { $left = $left + 1 }
   $done = 'برنامه حذف شد.'
