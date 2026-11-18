@@ -3,6 +3,7 @@ import fs from 'fs'; import path from 'path'; import { execFileSync } from 'chil
 import { open, sleep, closeDialogs, type, act, press, setFile, downloads, clearDl, txt, REPO, OUT, site } from './h.mjs';
 
 export const BASE_REV = '6814820';                 // نسخهٔ منتشرشدهٔ قبلی (۲٫۶٫۱) برای آزمایش «دو نسخه کنار هم»
+export const BASE_VER = '2.6.1';                   // شمارهٔ همان نسخه (پس از هر انتشار، هر دو با هم عوض شوند)
 export const UA_PC = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36';
 export const UA_AND = 'Mozilla/5.0 (Linux; Android 14; SM-A546E) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36';
 

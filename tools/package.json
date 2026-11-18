@@ -8,8 +8,10 @@
   },
   "devDependencies": {
     "@sparticuz/chromium": "^153.0.0",
+    "docx-preview": "^0.3.7",
     "eslint": "^9.0.0",
     "globals": "^17.14.0",
+    "jszip": "^3.10.2",
     "puppeteer-core": "^25.18.1",
     "vazirmatn": "^33.0.3"
   }

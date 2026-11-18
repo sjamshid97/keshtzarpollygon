@@ -1,7 +1,7 @@
 /* Service Worker — دفترچهٔ مختصات قطعات
    هدف: باز شدن برنامه بدون اینترنت. کاشی‌های نقشه در IndexedDB خود برنامه ذخیره می‌شوند.
    نام کش (CACHE) با هر نسخهٔ برنامه عوض می‌شود تا فایل‌های نسخهٔ قبلی کنار بروند. */
-const CACHE = 'seedcoord-v2.6.2';
+const CACHE = 'seedcoord-v2.6.3';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {

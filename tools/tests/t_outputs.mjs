@@ -1,7 +1,8 @@
-// خروجی‌های قدیمی نباید عوض شوند: یک سناریوی یکسان روی نسخهٔ قبلی (۲٫۶٫۱) و نسخهٔ تازه اجرا می‌شود
-// و همهٔ فایل‌های خروجی (GeoJSON، KML، CSV، JSON، Word، چاپ، پشتیبان‌ها) بایت‌به‌بایت مقایسه می‌شوند.
-import { site, launch, open, suite, sleep, act, type, press, dialogs, closeDialogs } from './h.mjs';
-import { oldSite } from './dev.mjs';
+// خروجی‌های قدیمی نباید ناخواسته عوض شوند: یک سناریوی یکسان روی نسخهٔ منتشرشدهٔ قبلی و نسخهٔ تازه اجرا می‌شود
+// و فایل‌های خروجی (GeoJSON، KML، CSV، JSON، چاپ، پشتیبان‌ها) بایت‌به‌بایت مقایسه می‌شوند.
+// تفاوت‌های خواسته‌شده (فهرستش پایین، در ALLOWED) جدا سنجیده می‌شوند: هر چیزی بیرون از آن فهرست خطاست.
+import { site, launch, open, suite, sleep, act, type, press, dialogs, closeDialogs, APP_VER } from './h.mjs';
+import { oldSite, BASE_VER } from './dev.mjs';
 import { unzip } from './zip.mjs';
 const browser = await launch(); const S = suite('خروجی‌ها مثل نسخهٔ قبلی');
 
@@ -85,18 +86,28 @@ async function run(st) {
 }
 const stOld = await oldSite(); const stNew = await site();
 const O = await run(stOld); const N = await run(stNew);
-S.ok(O.__ver === '2.6.1' && N.__ver === '2.6.2', 'مقایسهٔ نسخهٔ ' + O.__ver + ' با ' + N.__ver);
+S.ok(O.__ver === BASE_VER && N.__ver === APP_VER && BASE_VER !== APP_VER, 'مقایسهٔ نسخهٔ ' + O.__ver + ' با ' + N.__ver);
 S.ok(!N.__errors.length, 'نسخهٔ تازه خطایی در صفحه ندارد', N.__errors);
 S.ok(O.__errors.every(e => /toast is not defined/.test(e)), 'نسخهٔ قبلی فقط همان خطای شناخته‌شده را دارد (پیامِ پایانِ «GeoJSON تک‌تک قطعات»)', O.__errors);
 const names = Object.keys(O).filter(k => !k.startsWith('__'));
 S.ok(names.length >= 22 && JSON.stringify(names) === JSON.stringify(Object.keys(N).filter(k => !k.startsWith('__'))), 'هر دو نسخه همان ' + names.length + ' خروجی را با همان نام‌ها ساختند', [names.length, Object.keys(N).length]);
-const norm = (name, buf) => { // تنها تفاوتِ مجاز: خودِ شمارهٔ نسخه که در پشتیبان کامل نوشته می‌شود
-  if (/پشتیبان کامل/.test(name)) return Buffer.from(buf.toString('utf8').replace(/"appVersion":"[0-9.]+"/, '"appVersion":"X"'), 'utf8'); return buf; };
+
+/* تفاوت‌های خواسته‌شده نسبت به نسخهٔ منتشرشدهٔ قبلی:
+   ۱) شمارهٔ نسخه که در «پشتیبان کامل» نوشته می‌شود.
+   ۲) تصویر امضا حالا فقط به اندازهٔ خودِ خط‌ها بریده و ذخیره می‌شود (در «پشتیبان کامل» و داخل فایل ورد).
+   ۳) متن فایل‌های ورد (word/document.xml): قالب جدول‌ها و سرتیترها و جدول امضاها — جزئیاتش در t_word سنجیده می‌شود. */
+const normBackup = buf => { const o = JSON.parse(buf.toString('utf8')); o.appVersion = 'X';
+  let sigs = 0; (o.media || []).forEach(m => { if (m.kind === 'sigs') { sigs++; m.size = 0; m.crc = 0; m.data = ''; } });
+  return { text: JSON.stringify(o), sigs }; };
 for (const k of names) {
-  const a = norm(k, O[k]), b = N[k] ? norm(k, N[k]) : Buffer.alloc(0);
+  const a = O[k], b = N[k] || Buffer.alloc(0);
   if (/\.docx$/.test(k)) { const za = unzip(a), zb = unzip(b); const parts = Object.keys(za);
-    const same = JSON.stringify(parts) === JSON.stringify(Object.keys(zb)) && parts.every(p => za[p].equals(zb[p]));
-    S.ok(same && a.length > 2000, k + ' (' + parts.length + ' بخش، ' + a.length + ' بایت)', parts.filter(p => !zb[p] || !za[p].equals(zb[p]))); }
+    const ALLOWED = p => p === 'word/document.xml' || p === 'word/media/signature.png';
+    const diff = parts.filter(p => !zb[p] || !za[p].equals(zb[p]));
+    S.ok(JSON.stringify(parts) === JSON.stringify(Object.keys(zb)) && diff.every(ALLOWED) && diff.includes('word/document.xml') && a.length > 2000,
+      k + ': همان ' + parts.length + ' بخش؛ فقط متن سند' + (diff.includes('word/media/signature.png') ? ' و تصویر امضا' : '') + ' عوض شده (خواسته‌شده)', { parts, other: Object.keys(zb), diff }); }
+  else if (/پشتیبان کامل/.test(k)) { const x = normBackup(a), y = normBackup(b);
+    S.ok(x.text === y.text && x.sigs === 1 && y.sigs === 1, k + ': جز شمارهٔ نسخه و تصویر امضا (که حالا بریده ذخیره می‌شود) همان است', { same: x.text === y.text, sigs: [x.sigs, y.sigs] }); }
   else { let at = -1; if (!a.equals(b)) { const n = Math.min(a.length, b.length); at = n; for (let i = 0; i < n; i++) if (a[i] !== b[i]) { at = i; break; } }
     S.ok(at < 0 && a.length > 20, k + ' (' + a.length + ' بایت)', at >= 0 ? { at, old: a.slice(Math.max(0, at - 60), at + 80).toString('utf8'), new: b.slice(Math.max(0, at - 60), at + 80).toString('utf8') } : 'خالی'); }
 }

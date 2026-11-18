@@ -1,8 +1,8 @@
 // دو نسخه کنار هم: یک دستگاه نسخهٔ تازه دارد و دیگری هنوز نسخهٔ قبلی (مثل روزهای اولِ پس از انتشار).
 // همگام‌سازی باید مثل قبل کار کند و هیچ‌کدام دادهٔ دیگری را خراب نکند.
-import { site, launch, suite, sleep, act, type, press, closeDialogs, snap } from './h.mjs';
+import { site, launch, suite, sleep, act, type, press, closeDialogs, snap, drawPad, sigXKey } from './h.mjs';
 import { fakeSupabase } from './sb.mjs';
-import { device, oldSite, UA_PC, UA_AND } from './dev.mjs';
+import { device, oldSite, UA_PC, UA_AND, BASE_VER } from './dev.mjs';
 const stNew = await site(); const stOld = await oldSite(); const browser = await launch(); const S = suite('نسخهٔ تازه کنار نسخهٔ قبلی');
 const names = s => s.projects.map(p => p.name + '[' + p.plots.map(x => x.name + ':' + x.visits.length).join(',') + ']' + (p.reports ? '+' + p.reports : '')).join(' | ');
 const field = (pg, id, key) => pg.evaluate(([id, key]) => { for (const p of state.projects) for (const pl of p.plots) if (pl.id === id) return pl[key]; return null; }, [id, key]);
@@ -13,7 +13,7 @@ for (const [title, newIsPc] of [['کامپیوتر نسخهٔ تازه، گوش�
   const sb = await fakeSupabase(); const key = 'k-mix-' + (newIsPc ? 1 : 2);
   const N = await device(browser, stNew, sb, key, { ua: newIsPc ? UA_PC : UA_AND });     // نسخهٔ تازه
   const O = await device(browser, stOld, sb, key, { ua: newIsPc ? UA_AND : UA_PC });     // نسخهٔ قبلی
-  S.ok((await O.ver()) === '2.6.1' && (await N.ver()) !== '2.6.1', 'نسخه‌ها: تازه ' + (await N.ver()) + ' و قبلی ' + (await O.ver()));
+  S.ok((await O.ver()) === BASE_VER && (await N.ver()) !== BASE_VER, 'نسخه‌ها: تازه ' + (await N.ver()) + ' و قبلی ' + (await O.ver()));
   await act(N, 'data:demo'); await closeDialogs(N); let sN = await snap(N); const P = sN.projects[0].id, [a, b] = sN.projects[0].plots.map(x => x.id);
   const v1 = await N.addVisit(a, 'بازدید از نسخهٔ تازه'); await N.push(); await O.pull();
   let sO = await snap(O); S.ok(sO.projects.length === 1 && sO.projects[0].plots[0].visits[0] === v1, 'نسخهٔ قبلی داده‌های نسخهٔ تازه را می‌گیرد: ' + names(sO));
@@ -24,6 +24,16 @@ for (const [title, newIsPc] of [['کامپیوتر نسخهٔ تازه، گوش�
   S.ok(await summary(N, v1) === 'ویرایش در نسخهٔ قبلی', 'ویرایشِ نسخهٔ قبلی به نسخهٔ تازه می‌رسد');
   await N.evaluate(([a, v1]) => { visitOpen(a, v1); }, [a, v1]); await sleep(250); await type(N, '.vs-editor [data-input="visit:field"][data-k="f:summary"]', 'ویرایش دوباره در نسخهٔ تازه'); await N.evaluate(() => visitClose()); await N.push(); await O.pull();
   S.ok(await summary(O, v1) === 'ویرایش دوباره در نسخهٔ تازه', 'ویرایشِ نسخهٔ تازه به نسخهٔ قبلی می‌رسد');
+  // امضای کارشناس فنی (چیز تازهٔ این نسخه؛ نسخهٔ قبلی آن را نمی‌شناسد) نباید در دستِ نسخهٔ قبلی از بین برود
+  const xsig = (pg, vid) => pg.evaluate(vid => { for (const p of state.projects) for (const pl of p.plots) for (const v of (pl.visits || [])) if (v.id === vid) return v.sigExpert || null; return null; }, vid);
+  const calm = pg => pg.evaluate(() => document.getElementById('syncWarn').classList.contains('u-hidden') && !document.querySelector('.dlg-wrap .dlg'));
+  await N.evaluate(([a, v1]) => { visitOpen(a, v1); }, [a, v1]); await sleep(350);
+  await drawPad(N, v1, 'x'); await act(N, 'visit:signX'); await press(N, 'ok', 'کارشناس نسخهٔ تازه'); await sleep(350); await N.evaluate(() => visitClose()); await N.push(); await O.pull();
+  S.ok(((await xsig(O, v1)) || {}).name === 'کارشناس نسخهٔ تازه' && await summary(O, v1) === 'ویرایش دوباره در نسخهٔ تازه', 'نسخهٔ قبلی بازدیدِ دارای امضای کارشناس را می‌گیرد و آن بخش را نگه می‌دارد');
+  await O.evaluate(([a, v1]) => { visitOpen(a, v1); }, [a, v1]); await sleep(250); await type(O, '.vs-editor [data-input="visit:field"][data-k="f:summary"]', 'ویرایش نسخهٔ قبلی پس از امضای کارشناس'); await O.evaluate(() => visitClose()); await O.push(); await N.pull();
+  S.ok(await summary(N, v1) === 'ویرایش نسخهٔ قبلی پس از امضای کارشناس' && ((await xsig(N, v1)) || {}).name === 'کارشناس نسخهٔ تازه' && await N.evaluate(async k => (await vIdbGet('sigs', k)) instanceof Blob, await sigXKey(N, v1)),
+    'پس از ویرایش در نسخهٔ قبلی، امضای کارشناس (نام، تاریخ و تصویر) روی نسخهٔ تازه سر جایش است', await xsig(N, v1));
+  S.ok(await calm(N) && await calm(O), 'و هیچ هشدار «دو نسخه» پیش نیامد');
   // مرحلهٔ رشد تازه و فیلدهای قطعه
   await type(N, '[data-input="plot:field"][data-id="' + a + '"][data-key="code"]', 'N-1'); await sleep(40); await N.push(); await O.pull();
   await type(O, '[data-input="plot:field"][data-id="' + b + '"][data-key="code"]', 'O-2'); await sleep(40); await O.push(); await N.pull();

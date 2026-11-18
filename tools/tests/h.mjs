@@ -9,13 +9,16 @@ const { default: chromium } = await import('@sparticuz/chromium');
 export const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const REPO = path.resolve(HERE, '..', '..');           // ریشهٔ مخزن = خودِ سایت
 export const OUT = path.join(HERE, 'out');                      // خروجی‌های موقت آزمایش (در گیت نمی‌رود)
+/* شمارهٔ نسخهٔ برنامه‌ای که در مخزن است؛ آزمایش‌ها شمارهٔ نسخه را از همین می‌خوانند، نه از عددِ نوشته‌شده در خودشان */
+export const APP_VER = (fs.readFileSync(path.join(REPO, 'index.html'), 'utf8').match(/const APP_VERSION = '([0-9.]+)'/) || [])[1];
 export const sleep = ms => new Promise(r => setTimeout(r, ms));
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.png': 'image/png',
   '.webmanifest': 'application/manifest+json', '.md': 'text/plain; charset=utf-8', '.json': 'application/json' };
 
 /* سرور کوچک فایل. st.fail = (مسیر) => کد خطا | null ؛ st.down = true یعنی شبکه قطع است. */
+/* KZ_SITE_ROOT = پوشهٔ دیگری به‌جای مخزن (مثلاً یک رونوشتِ عمداً خراب‌شده، برای اینکه معلوم شود آزمایش خطا را می‌گیرد) */
 export async function site(opts = {}) {
-  const root = opts.root || REPO;
+  const root = opts.root || (process.env.KZ_SITE_ROOT ? path.resolve(process.env.KZ_SITE_ROOT) : REPO);
   const st = { hits: [], fail: null, down: false, root };
   const srv = http.createServer((q, r) => {
     let p = decodeURIComponent(q.url.split('?')[0]); if (p.endsWith('/')) p += 'index.html';
@@ -159,6 +162,25 @@ export async function downloads(page, ms = 4000) {
   while (Date.now() - t0 < ms) { const ok = await page.evaluate(() => window.__dl.length > 0 && window.__dl.every(x => x.b64 !== null)); if (ok) break; await sleep(80); }
   return page.evaluate(() => window.__dl.map(x => ({ name: x.name, size: x.size, type: x.type, b64: x.b64 })));
 }
+/* ---------- کادر امضا ---------- */
+/* مثل انگشت یا ماوس روی کادر امضا خط می‌کشد. who = 'x' یعنی کادر کارشناس فنی. نقطه‌ها نسبت به گوشهٔ بالا-چپِ کادرند. */
+export const padSel = (vid, who) => 'canvas[' + (who === 'x' ? 'data-sigcvx' : 'data-sigcv') + '="' + vid + '"]';
+export async function drawPad(page, vid, who, pts = [[40, 40], [110, 150], [190, 70], [250, 160]]) {
+  const r = await page.evaluate(([sel, pts]) => { const cv = document.querySelector(sel); if (!cv) return null; const b = cv.getBoundingClientRect();
+    const ev = (t, x, y) => cv.dispatchEvent(new PointerEvent(t, { clientX: b.left + x, clientY: b.top + y, bubbles: true, cancelable: true }));
+    ev('pointerdown', pts[0][0], pts[0][1]); for (const p of pts.slice(1)) ev('pointermove', p[0], p[1]);
+    window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true })); return cv.dataset.dirty || ''; }, [padSel(vid, who), pts]);
+  if (r === null) throw new Error('کادر امضا پیدا نشد: ' + padSel(vid, who));
+  await sleep(60); return r;
+}
+/* وضعیت یک کادر امضا: هست یا نه، «کشیده‌شده» حساب می‌شود یا نه، و چند نقطهٔ جوهر دارد */
+export const padInk = (page, vid, who) => page.evaluate(sel => { const cv = document.querySelector(sel); if (!cv) return null;
+  const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 8) n++;
+  const b = cv.getBoundingClientRect(); return { dirty: !!cv.dataset.dirty, ink: n, w: cv.width, h: cv.height, cssW: Math.round(b.width), cssH: Math.round(b.height) }; }, padSel(vid, who));
+/* کلید تصویر امضای کارشناس فنیِ یک بازدید در حافظهٔ دستگاه (هر امضای تازه کلید تازه دارد)؛ اگر امضا نشده: null */
+export const sigXKey = (page, vid) => page.evaluate(vid => { for (const p of state.projects) for (const h of [p, ...(p.plots || [])]) for (const v of (h.visits || [])) if (v.id === vid) return v.sigExpert ? vSigKey(vid, 'x', v.sigExpert) : null; return null; }, vid);
+/* همهٔ کلیدهای تصویر امضا که روی این دستگاه ذخیره است */
+export const sigKeys = page => page.evaluate(async () => { const db = await vDb(); return new Promise((res, rej) => { const r = db.transaction('sigs').objectStore('sigs').getAllKeys(); r.onsuccess = () => res(r.result.map(String).sort()); r.onerror = () => rej(r.error); }); });
 export const clearDl = page => page.evaluate(() => { window.__dl.length = 0; window.__opened.length = 0; });
 export const txt = d => Buffer.from(d.b64 || '', 'base64').toString('utf8');
 export const bin = d => Buffer.from(d.b64 || '', 'base64');

@@ -3,7 +3,7 @@
 // نسخهٔ قدیمی از داخل فایل نصب قبلی می‌آید (در مخزن نیست):
 //   python3 tools/installer/build_installer.py --base فایل-نصب-قبلی.exe --extract _local/base
 //   KZ_OLD_INDEX=_local/base/index.html node tools/tests/t_upgrade_file.mjs
-import { site, launch, open, reopen, suite, sleep, closeDialogs, dialogs, type, act, press, downloads, clearDl, txt, bin, REPO } from './h.mjs';
+import { site, launch, open, reopen, suite, sleep, closeDialogs, dialogs, type, act, press, downloads, clearDl, txt, bin, REPO, drawPad, sigXKey } from './h.mjs';
 import { fakeSupabase } from './sb.mjs';
 import { device, UA_PC, UA_AND } from './dev.mjs';
 import { unzip } from './zip.mjs';
@@ -68,15 +68,23 @@ S.sec('الف-۲) گوشی با نسخهٔ تازه کنار کامپیوترِ 
 const ph = await phone('k-up-a'); await ph.pull();
 S.ok(!!(await visit(ph, v1)), 'گوشی بازدیدِ کامپیوتر را گرفت');
 const v2 = await ph.addVisit(b, 'بازدید ثبت‌شده با گوشی');
+// کارشناس فنی روی گوشی همان بازدید را امضا می‌کند (نسخهٔ قدیمیِ کامپیوتر این را نمی‌شناسد)
+await ph.evaluate(([b, v]) => { visitOpen(b, v); }, [b, v2]); await sleep(350);
+await drawPad(ph, v2, 'x'); await act(ph, 'visit:signX'); await press(ph, 'ok', 'کارشناس گوشی'); await sleep(350); await ph.evaluate(() => visitClose()); await sleep(150);
 await ph.selectProject(await ph.evaluate(id => state.projects.find(p => (p.plots || []).some(pl => pl.id === id)).id, a));
 await ph.$eval('#genCard [data-act="visit:add"]', e => e.click()); await sleep(350); const g1 = await ph.evaluate(() => V_OPEN);
 await type(ph, '#genCard .vs-editor [data-input="visit:field"][data-k="f:summary"]', 'گزارش کلی پروژه از گوشی'); await ph.evaluate(() => visitClose()); await sleep(200);
 await ph.push(); await pull(pc); await push(pc);
 S.ok(!!(await visit(pc, v2)), 'کامپیوترِ نسخهٔ قدیمی بازدیدِ گوشی را گرفت');
+await edit(pc, b, v2, 'ویرایش کامپیوترِ قدیمی روی بازدید گوشی'); await push(pc);
 const srvHasReport = () => JSON.stringify(sb.row('k-up-a').data).includes(g1);
 if (!srvHasReport()) S.note('نسخهٔ قدیمی «گزارش کلی پروژه» را نمی‌شناسد و هنگام ارسال، آن را از نسخهٔ روی سرور جا می‌اندازد (رفتار شناخته‌شدهٔ ' + oldVer + ').');
 await ph.pull();
 S.ok(!!(await visit(ph, g1)), 'با این حال گزارش کلی پروژه روی گوشی می‌ماند (نبودن روی سرور به معنی «حذف» نیست)');
+S.ok(/ویرایش کامپیوترِ قدیمی/.test(await sumOf(ph, v2)) && ((await visit(ph, v2)).sigExpert || {}).name === 'کارشناس گوشی' && await ph.evaluate(async k => (await vIdbGet('sigs', k)) instanceof Blob, await sigXKey(ph, v2)),
+  'ویرایشِ کامپیوترِ قدیمی به گوشی رسید و امضای کارشناس فنی (که نسخهٔ قدیمی نمی‌شناسد) از بین نرفت', (await visit(ph, v2)).sigExpert);
+// (امضای کارشناس دوباره برداشته می‌شود تا کامپیوتر پایین‌تر بتواند «پشتیبان کامل» بگیرد: دستگاهی که تصویر یک امضا را ندارد پشتیبان کامل نمی‌سازد)
+await ph.evaluate(([b, v]) => { visitOpen(b, v); }, [b, v2]); await sleep(350); await act(ph, 'visit:signXClear'); await press(ph, 'ok'); await sleep(300); await ph.evaluate(() => visitClose()); await sleep(150);
 await ph.push();
 S.ok(srvHasReport(), 'و با ارسال بعدیِ گوشی دوباره روی سرور می‌نشیند');
 
